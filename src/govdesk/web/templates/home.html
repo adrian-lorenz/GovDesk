@@ -1,0 +1,38 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+
+{% block content %}
+<article class="round large-padding primary-container">
+  <h5 class="no-margin"><i>account_balance</i> Willkommen bei {{ platform_name }}</h5>
+  <p class="no-margin">Souveräne KI/RAG-Plattform für Behörden — Dokumente einbetten,
+     durchsuchen und in projektbasierten Chats mit Quellenangaben nutzen.</p>
+  <nav class="top-margin">
+    <a class="button" href="/projects"><i>folder</i> Zu den Projekten</a>
+  </nav>
+</article>
+
+<div class="grid top-margin">
+  <div class="s12 m4">
+    <article class="round border">
+      <h6><i>upload_file</i> Dokumente</h6>
+      <p class="small-text no-margin">PDF, DOCX, ODT, TXT, MD & HTML einbetten —
+         lokal verarbeitet, ohne Datenabfluss.</p>
+    </article>
+  </div>
+  <div class="s12 m4">
+    <article class="round border">
+      <h6><i>forum</i> Chats mit Quellen</h6>
+      <p class="small-text no-margin">Projektbezogene Antworten mit nachvollziehbaren
+         Quellenangaben aus Ihren Dokumenten.</p>
+    </article>
+  </div>
+  <div class="s12 m4">
+    <article class="round border">
+      <h6><i>shield_lock</i> Souverän betrieben</h6>
+      <p class="small-text no-margin">Eigene Modelle via Ollama, On-Premises,
+         auditierbar — keine Abhängigkeit von Cloud-Anbietern.</p>
+    </article>
+  </div>
+</div>
+{% endblock %}

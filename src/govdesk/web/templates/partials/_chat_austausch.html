@@ -1,0 +1,13 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Nach dem Absenden: Nutzer-Nachricht + Assistent-Bubble, die sich per SSE füllt #}
+<div class="msg-user">{{ frage }}</div>
+<article class="msg-assistant round"
+         hx-ext="sse"
+         sse-connect="/projects/{{ project.id }}/chats/{{ chat.id }}/stream"
+         sse-close="done">
+  <div sse-swap="done" hx-swap="innerHTML">
+    <span class="stream-text" sse-swap="token" hx-swap="beforeend"></span>
+    <progress class="circle small"></progress>
+  </div>
+</article>

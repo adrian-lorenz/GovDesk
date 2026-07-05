@@ -1,0 +1,128 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}{{ chat.title or "Chat" }} — {{ platform_name }}{% endblock %}
+{# Chat nutzt die volle Fensterbreite statt der 75rem-Spalte #}
+{% block main_class %}responsive max{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
+{% endblock %}
+
+{% block content %}
+<style>
+  .gd-chat { display: grid; grid-template-columns: 20rem minmax(0, 1fr) 20rem;
+             gap: 1.5rem; align-items: start; }
+  /* Beer gibt aufeinanderfolgenden section/aside automatisch margin-top:1rem
+     (höhere Spezifität → !important nötig); das versetzt die Spalten. */
+  .gd-chat > * { margin-block-start: 0 !important; }
+  .gd-chat-main { min-width: 0; }
+  .chat-verlauf { max-width: 52rem; margin: 0 auto; }
+  .msg-user { background: var(--primary-container); color: var(--on-primary-container);
+              border-radius: 0.75rem 0.75rem 0.2rem 0.75rem; padding: 0.75rem 1rem;
+              margin: 0.75rem 0 0.75rem auto; max-width: 85%; width: fit-content; }
+  .msg-assistant { border-radius: 0.75rem 0.75rem 0.75rem 0.2rem;
+                   margin: 0.75rem auto 0.75rem 0; max-width: 100%; }
+  .stream-text { white-space: pre-wrap; }
+  .chat-eingabe { position: sticky; bottom: 0; z-index: 5;
+                  background: var(--surface); padding: 1rem 0 0.5rem; }
+  .chat-eingabe form { max-width: 52rem; margin: 0 auto; }
+
+  /* Alle drei Spalten oben bündig. (sticky versetzte das kurze rechte Aside
+     um top:5rem nach unten — daher bewusst statisch.) */
+  .gd-chat-nav, .gd-chat-aside { align-self: start; }
+  .gd-chat-nav .list > li { border-radius: 0.5rem; }
+  .gd-chat-nav .list > li.aktiv { background: var(--primary-container); }
+  .gd-chat-nav .list > li.aktiv a { color: var(--on-primary-container); }
+  /* Titel + Zeitstempel vertikal, jeweils einzeilig mit Ellipsis (Beers
+     Listen-Anchor ist sonst Flex-Row und quetscht den Zeitstempel). */
+  .gd-chat-nav .list > li > a.max { display: block; min-inline-size: 0; }
+  .gd-chat-nav .chat-titel { display: block; white-space: nowrap;
+                             overflow: hidden; text-overflow: ellipsis; }
+  .gd-chat-nav .list .small-text { display: block; white-space: nowrap;
+                                   overflow-wrap: normal; }
+
+  /* Rechte Sidebar: Quellen */
+  .gd-chat-aside .quelle { border-block-start: 1px solid var(--outline-variant); padding: 0.6rem 0; }
+  .gd-chat-aside .quelle:first-of-type { border-block-start: 0; }
+
+  @media (max-width: 75rem) {
+    .gd-chat { grid-template-columns: 14rem minmax(0, 1fr); }
+    .gd-chat-aside { grid-column: 1 / -1; position: static; }
+  }
+  @media (max-width: 45rem) {
+    .gd-chat { grid-template-columns: 1fr; }
+    .gd-chat-nav { position: static; }
+  }
+</style>
+
+{% set answers = messages | selectattr("role", "equalto", "assistant") | list %}
+{% set citations = answers[-1].citations if answers else [] %}
+
+<div class="gd-chat">
+  <aside class="gd-chat-nav">
+    <article class="round border">
+      <nav class="no-margin">
+        <h6 class="max no-margin"><i>chat</i> Meine Chats</h6>
+        <form method="post" action="/projects/{{ project.id }}/chats" class="no-margin">
+          <button class="circle small" title="Neuer Chat"><i>add</i></button>
+        </form>
+      </nav>
+      <ul class="list">
+        {% for c in chats %}
+        <li class="{{ 'aktiv' if c.id == chat.id }}">
+          <a class="max" href="/projects/{{ project.id }}/chats/{{ c.id }}">
+            <span class="chat-titel">{{ c.title or "Neuer Chat" }}</span>
+            <span class="small-text">{{ c.updated_at.strftime("%d.%m. %H:%M") }}</span>
+          </a>
+          <form method="post" action="/projects/{{ project.id }}/chats/{{ c.id }}/delete"
+                class="no-margin" hx-confirm="Diesen Chat mitsamt Verlauf endgültig löschen?">
+            <button class="circle transparent small" title="Löschen"><i>delete</i></button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    </article>
+  </aside>
+
+  <section class="gd-chat-main">
+    <div class="chat-verlauf" id="nachrichten">
+      {% for message in messages %}
+        {% if message.role == "user" %}
+          <div class="msg-user">{{ message.content }}</div>
+        {% elif message.role == "assistant" %}
+          <article class="msg-assistant round">{{ message.html | safe }}</article>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="chat-eingabe">
+      {# Reset via theme.js (data-reset-on-success) statt hx-on — hx-on nutzt
+         new Function() und verstößt gegen die CSP (kein 'unsafe-eval'). #}
+      <form hx-post="/projects/{{ project.id }}/chats/{{ chat.id }}/messages"
+            hx-target="#nachrichten" hx-swap="beforeend"
+            data-reset-on-success
+            class="row">
+        <div class="field textarea border round max no-margin">
+          <textarea name="frage" required rows="2" placeholder="Frage zu den Projektdokumenten stellen …"
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.requestSubmit();}"></textarea>
+        </div>
+        <button type="submit" class="circle large"><i>send</i></button>
+      </form>
+    </div>
+  </section>
+
+  <aside class="gd-chat-aside">
+    <article class="round border">
+      <h6 class="no-margin"><i>menu_book</i> Quellen</h6>
+      <div id="quellen-sidebar">
+        {% include "partials/_quellen_sidebar.html" %}
+      </div>
+    </article>
+  </aside>
+</div>
+
+<script>
+  window.scrollTo(0, document.body.scrollHeight);
+</script>
+{% endblock %}

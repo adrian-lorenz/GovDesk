@@ -1,0 +1,182 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Einstellungen — {{ platform_name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
+<a class="button border small" href="/admin/users"><i>group</i> Nutzer</a>
+{% endblock %}
+
+{% block content %}
+<nav>
+  <h5 class="max no-margin"><i>settings</i> Plattform-Einstellungen</h5>
+</nav>
+
+<div class="grid">
+  <div class="s12 l8">
+  <article class="round">
+  <form method="post" action="/admin/settings">
+    <h6>Branding</h6>
+    <div class="field label border round">
+      <input type="text" name="platform_name" value="{{ platform_name }}" maxlength="80" placeholder=" ">
+      <label>Plattform-Name</label>
+    </div>
+    <div class="field label border round">
+      <input type="text" name="platform_subtitle" value="{{ platform_subtitle or '' }}"
+             maxlength="160" placeholder=" ">
+      <label>Untertitel (Login/Start, optional)</label>
+    </div>
+
+    <div class="divider"></div>
+    <h6>Ollama</h6>
+    <div class="field label border round">
+      <input type="url" name="ollama_base_url" value="{{ cfg.ollama_base_url }}" required>
+      <label>Ollama-Adresse</label>
+    </div>
+    <div class="field label border round">
+      <input type="password" name="ollama_api_key" value="{{ cfg.ollama_api_key or '' }}" placeholder=" ">
+      <label>API-Schlüssel (nur Ollama Cloud)</label>
+    </div>
+    <button type="button" class="border"
+            hx-post="/admin/settings/ollama-test"
+            hx-include="closest form"
+            hx-target="#testergebnis" hx-swap="innerHTML">
+      <i>network_check</i> Verbindung testen
+    </button>
+    <div id="testergebnis"></div>
+
+    <div class="divider"></div>
+    <h6>Modelle</h6>
+    <div class="field label border round suffix">
+      <select name="default_llm_model">
+        {% for model in installed %}
+        <option value="{{ model }}" {% if model == cfg.default_llm_model %}selected{% endif %}>{{ model }}</option>
+        {% endfor %}
+        {% if cfg.default_llm_model not in installed %}
+        <option value="{{ cfg.default_llm_model }}" selected>{{ cfg.default_llm_model }} (nicht installiert)</option>
+        {% endif %}
+      </select>
+      <label>Standard-Sprachmodell (Ollama)</label>
+      <i>arrow_drop_down</i>
+    </div>
+    <p class="small-text">Embedding-Modell: <strong>{{ cfg.embedding_model }}</strong> — pro Projekt eingefroren, Wechsel erfordert Neuaufbau.</p>
+
+    <div class="divider"></div>
+    <h6>Externer LLM-Provider (OpenAI-kompatibel)</h6>
+    <p class="small-text">Optional: Mistral-API, Teuken via vLLM oder andere souveräne,
+       OpenAI-kompatible Endpunkte. Embeddings laufen weiterhin über Ollama.</p>
+    <div class="field label border round suffix">
+      <select name="llm_provider">
+        <option value="ollama" {% if cfg.llm_provider != 'openai' %}selected{% endif %}>Ollama (lokal)</option>
+        <option value="openai" {% if cfg.llm_provider == 'openai' %}selected{% endif %}>Extern (OpenAI-kompatibel)</option>
+      </select>
+      <label>Aktiver Chat-Provider</label>
+      <i>arrow_drop_down</i>
+    </div>
+    <div class="field label border round">
+      <input type="url" name="openai_base_url" value="{{ cfg.openai_base_url or '' }}"
+             placeholder="https://api.mistral.ai/v1">
+      <label>Endpunkt-URL</label>
+    </div>
+    <div class="field label border round">
+      <input type="password" name="openai_api_key" value="{{ cfg.openai_api_key or '' }}" placeholder=" ">
+      <label>API-Schlüssel</label>
+    </div>
+    <div class="field label border round">
+      <input type="text" name="openai_model" value="{{ cfg.openai_model or '' }}"
+             placeholder="z. B. mistral-large-latest" list="ext-models">
+      <label>Modell</label>
+    </div>
+    {% if external_models %}
+    <datalist id="ext-models">
+      {% for m in external_models %}<option value="{{ m }}"></option>{% endfor %}
+    </datalist>
+    {% endif %}
+    <button type="button" class="border"
+            hx-post="/admin/settings/openai-test"
+            hx-include="closest form"
+            hx-target="#ext-testergebnis" hx-swap="innerHTML">
+      <i>network_check</i> Verbindung testen
+    </button>
+    <div id="ext-testergebnis"></div>
+
+    <div class="divider"></div>
+    <h6>Reranker</h6>
+    <div class="field label border round">
+      <input type="url" name="reranker_url" value="{{ cfg.reranker_url }}" required>
+      <label>Reranker-Adresse (TEI)</label>
+    </div>
+    <label class="switch">
+      <input type="checkbox" name="reranker_enabled" value="true" {% if cfg.reranker_enabled %}checked{% endif %}>
+      <span>Reranker verwenden
+        {% if reranker_ok %}<span class="chip small green-text"><i>check</i> erreichbar</span>
+        {% else %}<span class="chip small amber-text"><i>warning</i> derzeit nicht erreichbar</span>{% endif %}
+      </span>
+    </label>
+
+    <nav class="right-align top-margin">
+      <button type="submit"><i>save</i> Speichern</button>
+    </nav>
+  </form>
+  </article>
+  </div>
+
+  <div class="s12 l4">
+    <article class="round">
+      <nav class="no-margin">
+        <h6 class="max no-margin"><i>monitor_heart</i> Dienste-Status</h6>
+        <a class="button circle transparent small" href="/admin/settings" title="Aktualisieren"><i>refresh</i></a>
+      </nav>
+      <ul class="list border">
+        {% for s in services %}
+        <li>
+          {% if s.ok %}<i class="green-text">check_circle</i>
+          {% else %}<i class="error-text">cancel</i>{% endif %}
+          <div class="max">
+            <strong>{{ s.name }}</strong>
+            <div class="small-text">{{ s.detail }}</div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="small-text no-margin">Aktives Chat-Modell: <strong>{{ cfg.chat_model }}</strong></p>
+    </article>
+
+    <article class="round">
+      <h6><i>info</i> System-Info</h6>
+      <ul class="list border">
+        {% for e in env_info %}
+        <li>
+          <div class="max"><strong class="small-text">{{ e.label }}</strong></div>
+          <span class="small-text">{{ e.value }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="small-text no-margin">Werte aus der Server-Umgebung (.env) — nur lesbar.</p>
+    </article>
+
+    <article class="round">
+      <nav class="no-margin">
+        <h6 class="max no-margin"><i>badge</i> Anmeldung (OIDC / SSO)</h6>
+        {% if oidc_info.enabled %}<span class="chip small green-text"><i>check</i> aktiv</span>
+        {% else %}<span class="chip small">deaktiviert</span>{% endif %}
+      </nav>
+      <ul class="list border">
+        <li><div class="max"><strong class="small-text">Lokale Anmeldung</strong></div>
+          <span class="small-text">{{ "erlaubt" if oidc_info.local_login else "gesperrt" }}</span></li>
+        <li><div class="max"><strong class="small-text">Issuer</strong>
+          <div class="small-text">{{ oidc_info.issuer }}</div></div></li>
+        <li><div class="max"><strong class="small-text">Client-ID</strong>
+          <div class="small-text">{{ oidc_info.client_id }}</div></div></li>
+        <li><div class="max"><strong class="small-text">Redirect-URI</strong>
+          <div class="small-text">{{ oidc_info.redirect_uri }}</div></div></li>
+      </ul>
+      <p class="small-text no-margin">OIDC wird aus Sicherheitsgründen über die Server-Umgebung
+        konfiguriert: <code>GOVDESK_OIDC_ENABLED</code>, <code>GOVDESK_OIDC_ISSUER</code>,
+        <code>GOVDESK_OIDC_CLIENT_ID</code>, <code>GOVDESK_OIDC_CLIENT_SECRET</code>,
+        <code>GOVDESK_LOCAL_LOGIN_ENABLED</code>.</p>
+    </article>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Quellen der jeweils letzten Antwort — für die Sidebar der Chat-Ansicht. #}
+{% if citations %}
+  {% for citation in citations %}
+  <div class="quelle">
+    <div class="row no-space">
+      <span class="chip small">[{{ citation.number }}]</span>
+      <strong class="max small-text">{{ citation.filename }}</strong>
+    </div>
+    {% if citation.heading_path %}<div class="small-text">{{ citation.heading_path }}</div>{% endif %}
+    {% if citation.page_no %}<div class="small-text">Seite {{ citation.page_no }}</div>{% endif %}
+    <div class="small-text italic">{{ citation.snippet[:180] }}…</div>
+    {% if citation.source_url %}
+    <a class="small-text" href="{{ citation.source_url }}" target="_blank" rel="noopener">
+      <i>open_in_new</i> Quelle öffnen
+    </a>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="small-text">Die Quellen zur jeweils letzten Antwort erscheinen hier.</p>
+{% endif %}

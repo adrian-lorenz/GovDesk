@@ -1,0 +1,75 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Nutzerverwaltung — {{ platform_name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
+<a class="button border small" href="/admin/settings"><i>settings</i> Einstellungen</a>
+{% endblock %}
+
+{% block content %}
+<h5><i>group</i> Nutzerverwaltung</h5>
+
+{% if error %}<p class="error-text"><i>error</i> {{ error }}</p>{% endif %}
+
+<article class="round">
+  <h6>Neuen Nutzer anlegen</h6>
+  <form method="post" action="/admin/users" class="grid">
+    <div class="field label border round s12 m3">
+      <input type="text" name="username" required minlength="3">
+      <label>Benutzername</label>
+    </div>
+    <div class="field label border round s12 m3">
+      <input type="text" name="display_name">
+      <label>Anzeigename</label>
+    </div>
+    <div class="field label border round s12 m3">
+      <input type="email" name="email">
+      <label>E-Mail</label>
+    </div>
+    <div class="field label border round s12 m3">
+      <input type="password" name="password" required minlength="12" autocomplete="new-password">
+      <label>Passwort (min. 12)</label>
+    </div>
+    <label class="checkbox s12 m6">
+      <input type="checkbox" name="is_platform_admin" value="true">
+      <span>Plattform-Administrator</span>
+    </label>
+    <div class="s12 m6 right-align">
+      <button type="submit"><i>person_add</i> Anlegen</button>
+    </div>
+  </form>
+</article>
+
+<article class="round">
+  <table class="stripes">
+    <thead>
+      <tr><th>Benutzer</th><th>E-Mail</th><th>Rolle</th><th>Status</th><th>Letzte Anmeldung</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td><strong>{{ user.username }}</strong>{% if user.display_name %} <span class="small-text">({{ user.display_name }})</span>{% endif %}</td>
+        <td>{{ user.email or "—" }}</td>
+        <td>{% if user.is_platform_admin %}<span class="chip small primary">Admin</span>{% else %}Nutzer{% endif %}</td>
+        <td>{% if user.is_active %}<span class="green-text">aktiv</span>{% else %}<span class="error-text">deaktiviert</span>{% endif %}</td>
+        <td class="small-text">{{ user.last_login_at.strftime("%d.%m.%Y %H:%M") if user.last_login_at else "—" }}</td>
+        <td class="right-align">
+          {% if user.id != current_user.id %}
+          <form method="post" action="/admin/users/{{ user.id }}/adminrolle" class="inline no-margin">
+            <button class="border small" title="Admin-Rolle umschalten"><i>admin_panel_settings</i></button>
+          </form>
+          <form method="post" action="/admin/users/{{ user.id }}/aktiv" class="inline no-margin">
+            <button class="border small" title="Aktiv/Deaktiviert umschalten">
+              <i>{{ "person_off" if user.is_active else "person" }}</i>
+            </button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</article>
+{% endblock %}

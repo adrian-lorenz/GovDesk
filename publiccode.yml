@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+publiccodeYmlVersion: "0.4"
+name: GovDesk
+url: "https://gitlab.opencode.de/govdesk/govdesk"
+releaseDate: "2026-07-05"
+softwareVersion: "0.1.0"
+platforms:
+  - web
+categories:
+  - knowledge-management
+  - it-development
+developmentStatus: development
+softwareType: standalone/web
+legal:
+  license: EUPL-1.2
+maintenance:
+  type: community
+  contacts:
+    - name: GovDesk-Mitwirkende
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - de
+description:
+  de:
+    genericName: KI/RAG-Plattform
+    shortDescription: >-
+      Souveräne, self-hostbare KI/RAG-Plattform für Behörden — Dokumente und
+      Gesetze einbetten, durchsuchen und in projektbasierten Chats mit
+      Quellenangaben nutzen.
+    longDescription: >-
+      GovDesk ermöglicht Behörden und öffentlichen Einrichtungen den Betrieb
+      einer vollständig souveränen KI-Plattform ohne Cloud-Zwang. Dokumente
+      (PDF, DOCX, ODT, HTML u. a.) und Online-Quellen wie Gesetze werden per
+      Oberfläche, REST-API oder Internet-Agent eingebettet und in
+      projektbasierten Chats mit lokalen Sprachmodellen (Ollama) durchsuchbar
+      gemacht. Antworten enthalten Quellenangaben bis auf Paragraphen-Ebene.
+      Rollen- und Rechteverwaltung, Keycloak/OIDC-Anbindung, Audit-Protokoll
+      und ein Einrichtungs-Assistent sind eingebaut. Es findet keinerlei
+      Telemetrie oder Kommunikation mit Drittservern statt.
+    features:
+      - Projektbasierte Dokumenten-Einbettung mit Qdrant und bge-m3
+      - RAG-Chats mit Quellenangaben und konfigurierbaren Profilen
+      - Internet-Agent für Online-Quellen (z. B. gesetze-im-internet.de)
+      - Eigene Nutzerverwaltung plus Keycloak/OIDC
+      - REST-API mit projektgebundenen API-Keys
+      - Reranker-Unterstützung (bge-reranker-v2-m3)

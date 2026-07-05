@@ -1,0 +1,38 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Projekte — {{ platform_name }}{% endblock %}
+
+{% block content %}
+<nav>
+  <h5 class="max">Projekte</h5>
+  <a class="button" href="/projects/neu"><i>add</i> Neues Projekt</a>
+</nav>
+
+{% if projects %}
+<div class="projekt-liste">
+  {% for item in projects %}
+  {% set project = item.project %}
+  <a href="/projects/{{ project.id }}">
+    <article class="round border projekt-kachel">
+      <h6 class="no-margin"><i>folder</i> {{ project.name }}</h6>
+      <p class="small-text projekt-beschreibung">{{ project.description or "Keine Beschreibung" }}</p>
+      <nav class="small-text projekt-infos no-margin">
+        <span title="Dokumente"><i>description</i> {{ item.documents }}</span>
+        <span title="Mitglieder"><i>group</i> {{ item.members }}</span>
+        <div class="max"></div>
+        <span>{{ project.updated_at.strftime("%d.%m.%Y") }}</span>
+      </nav>
+    </article>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<article class="round large-padding center-align">
+  <i class="extra">folder_open</i>
+  <h6>Noch keine Projekte</h6>
+  <p>Legen Sie Ihr erstes Projekt an, um Dokumente einzubetten und Chats zu starten.</p>
+  <a class="button" href="/projects/neu"><i>add</i> Erstes Projekt anlegen</a>
+</article>
+{% endif %}
+{% endblock %}

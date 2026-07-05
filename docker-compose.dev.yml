@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+# Entwicklung: nur die Dienste, App/Worker laufen lokal via `uv run govdesk …`
+# Nutzung: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres qdrant ollama reranker
+
+services:
+  postgres:
+    ports:
+      # 5434, damit natives Postgres (5432) und andere Projekte (5433) nicht kollidieren
+      - "5434:5432"
+
+  qdrant:
+    ports:
+      - "6333:6333"
+
+  ollama:
+    ports:
+      - "11434:11434"
+
+  reranker:
+    # TEI liefert kein arm64-CPU-Image — auf Apple Silicon via Rosetta emulieren
+    platform: linux/amd64
+    ports:
+      - "8081:80"

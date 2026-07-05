@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+.git
+.venv
+.env
+__pycache__
+*.py[cod]
+.mypy_cache
+.ruff_cache
+.pytest_cache
+data
+tests
+docs

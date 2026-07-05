@@ -1,0 +1,133 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Chat-Profile — {{ project.name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
+{% endblock %}
+
+{% block content %}
+<h5><i>tune</i> Chat-Profile</h5>
+<p class="small-text">Profile legen fest, wie ein Chat antwortet: System-Prompt,
+   Modell, Kreativität und welche Sammlungen durchsucht werden.</p>
+
+<div class="grid">
+  <div class="s12 m5">
+    <article class="round">
+      <h6>Vorhandene Profile</h6>
+      {% if configs %}
+      <ul class="list">
+        {% for config in configs %}
+        <li>
+          <i>{{ "star" if config.is_default else "tune" }}</i>
+          <div class="max">
+            <strong>{{ config.name }}</strong>
+            <div class="small-text">
+              {{ config.model or default_model ~ " (Standard)" }} ·
+              Temp {{ config.temperature }} · Top-{{ config.top_k }}
+              {% if config.rerank_enabled %}· Reranker{% endif %}
+            </div>
+          </div>
+          <a class="button circle transparent small" title="Bearbeiten"
+             href="/projects/{{ project.id }}/chat-configs/{{ config.id }}"><i>edit</i></a>
+          <form method="post" action="/projects/{{ project.id }}/chat-configs/{{ config.id }}/loeschen"
+                class="no-margin" hx-confirm="Profil „{{ config.name }}“ löschen?">
+            <button class="circle transparent small" title="Löschen"><i>delete</i></button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="small-text">Noch keine Profile — Chats nutzen die Plattform-Standards.</p>
+      {% endif %}
+    </article>
+  </div>
+
+  <div class="s12 m7">
+    {% set fd = edit or draft %}
+    {% if not edit %}
+    <article class="round border">
+      <h6 class="no-margin"><i>auto_awesome</i> Profil mit KI erstellen</h6>
+      <p class="small-text">Erzeugt einen Vorschlag anhand der Projektdokumente und ihrer Inhalte.
+         Du prüfst und speicherst ihn anschließend.</p>
+      {% if generate_error %}
+      <p class="error-text"><i>error</i> Vorschlag konnte nicht erzeugt werden — ist das
+         Sprachmodell erreichbar?</p>
+      {% endif %}
+      <form method="post" action="/projects/{{ project.id }}/chat-configs/generate" class="row">
+        <div class="field label border round max no-margin">
+          <input type="text" name="ziel" placeholder=" ">
+          <label>Ziel/Zweck (optional)</label>
+        </div>
+        <button type="submit"><i>auto_awesome</i> Erstellen</button>
+      </form>
+    </article>
+    {% endif %}
+
+    <article class="round">
+      <h6>{% if edit %}Profil bearbeiten{% elif draft %}KI-Vorschlag — prüfen &amp; speichern{% else %}Neues Profil{% endif %}</h6>
+      <form method="post" action="/projects/{{ project.id }}/chat-configs">
+        {% if edit %}<input type="hidden" name="config_id" value="{{ edit.id }}">{% endif %}
+        <div class="field label border round">
+          <input type="text" name="name" required maxlength="150" value="{{ fd.name if fd else '' }}">
+          <label>Name</label>
+        </div>
+        <div class="field textarea label border round">
+          <textarea name="system_prompt" rows="6">{{ (fd.system_prompt or '') if fd else '' }}</textarea>
+          <label>System-Prompt (optional)</label>
+        </div>
+        <div class="grid">
+          <div class="field label border round s12 m6">
+            <select name="model">
+              <option value="">Plattform-Standard ({{ default_model }})</option>
+              {% for m in models %}
+              <option value="{{ m }}" {% if fd and fd.model == m %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+            <label>Modell</label>
+          </div>
+          <div class="field label border round s6 m3">
+            <input type="number" name="temperature" min="0" max="2" step="0.1"
+                   value="{{ fd.temperature if fd else 0.2 }}">
+            <label>Temperatur</label>
+          </div>
+          <div class="field label border round s6 m3">
+            <input type="number" name="top_k" min="1" max="20"
+                   value="{{ fd.top_k if fd else 4 }}">
+            <label>Top-K</label>
+          </div>
+        </div>
+        {% if collections %}
+        <p class="small-text no-margin">Durchsuchte Sammlungen (keine Auswahl = alle):</p>
+        <nav class="wrap">
+          {% for collection in collections %}
+          <label class="checkbox">
+            <input type="checkbox" name="collection_ids" value="{{ collection.id }}"
+                   {% if fd and fd.collection_ids and collection.id in fd.collection_ids %}checked{% endif %}>
+            <span>{{ collection.name }}</span>
+          </label>
+          {% endfor %}
+        </nav>
+        {% endif %}
+        <nav>
+          <label class="switch">
+            <input type="checkbox" name="rerank_enabled" value="true"
+                   {% if not fd or fd.rerank_enabled %}checked{% endif %}>
+            <span>Reranker verwenden</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" name="is_default" value="true"
+                   {% if fd and fd.is_default %}checked{% endif %}>
+            <span>Standard-Profil</span>
+          </label>
+        </nav>
+        <nav class="right-align">
+          {% if edit %}<a class="button border" href="/projects/{{ project.id }}/chat-configs">Abbrechen</a>{% endif %}
+          <button type="submit"><i>save</i> Speichern</button>
+        </nav>
+      </form>
+    </article>
+  </div>
+</div>
+{% endblock %}

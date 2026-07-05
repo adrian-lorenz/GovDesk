@@ -1,0 +1,24 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Neues Projekt — {{ platform_name }}{% endblock %}
+
+{% block content %}
+<article class="round large-padding" style="max-width: 36rem; margin: 2rem auto">
+  <h5><i>create_new_folder</i> Neues Projekt</h5>
+  <form method="post" action="/projects">
+    <div class="field label border round">
+      <input type="text" name="name" required maxlength="200" autofocus>
+      <label>Name (z. B. „Vergaberecht“)</label>
+    </div>
+    <div class="field textarea label border round">
+      <textarea name="description" maxlength="2000"></textarea>
+      <label>Beschreibung (optional)</label>
+    </div>
+    <nav class="right-align">
+      <a class="button border" href="/projects">Abbrechen</a>
+      <button type="submit"><i>check</i> Anlegen</button>
+    </nav>
+  </form>
+</article>
+{% endblock %}

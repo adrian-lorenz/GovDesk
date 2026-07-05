@@ -1,0 +1,89 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Internet-Agent — {{ project.name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
+{% endblock %}
+
+{% block content %}
+<h5><i>travel_explore</i> Internet-Agent</h5>
+<p class="small-text">Geben Sie eine Webseite und optional einen Suchauftrag an. Mit
+   „Unterseiten einbeziehen“ folgt der Agent Links und sucht — vom Suchauftrag geleitet —
+   selbstständig passende Informationen zusammen und bettet sie ein. robots.txt wird respektiert.</p>
+
+<article class="round">
+  <h6>Neue Quelle</h6>
+  <form method="post" action="/projects/{{ project.id }}/crawler">
+    <div class="grid">
+      <div class="field label border round s12 m4">
+        <input type="text" name="name" required maxlength="200">
+        <label>Name (z. B. „VgV“)</label>
+      </div>
+      <div class="field label border round s12 m8">
+        <input type="url" name="start_url" required placeholder="https://www.gesetze-im-internet.de/vgv_2016/">
+        <label>Start-URL</label>
+      </div>
+      <div class="field textarea label border round s12">
+        <textarea name="topic" rows="2"
+                  placeholder="z. B. Fristen, Zuständigkeiten und Schwellenwerte im Vergaberecht"></textarea>
+        <label>Suchauftrag / Thema (optional)</label>
+      </div>
+      <div class="s12">
+        <label class="checkbox">
+          <input type="checkbox" name="follow_subpages" value="true">
+          <span>Unterseiten einbeziehen (Links folgen)</span>
+        </label>
+        <p class="small-text no-margin">Ohne Suchauftrag werden alle Unterseiten derselben
+           Domain gecrawlt; mit Suchauftrag wählt der KI-Agent gezielt relevante Seiten.</p>
+      </div>
+    </div>
+    <details class="top-margin">
+      <summary class="small-text"><i>tune</i> Erweiterte Optionen</summary>
+      <div class="grid top-margin">
+        <div class="field label border round s6 m3">
+          <input type="number" name="max_depth" min="0" max="5" value="2">
+          <label>Max. Tiefe</label>
+        </div>
+        <div class="field label border round s6 m3">
+          <input type="number" name="max_pages" min="1" max="500" value="50">
+          <label>Max. Seiten</label>
+        </div>
+        <div class="field label border round s6 m3">
+          <input type="number" name="recrawl_interval_hours" min="0" value="0">
+          <label>Re-Crawl (h, 0=aus)</label>
+        </div>
+        {% if collections %}
+        <div class="field label border round s6 m3">
+          <select name="collection_id">
+            <option value="">Ohne Sammlung</option>
+            {% for collection in collections %}
+            <option value="{{ collection.id }}">{{ collection.name }}</option>
+            {% endfor %}
+          </select>
+          <label>Sammlung</label>
+        </div>
+        {% endif %}
+        <div class="field label border round s12 m6">
+          <input type="text" name="url_include_pattern" placeholder="z. B. /vgv_2016/">
+          <label>URL muss enthalten (Regex, optional)</label>
+        </div>
+        <div class="field label border round s12 m6">
+          <input type="text" name="url_exclude_pattern" placeholder="z. B. \.pdf$">
+          <label>URL ausschließen (Regex, optional)</label>
+        </div>
+      </div>
+    </details>
+    <nav class="right-align">
+      <button type="submit"><i>rocket_launch</i> Anlegen &amp; Crawl starten</button>
+    </nav>
+  </form>
+</article>
+
+{% for row in rows %}
+  {% include "partials/_crawl_quelle.html" %}
+{% else %}
+<article class="round center-align"><p class="small-text">Noch keine Web-Quellen.</p></article>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Retrieval-Test — {{ project.name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
+{% endblock %}
+
+{% block content %}
+<h5><i>manage_search</i> Retrieval-Test</h5>
+<p class="small-text">Zeigt die gerankten Textabschnitte für eine Suchanfrage —
+   ohne Sprachmodell. Nützlich zum Prüfen der Trefferqualität.</p>
+
+<form method="get" action="/projects/{{ project.id }}/retrieval" class="row">
+  <div class="field label border round max">
+    <input type="text" name="q" value="{{ q }}" required>
+    <label>Suchanfrage</label>
+  </div>
+  <button type="submit"><i>search</i> Suchen</button>
+</form>
+
+{% if q and not citations %}
+<article class="round center-align"><p>Keine Treffer.</p></article>
+{% endif %}
+
+{% for citation in citations %}
+<article class="round">
+  <nav>
+    <span class="chip small">#{{ citation.number }}</span>
+    <strong class="max">{{ citation.filename }}
+      {% if citation.heading_path %}<span class="small-text"> — {{ citation.heading_path }}</span>{% endif %}
+    </strong>
+    <span class="chip small">Score: {{ "%.3f" | format(citation.score) }}</span>
+  </nav>
+  <p class="small-text">{{ citation.snippet }}</p>
+</article>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,67 @@
+# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+stages:
+  - lint
+  - test
+  - build
+
+variables:
+  UV_CACHE_DIR: .uv-cache
+
+default:
+  image: ghcr.io/astral-sh/uv:python3.14-bookworm-slim
+  cache:
+    key: uv-$CI_COMMIT_REF_SLUG
+    paths:
+      - .uv-cache
+
+lint:
+  stage: lint
+  script:
+    - uv sync --frozen
+    - uv run ruff check src tests
+    - uv run ruff format --check src tests
+    - uv run mypy
+    - uv run reuse lint
+
+unit-tests:
+  stage: test
+  script:
+    - uv sync --frozen
+    - uv run pytest tests/unit -q
+
+integration-tests:
+  stage: test
+  services:
+    - name: postgres:17-alpine
+      alias: postgres
+    - name: qdrant/qdrant:v1.15.5
+      alias: qdrant
+  variables:
+    POSTGRES_USER: govdesk
+    POSTGRES_PASSWORD: govdesk
+    POSTGRES_DB: govdesk
+    GOVDESK_DATABASE_URL: postgresql+psycopg://govdesk:govdesk@postgres:5432/govdesk
+    GOVDESK_QDRANT_URL: http://qdrant:6333
+  script:
+    - uv sync --frozen
+    - uv run alembic upgrade head
+    - uv run pytest tests -q -m integration
+  allow_failure: true # bis Integrationstests existieren
+
+docker-build:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" .
+    - |
+      if [ -n "$CI_REGISTRY" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

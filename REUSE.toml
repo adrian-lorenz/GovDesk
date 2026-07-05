@@ -1,0 +1,31 @@
+version = 1
+SPDX-PackageName = "GovDesk"
+SPDX-PackageDownloadLocation = "https://gitlab.opencode.de/govdesk/govdesk"
+
+# Gevendorte Fremd-Assets (kein CDN — bewusst lokal ausgeliefert)
+[[annotations]]
+path = ["src/govdesk/web/static/js/htmx.min.js", "src/govdesk/web/static/js/sse.js"]
+SPDX-FileCopyrightText = "Big Sky Software"
+SPDX-License-Identifier = "0BSD"
+
+[[annotations]]
+path = ["src/govdesk/web/static/css/beer.min.css", "src/govdesk/web/static/js/beer.min.js"]
+SPDX-FileCopyrightText = "beercss"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["src/govdesk/web/static/fonts/*.woff2"]
+SPDX-FileCopyrightText = "Google LLC (Material Symbols)"
+SPDX-License-Identifier = "Apache-2.0"
+
+# Generierte/Daten-Dateien ohne Schöpfungshöhe
+[[annotations]]
+path = [
+    "uv.lock",
+    "tests/fixtures/**",
+    "alembic/versions/*.py",
+    "deploy/keycloak/realm-export.json",
+    ".env.example",
+]
+SPDX-FileCopyrightText = "2026 GovDesk-Mitwirkende"
+SPDX-License-Identifier = "EUPL-1.2"

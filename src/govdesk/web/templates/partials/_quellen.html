@@ -1,0 +1,23 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% if citations %}
+<details class="small-margin">
+  <summary class="small-text"><i>menu_book</i> {{ citations | length }} Quelle(n)</summary>
+  <ul class="list">
+    {% for citation in citations %}
+    <li>
+      <span class="chip small">[{{ citation.number }}]</span>
+      <div class="max small-text">
+        <strong>{{ citation.filename }}</strong>
+        {% if citation.heading_path %} — {{ citation.heading_path }}{% endif %}
+        {% if citation.page_no %} (Seite {{ citation.page_no }}){% endif %}
+        {% if citation.source_url %}
+          · <a href="{{ citation.source_url }}" target="_blank" rel="noopener">Quelle öffnen</a>
+        {% endif %}
+        <div class="italic">{{ citation.snippet[:200] }}…</div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}

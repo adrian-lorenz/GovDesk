@@ -1,0 +1,7 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# done-Event: gerenderte Antwort in die Bubble, Quellen per OOB in die Sidebar. #}
+{{ html_content | safe }}
+<div id="quellen-sidebar" hx-swap-oob="innerHTML">
+  {% include "partials/_quellen_sidebar.html" %}
+</div>

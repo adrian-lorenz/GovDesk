@@ -1,0 +1,35 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Anmelden — {{ platform_name }}{% endblock %}
+
+{% block content %}
+<div class="middle-align center-align" style="min-height: 70vh">
+  <article class="round large-padding" style="width: 24rem">
+    <h5 class="center-align"><i>account_balance</i> {{ platform_name }}</h5>
+    <p class="center-align">{{ platform_subtitle or "Bitte melden Sie sich an." }}</p>
+    {% if error %}
+    <p class="error-text"><i>error</i> {{ error }}</p>
+    {% endif %}
+    {% if local_login_enabled is not defined or local_login_enabled %}
+    <form method="post" action="/login">
+      <div class="field label border round">
+        <input type="text" name="username" required autofocus autocomplete="username">
+        <label>Benutzername</label>
+      </div>
+      <div class="field label border round">
+        <input type="password" name="password" required autocomplete="current-password">
+        <label>Passwort</label>
+      </div>
+      <button class="responsive" type="submit"><i>login</i> Anmelden</button>
+    </form>
+    {% endif %}
+    {% if oidc_enabled %}
+    <div class="divider small-margin"></div>
+    <a class="button responsive border" href="/auth/oidc/login" hx-boost="false">
+      <i>badge</i> Anmelden mit Behörden-Konto (SSO)
+    </a>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

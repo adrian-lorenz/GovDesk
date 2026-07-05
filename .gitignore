@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+dist/
+data/
+*.egg-info/
+.DS_Store
+
+# Lokale Claude-Code-Einstellungen (maschinenspezifisch, enthält Home-Pfade)
+.claude/

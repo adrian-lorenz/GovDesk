@@ -1,0 +1,102 @@
+# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+name: govdesk
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: govdesk
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-govdesk}
+      POSTGRES_DB: govdesk
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U govdesk -d govdesk"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      # Das Qdrant-Image enthält kein curl/wget — TCP-Check über bash
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_models:/root/.ollama
+    # Für GPU-Betrieb: siehe README (deploy.resources / device_requests)
+
+  reranker:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3"]
+    volumes:
+      - reranker_cache:/data
+    environment:
+      HF_HUB_CACHE: /data
+
+  # Optional: Keycloak für SSO — Start mit `docker compose --profile keycloak up`
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    profiles: ["keycloak"]
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./deploy/keycloak:/opt/keycloak/data/import:ro
+    ports:
+      - "8180:8080"
+
+  app:
+    build: .
+    command: sh -c "govdesk migrate && govdesk serve"
+    environment: &govdesk_env
+      GOVDESK_SECRET_KEY: ${GOVDESK_SECRET_KEY:?GOVDESK_SECRET_KEY muss gesetzt sein (siehe .env.example)}
+      GOVDESK_DATABASE_URL: postgresql+psycopg://govdesk:${POSTGRES_PASSWORD:-govdesk}@postgres:5432/govdesk
+      GOVDESK_QDRANT_URL: http://qdrant:6333
+      GOVDESK_OLLAMA_BASE_URL: ${GOVDESK_OLLAMA_BASE_URL:-http://ollama:11434}
+      GOVDESK_OLLAMA_API_KEY: ${GOVDESK_OLLAMA_API_KEY:-}
+      GOVDESK_RERANKER_URL: http://reranker:80
+      GOVDESK_COOKIE_SECURE: ${GOVDESK_COOKIE_SECURE:-false}
+    volumes:
+      - govdesk_data:/data
+    ports:
+      - "${GOVDESK_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  worker:
+    build: .
+    command: govdesk worker
+    environment: *govdesk_env
+    volumes:
+      - govdesk_data:/data
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  qdrant_data:
+  ollama_models:
+  reranker_cache:
+  govdesk_data:

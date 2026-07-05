@@ -1,0 +1,65 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>{% block title %}{{ platform_name }}{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230b57d0'/%3E%3Cpath fill='white' d='M12 4 5 8v1h14V8zM6 10v6H5v2h14v-2h-1v-6h-2v6h-3v-6h-2v6H8v-6z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/beer.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
+  <script src="{{ url_for('static', path='js/htmx.min.js') }}" defer></script>
+  <script src="{{ url_for('static', path='js/sse.js') }}" defer></script>
+  <script src="{{ url_for('static', path='js/beer.min.js') }}" defer></script>
+  <script src="{{ url_for('static', path='js/theme.js') }}" defer></script>
+</head>
+{# Theme kommt serverseitig aus dem Cookie — kein Aufblitzen des falschen Modus #}
+{# hx-boost: alle Formulare/Links laufen über HTMX. Der CSRF-Header wird per
+   htmx:configRequest aus #gd-csrf gesetzt — dieses Element liegt IM Body und
+   wird bei jedem Boost-Swap miterneuert, anders als Attribute am <body>. #}
+<body class="{{ theme }}" hx-boost="true">
+<span id="gd-csrf" data-token="{{ csrf_token or '' }}" hidden></span>
+<div id="gd-progress" aria-hidden="true"></div>
+
+{# Eigenes Bestätigungs-Modal statt window.confirm — von theme.js gesteuert #}
+<div id="gd-confirm-overlay" class="gd-overlay" hidden>
+  <div class="gd-dialog" role="alertdialog" aria-modal="true" aria-labelledby="gd-confirm-text">
+    <h6 id="gd-confirm-text" class="no-margin"></h6>
+    <nav class="right-align top-margin">
+      <button type="button" class="border" id="gd-confirm-cancel">Abbrechen</button>
+      <button type="button" id="gd-confirm-ok"><i>check</i> Bestätigen</button>
+    </nav>
+  </div>
+</div>
+
+<header class="fixed">
+  <nav>
+    <a href="/" class="row no-margin">
+      <i>account_balance</i>
+      <h6 class="no-margin brand-name">{{ platform_name }}</h6>
+    </a>
+    <div class="max"></div>
+    {% block nav %}{% endblock %}
+    {% if current_user and current_user.is_platform_admin %}
+    <a class="button circle transparent" href="/admin/users" title="Nutzerverwaltung"><i>group</i></a>
+    <a class="button circle transparent" href="/admin/settings" title="Einstellungen"><i>settings</i></a>
+    {% endif %}
+    <button class="circle transparent" onclick="gdToggleTheme()" title="Hell/Dunkel umschalten">
+      <i data-theme-icon>{{ 'light_mode' if theme == 'dark' else 'dark_mode' }}</i>
+    </button>
+    {% if current_user %}
+    <form method="post" action="/logout" class="no-margin">
+      <button class="circle transparent" title="Abmelden ({{ current_user.username }})"><i>logout</i></button>
+    </form>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="{% block main_class %}responsive{% endblock %}">
+  {% block content %}{% endblock %}
+</main>
+
+</body>
+</html>

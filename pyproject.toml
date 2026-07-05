@@ -1,0 +1,90 @@
+# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[project]
+name = "govdesk"
+version = "0.1.0"
+description = "GovDesk — souveräne, self-hostbare KI/RAG-Plattform für Behörden"
+readme = "README.md"
+license = "EUPL-1.2"
+requires-python = ">=3.14"
+authors = [{ name = "GovDesk-Mitwirkende" }]
+keywords = ["rag", "ki", "behoerden", "souveraen", "ollama", "qdrant"]
+
+dependencies = [
+    # Web
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.20",
+    "itsdangerous>=2.2",
+    "slowapi>=0.1.9",
+    # Datenbank
+    "sqlalchemy[asyncio]>=2.0.36",
+    "psycopg[binary,pool]>=3.2",
+    "alembic>=1.14",
+    "pydantic-settings>=2.7",
+    # Jobs
+    "procrastinate>=3.0",
+    # RAG
+    "qdrant-client>=1.12",
+    "httpx>=0.28",
+    "ollama>=0.4",
+    # Auth
+    "argon2-cffi>=23.1",
+    "authlib>=1.4",
+    # Parsing
+    "pypdf>=5.1",
+    "python-docx>=1.1",
+    "odfpy>=1.4",
+    "markdown-it-py>=3.0",
+    "trafilatura>=2.0",
+    "selectolax>=0.3.27",
+    "protego>=0.3.1",
+    "nh3>=0.2.20",
+    "tokenizers>=0.21",
+    # i18n
+    "babel>=2.16",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "respx>=0.22",
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "reuse>=5.0",
+]
+
+[project.scripts]
+govdesk = "govdesk.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.10,<0.11"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S", "ASYNC"]
+ignore = ["S101"] # assert in Tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "ASYNC"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = false
+ignore_missing_imports = true
+files = ["src/govdesk"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: benötigt laufende Postgres/Qdrant (docker compose)",
+]

@@ -1,0 +1,35 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "setup/_wizard.html" %}
+
+{% block wizard_content %}
+<h6>Willkommen! Zuerst prüfen wir die Systemdienste.</h6>
+<ul class="list border">
+  {% for check in checks %}
+  <li>
+    {% if check.ok %}
+      <i class="green-text">check_circle</i>
+    {% else %}
+      <i class="error-text">cancel</i>
+    {% endif %}
+    <div class="max">
+      <strong>{{ check.name }}</strong>
+      <div class="small-text">{{ check.detail }}</div>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% if checks | rejectattr("ok") | list %}
+<p class="error-text">
+  <i>warning</i> Bitte beheben Sie die markierten Probleme (Dienste starten,
+  <code>.env</code> prüfen) und laden Sie die Seite neu.
+</p>
+<a class="button border" href="/setup"><i>refresh</i> Erneut prüfen</a>
+{% else %}
+<p class="green-text"><i>verified</i> Alle Dienste erreichbar.</p>
+{% endif %}
+<nav class="right-align">
+  <a class="button" href="/setup?schritt=2">Weiter <i>arrow_forward</i></a>
+</nav>
+{% endblock %}

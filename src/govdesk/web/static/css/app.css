@@ -1,0 +1,382 @@
+/*
+SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
+
+SPDX-License-Identifier: EUPL-1.2
+*/
+
+/* Lokal gevendorte Material Symbols — kein CDN, kein Phone-Home. */
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url("../fonts/material-symbols-outlined.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url("../fonts/material-symbols-rounded.woff2") format("woff2");
+}
+
+/* ==========================================================================
+   Farbwelt — seriöses Behörden-Blau statt Material-You-Lila.
+   Vollständige Material-3-Tonalpalette (Seed #0061A4) für Hell & Dunkel.
+   Kommt nach beer.min.css → überschreibt die Standardwerte.
+   ========================================================================== */
+:root,
+body.light {
+  --primary: #0b57d0;
+  --on-primary: #ffffff;
+  --primary-container: #d6e3ff;
+  --on-primary-container: #001a41;
+  --secondary: #4a6173;
+  --on-secondary: #ffffff;
+  --secondary-container: #cde5f9;
+  --on-secondary-container: #051d2c;
+  --tertiary: #38693e;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #b9f0ba;
+  --on-tertiary-container: #002106;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #410002;
+  --background: #f8f9ff;
+  --on-background: #191c20;
+  --surface: #f8f9ff;
+  --on-surface: #191c20;
+  --surface-variant: #dfe2eb;
+  --on-surface-variant: #42474e;
+  --outline: #72777f;
+  --outline-variant: #c2c7cf;
+  --shadow: #000000;
+  --scrim: #000000;
+  --inverse-surface: #2e3035;
+  --inverse-on-surface: #eff0f7;
+  --inverse-primary: #aac7ff;
+  --surface-dim: #d8dae2;
+  --surface-bright: #f8f9ff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f3fb;
+  --surface-container: #eceef5;
+  --surface-container-high: #e6e8f0;
+  --surface-container-highest: #e1e2ea;
+}
+
+body.dark {
+  --primary: #aac7ff;
+  --on-primary: #002d6d;
+  --primary-container: #024299;
+  --on-primary-container: #d6e3ff;
+  --secondary: #b2cadf;
+  --on-secondary: #1c3243;
+  --secondary-container: #33485a;
+  --on-secondary-container: #cde5f9;
+  --tertiary: #9ed49f;
+  --on-tertiary: #033913;
+  --tertiary-container: #205127;
+  --on-tertiary-container: #b9f0ba;
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+  --background: #111318;
+  --on-background: #e1e2ea;
+  --surface: #111318;
+  --on-surface: #e1e2ea;
+  --surface-variant: #42474e;
+  --on-surface-variant: #c2c7cf;
+  --outline: #8c9199;
+  --outline-variant: #42474e;
+  --shadow: #000000;
+  --scrim: #000000;
+  --inverse-surface: #e1e2ea;
+  --inverse-on-surface: #2e3035;
+  --inverse-primary: #0b57d0;
+  --surface-dim: #111318;
+  --surface-bright: #37393e;
+  --surface-container-lowest: #0c0e13;
+  --surface-container-low: #191c20;
+  --surface-container: #1d2024;
+  --surface-container-high: #272a2f;
+  --surface-container-highest: #32353a;
+}
+
+:root {
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ==========================================================================
+   Struktur & Raster — Header-Inhalt und Seiteninhalt fluchten (gleiche Breite),
+   ruhige Abstände, klare Kartenkanten.
+   ========================================================================== */
+
+/* Kopfzeile: dezent statt schwerer Farbbalken, sticky, mit Unterkante. */
+body > header.fixed {
+  background-color: var(--surface) !important;
+  border-bottom: 1px solid var(--outline-variant);
+  min-block-size: 3.75rem;
+}
+
+/* Header-Inhalt auf dieselbe Container-Breite wie main zentrieren → keine
+   „verschobenen" Kanten mehr zwischen Logo und Seiteninhalt. */
+body > header.fixed > nav {
+  max-inline-size: 75rem;
+  inline-size: 100%;
+  margin-inline: auto;
+  gap: 0.25rem;
+}
+
+body > header.fixed .brand-name {
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+body > header.fixed a.row > i {
+  color: var(--primary);
+}
+
+/* Hauptbereich: etwas mehr Luft, damit Inhalte atmen. */
+main.responsive {
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+/* Weniger rund — sachlicher, behördlicher Auftritt statt Pillen/starker Rundungen.
+   --_round steuert alle .round-Elemente; Kreise/Quadrate bleiben unverändert. */
+body .round,
+body [class*="-round"] { --_round: 0.6rem; }
+body :is(.circle, .square).round { border-radius: 1rem !important; }
+
+/* Buttons & Chips: dezent kantig; Kreis-/Icon-Buttons bleiben rund. */
+body :is(button, .button):not(.circle):not(.square) { border-radius: 0.5rem; }
+body .chip { border-radius: 0.5rem; }
+
+/* Eingabefelder: ruhige, einheitliche Rundung. */
+body .field.round,
+body .field.round > :is(input, textarea, select) { border-radius: 0.5rem !important; }
+
+/* Karten: einheitlicher Radius, weiche Kante, gleichmäßiger Innenabstand. */
+main article.round {
+  border-radius: 0.6rem;
+  padding: 1.25rem 1.5rem;
+}
+
+main article.round.large-padding {
+  border-radius: 0.75rem;
+  padding: 2rem;
+}
+
+/* Buttons in vertikalen Formularen/Karten brauchen Abstand nach oben —
+   Beer gibt aufeinanderfolgenden Buttons/Feldern standardmäßig keinen.
+   Nur im Hauptbereich und nicht für Icon-Buttons (Kreis/transparent), sonst
+   verschiebt es u. a. den Logout-Button im Header. */
+main form:not(.row):not(.grid) > :is(button, .button, [type="submit"]):not(.circle):not(.square) {
+  margin-block-start: 1rem;
+}
+main :is(button, .button).responsive { margin-block-start: 1rem; }
+main :is(nav, .row) :is(button, .button).responsive { margin-block-start: 0; }
+
+/* Karten in Kachel-Rastern: gleiche Höhe, dezenter Hover. */
+.grid > a > article,
+.grid > article {
+  block-size: 100%;
+  transition: box-shadow var(--speed2) ease, border-color var(--speed2) ease;
+}
+
+/* Projektliste: festes 2-Spalten-Raster mit gleich breiten Kacheln
+   (Beers s/m/l-Grid auf <a> streckte sich nicht zuverlässig → Breite nach
+   Namenslänge). Anker als Block, damit sie die Spalte füllen. */
+.projekt-liste {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.projekt-liste > a {
+  display: block;
+  min-inline-size: 0;
+}
+@media (max-width: 45rem) {
+  .projekt-liste { grid-template-columns: 1fr; }
+}
+
+/* Projektkacheln: einheitliche Größe, Beschreibung auf 2 Zeilen, Infozeile
+   unten bündig. */
+.projekt-kachel {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 11rem;
+}
+.projekt-beschreibung {
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.projekt-infos {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--on-surface-variant);
+}
+.projekt-infos i { font-size: 1.1rem; vertical-align: -0.2rem; }
+
+.grid > a:hover > article {
+  border-color: var(--primary);
+  box-shadow: var(--elevate1);
+}
+
+/* Überschriften-Rhythmus vereinheitlichen. */
+main h5 { margin-block: 0 1rem; }
+main h6 { margin-block: 0 0.5rem; }
+
+/* Seiten-Kopfzeilen (nav mit Titel) enger und ausgerichtet. */
+main > nav:first-child {
+  margin-block: 0 1.5rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Lange, umbruchlose Zeichenketten (Dateinamen, Chat-Titel, Fehlermeldungen)
+   dürfen nicht über die Karte hinauslaufen. Flex-Zellen brauchen min-width:0,
+   damit sie schrumpfen und umbrechen können. */
+main article,
+main .list > li,
+main .field { overflow-wrap: break-word; }
+
+main .list > li { min-inline-size: 0; }
+main .list > li > .max,
+main .list > li > a.max,
+main .grid article .max { min-inline-size: 0; overflow-wrap: anywhere; }
+
+/* Kopfzeilen-Titel: nur echte Langwörter umbrechen. `anywhere` würde die
+   min-content-Breite der Flex-Zelle auf ~1 Zeichen drücken, sodass der Titel
+   zusammenschrumpft und mitten im Wort umbricht, obwohl rechts Platz ist. */
+main nav > .max { min-inline-size: 0; overflow-wrap: break-word; }
+
+/* Beer setzt auf Listen-Anchors white-space:nowrap → lange Titel/Dateinamen
+   laufen sonst aus der Karte. In Listen normal umbrechen lassen (break-word
+   bricht nur überlange Wörter, nicht jedes Zeichen). */
+main .list .max,
+main .list .max > a,
+main .list > li > a { white-space: normal; overflow-wrap: break-word; }
+
+main .chip { max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+/* Icon-Buttons in der Kopfzeile nicht überdimensioniert. */
+body > header i { font-size: 1.5rem; }
+
+/* Logout steckt in einem <form>; als flex-zentrierter Container richtet sich
+   der Button exakt wie die übrigen Icon-Buttons aus (display:contents war in
+   der Flex-Leiste nicht zuverlässig vertikal zentriert). */
+body > header.fixed > nav { align-items: center; }
+body > header form { display: inline-flex; align-items: center; margin: 0; }
+
+/* ==========================================================================
+   HTMX-Feinschliff
+   ========================================================================== */
+.htmx-added {
+  animation: gd-fade-in 0.2s ease-out;
+}
+
+@keyframes gd-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-block; }
+
+/* ==========================================================================
+   Globales Feedback für laufende Vorgänge
+   ========================================================================== */
+
+/* Fortschrittsbalken am oberen Rand, solange ein HTMX-Request läuft. */
+#gd-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  block-size: 3px;
+  z-index: 30;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+body.gd-loading #gd-progress {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: gd-bar 1s linear infinite;
+}
+
+@keyframes gd-bar {
+  from { background-position: -40% 0; }
+  to { background-position: 140% 0; }
+}
+
+/* Warte-Cursor global, während etwas lädt. */
+body.gd-loading { cursor: progress; }
+
+/* Nativer Datei-Input (außerhalb Beers .field). */
+.gd-file-label { display: block; margin-block-end: 0.4rem; color: var(--on-surface-variant); }
+.gd-file-input {
+  display: block;
+  inline-size: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--outline);
+  border-radius: 0.5rem;
+  background: var(--surface-container-low);
+  color: var(--on-surface);
+  cursor: pointer;
+  margin-block-end: 1rem;
+}
+.gd-file-input::file-selector-button {
+  margin-inline-end: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Eigenes Modal (Bestätigung/Alert) statt window.confirm/alert. */
+.gd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.5);
+  animation: gd-fade-in 0.15s ease-out;
+}
+.gd-overlay[hidden] { display: none; }
+.gd-dialog {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  inline-size: 26rem;
+  max-inline-size: 92vw;
+  box-shadow: var(--elevate3);
+}
+
+/* Auslösendes Element (Button/Form) sichtbar als „beschäftigt" markieren. */
+:is(button, .button).htmx-request,
+form.htmx-request button[type="submit"] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.gd-loading #gd-progress { animation: none; background: var(--primary); }
+}

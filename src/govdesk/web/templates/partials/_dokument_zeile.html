@@ -1,0 +1,41 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% set status_map = {
+  "pending":   ("schedule",     "Wartet",     ""),
+  "parsing":   ("description",  "Liest",      ""),
+  "chunking":  ("content_cut",  "Zerteilt",   ""),
+  "embedding": ("memory",       "Bettet ein", ""),
+  "ready":     ("check_circle", "Bereit",     "green-text"),
+  "failed":    ("error",        "Fehler",     "error-text"),
+} %}
+{% set icon, label, farbe = status_map[document.status.value] %}
+<li id="doc-{{ document.id }}"
+    {% if document.status.value not in ("ready", "failed") %}
+    hx-get="/projects/{{ project.id }}/documents/{{ document.id }}/zeile"
+    hx-trigger="every 2s" hx-swap="outerHTML"
+    {% endif %}>
+  <i class="{{ farbe }}">{{ icon }}</i>
+  <div class="max">
+    <strong>{{ document.filename }}</strong>
+    <div class="small-text">
+      {{ (document.size_bytes or 0) // 1024 }} KB
+      {% if document.status.value == "ready" %} · {{ document.chunk_count }} Abschnitte{% endif %}
+      {% if document.status.value == "failed" %} · {{ document.error }}{% endif %}
+    </div>
+  </div>
+  <span class="chip small {{ farbe }}">
+    {{ label }}
+    {% if document.status.value not in ("ready", "failed") %}
+      <progress class="circle small"></progress>
+    {% endif %}
+  </span>
+  {% if can_edit %}
+  <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/reindex" class="no-margin">
+    <button class="circle transparent small" title="Neu einlesen"><i>refresh</i></button>
+  </form>
+  <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/loeschen" class="no-margin"
+        hx-confirm="Dokument „{{ document.filename }}“ endgültig löschen?">
+    <button class="circle transparent small" title="Löschen"><i>delete</i></button>
+  </form>
+  {% endif %}
+</li>

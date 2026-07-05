@@ -1,0 +1,34 @@
+{
+  "realm": "govdesk",
+  "enabled": true,
+  "registrationAllowed": false,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["de"],
+  "defaultLocale": "de",
+  "clients": [
+    {
+      "clientId": "govdesk",
+      "name": "GovDesk",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "govdesk-demo-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:8000/auth/oidc/callback"],
+      "webOrigins": ["http://localhost:8000"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    }
+  ],
+  "users": [
+    {
+      "username": "demo.sachbearbeiterin",
+      "email": "demo@musterstadt.example",
+      "emailVerified": true,
+      "firstName": "Erika",
+      "lastName": "Muster",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "DemoPasswort2026!", "temporary": false }]
+    }
+  ]
+}
