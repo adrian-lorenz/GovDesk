@@ -22,7 +22,7 @@ from govdesk.connectors.service import (
 from govdesk.core.audit import audit
 from govdesk.db.models import Collection, ConnectorJob, ConnectorJobStatus, ConnectorSource
 from govdesk.web.deps import render
-from govdesk.web.project_layout import project_menu_context
+from govdesk.web.project_layout import ensure_section_visible, project_menu_context
 
 router = APIRouter()
 
@@ -48,6 +48,7 @@ def _coerce(field: ConfigField, raw: Any) -> Any:
 async def connectors_page(
     request: Request, project: ProjectEditor, user: CurrentUser, db: Db
 ) -> HTMLResponse:
+    await ensure_section_visible(db, project, user, "connectors")
     collections = (
         (
             await db.execute(

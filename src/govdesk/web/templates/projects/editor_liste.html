@@ -1,0 +1,59 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "projects/_layout.html" %}
+{% set active = "editor" %}
+{% set page_title = "Dokumente" %}
+
+{% block project_body %}
+<nav class="gd-dok-kopf">
+  <div class="max">
+    <h5 class="no-margin"><i>description</i> Dokumente</h5>
+    <p class="small-text no-margin">Gemeinsam bearbeitete Dokumente — für alle Projekt-Mitglieder
+       sichtbar, außer als <em>privat</em> markierte.</p>
+  </div>
+</nav>
+
+{% if can_edit %}
+<form method="post" action="/projects/{{ project.id }}/editor" class="row wrap gd-dok-neu">
+  <div class="field label border round max no-margin">
+    <input type="text" name="title" required maxlength="300">
+    <label>Neues Dokument</label>
+  </div>
+  <label class="checkbox">
+    <input type="checkbox" name="is_private" value="true"><span>privat</span>
+  </label>
+  <button type="submit"><i>add</i> Anlegen</button>
+</form>
+{% endif %}
+
+{% if docs %}
+<ul class="gd-doc-liste">
+  {% for d in docs %}
+  <li class="gd-doc-row">
+    <span class="gd-doc-icon"><i>{{ "lock" if d.is_private else "description" }}</i></span>
+    <a class="max min-width-0 gd-doc-open" href="/projects/{{ project.id }}/editor/{{ d.id }}">
+      <strong class="gd-doc-name">{{ d.title }}</strong>
+      <div class="small-text gd-doc-meta">
+        <span>v{{ d.version }}</span>
+        <span>{{ d.updated_at.strftime("%d.%m.%Y %H:%M") }}</span>
+        {% if names.get(d.updated_by) %}<span>{{ names[d.updated_by] }}</span>{% endif %}
+        {% if d.is_private %}<span class="chip tiny amber-text">privat</span>{% endif %}
+      </div>
+    </a>
+    {% if can_edit %}
+    <form method="post" action="/projects/{{ project.id }}/editor/{{ d.id }}/loeschen"
+          class="no-margin" hx-confirm="Dokument „{{ d.title }}“ mitsamt Historie löschen?">
+      <button class="circle transparent small" title="Löschen"><i>delete</i></button>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<article class="round large-padding center-align">
+  <i class="extra">description</i>
+  <h6>Noch keine Dokumente</h6>
+  <p class="small-text">Legen Sie ein Dokument an oder speichern Sie eine Chat-Zusammenfassung.</p>
+</article>
+{% endif %}
+{% endblock %}

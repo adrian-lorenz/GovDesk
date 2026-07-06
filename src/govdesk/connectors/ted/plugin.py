@@ -46,6 +46,10 @@ _FIELDS = [
     "classification-cpv",
     "buyer-name",
     "links",
+    # BT-15: „Elektronischer Zugang zu den Auftragsunterlagen" — Link auf die
+    # vollständige Leistungsbeschreibung/Vergabeunterlagen auf der Vergabeplattform.
+    "BT-15-Lot",
+    "BT-15-Part",
 ]
 
 
@@ -70,6 +74,19 @@ def _pdf_url(notice: dict) -> str | None:
     links = notice.get("links") or {}
     pdf = links.get("pdf") or {}
     return pdf.get("DEU") or pdf.get("ENG") or next(iter(pdf.values()), None)
+
+
+def _documents_url(notice: dict) -> str | None:
+    """Erste „Documents URL" (BT-15) — Zugang zu den vollständigen Vergabeunterlagen."""
+    for feld in ("BT-15-Lot", "BT-15-Part"):
+        werte = notice.get(feld)
+        if isinstance(werte, str) and werte.strip():
+            return werte.strip()
+        if isinstance(werte, list):
+            for url in werte:
+                if isinstance(url, str) and url.strip():
+                    return url.strip()
+    return None
 
 
 def _safe_name(nr: str) -> str:
@@ -144,12 +161,15 @@ class TedConnector:
                     except httpx.HTTPError as exc:
                         logger.warning("TED-PDF-Download fehlgeschlagen (%s): %s", nr, exc)
                         continue
+                    # Bevorzugt auf die vollständigen Vergabeunterlagen verlinken,
+                    # sonst auf die TED-Bekanntmachung.
+                    source_url = _documents_url(notice) or DETAIL_URL.format(nr=nr)
                     yield FetchedItem(
                         external_id=nr,
                         filename=f"{_safe_name(nr)}.pdf",
                         data=pdf.content,
                         content_type="application/pdf",
-                        source_url=DETAIL_URL.format(nr=nr),
+                        source_url=source_url,
                     )
                     await asyncio.sleep(0.2)  # höflich zur API
                 page += 1

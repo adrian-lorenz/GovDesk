@@ -20,7 +20,7 @@ from govdesk.db.models import ChatConfig, Collection, Document
 from govdesk.rag.llm import llm_provider_from_config
 from govdesk.rag.retrieval import retrieve
 from govdesk.web.deps import render
-from govdesk.web.project_layout import project_menu_context
+from govdesk.web.project_layout import ensure_section_visible, project_menu_context
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,7 @@ async def _page_context(request: Request, project, user, db: Db, edit: ChatConfi
 async def config_list(
     request: Request, project: ProjectEditor, user: CurrentUser, db: Db
 ) -> HTMLResponse:
+    await ensure_section_visible(db, project, user, "chat-configs")
     return render(
         request, "projects/chat_configs.html", await _page_context(request, project, user, db)
     )

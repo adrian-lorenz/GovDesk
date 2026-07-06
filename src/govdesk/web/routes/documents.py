@@ -8,7 +8,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from govdesk.auth.deps import CurrentUser, Db, ProjectEditor, ProjectViewer, has_min_role
 from govdesk.core.app_settings import get_runtime_config
@@ -26,7 +26,7 @@ from govdesk.documents.service import (
 )
 from govdesk.rag.retrieval import retrieve
 from govdesk.web.deps import render
-from govdesk.web.project_layout import project_menu_context
+from govdesk.web.project_layout import ensure_section_visible, project_menu_context
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +145,25 @@ async def document_passage(
     )
 
 
+@router.get("/projects/{project_id}/documents/{document_id}/download")
+async def document_download(
+    project: ProjectViewer, db: Db, document_id: uuid.UUID
+) -> Response:
+    """Lädt das Originaldokument als Datei herunter."""
+    document = await _load_document(db, project, document_id)
+    if not document.file_path:
+        raise HTTPException(status_code=404, detail="Keine Datei hinterlegt")
+    try:
+        data = await asyncio.to_thread(storage.read_file, document.file_path)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden") from exc
+    return Response(
+        content=data,
+        media_type=document.content_type or "application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{document.filename}"'},
+    )
+
+
 async def _load_document(db: Db, project, document_id: uuid.UUID) -> Document:
     document = await db.get(Document, document_id)
     if document is None or document.project_id != project.id:
@@ -215,6 +234,7 @@ async def retrieval_debug(
     request: Request, project: ProjectEditor, user: CurrentUser, db: Db, q: str = ""
 ) -> HTMLResponse:
     """Debug-Seite: Retrieval ohne LLM — zeigt gerankte Chunks mit Scores."""
+    await ensure_section_visible(db, project, user, "retrieval")
     citations = []
     if q.strip():
         cfg = await get_runtime_config(db)

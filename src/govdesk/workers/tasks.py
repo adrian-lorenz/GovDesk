@@ -423,6 +423,58 @@ async def run_connector_job(job_id: str) -> None:
 
 
 @queue.periodic(cron="*/15 * * * *")
+@queue.task(name="govdesk.schedule_connector_syncs")
+async def schedule_connector_syncs(timestamp: int) -> None:
+    """Alle 15 Minuten: fällige Connector-Quellen mit Sync-Intervall neu einplanen."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import select
+
+    from govdesk.db.models import ConnectorJob, ConnectorJobStatus, ConnectorSource
+
+    now = datetime.now(UTC).replace(tzinfo=None)
+    async with get_session_factory()() as db:
+        sources = (
+            (
+                await db.execute(
+                    select(ConnectorSource).where(
+                        ConnectorSource.enabled,
+                        ConnectorSource.sync_interval_hours.is_not(None),
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        for source in sources:
+            last_job = (
+                await db.execute(
+                    select(ConnectorJob)
+                    .where(ConnectorJob.connector_source_id == source.id)
+                    .order_by(ConnectorJob.created_at.desc())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+            if last_job is not None and last_job.status in (
+                ConnectorJobStatus.QUEUED,
+                ConnectorJobStatus.RUNNING,
+            ):
+                continue
+            due = last_job is None or (
+                last_job.finished_at is not None
+                and now - last_job.finished_at
+                > timedelta(hours=source.sync_interval_hours or 24)
+            )
+            if due:
+                job = ConnectorJob(connector_source_id=source.id)
+                db.add(job)
+                await db.flush()
+                await run_connector_job.defer_async(job_id=str(job.id))
+                logger.info("Connector-Sync eingeplant: %s", source.name)
+        await db.commit()
+
+
+@queue.periodic(cron="*/15 * * * *")
 @queue.task(name="govdesk.schedule_recrawls")
 async def schedule_recrawls(timestamp: int) -> None:
     """Alle 15 Minuten: fällige Quellen mit Re-Crawl-Intervall neu einplanen."""

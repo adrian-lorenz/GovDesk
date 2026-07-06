@@ -20,8 +20,33 @@ from govdesk.chat.service import (
     last_message,
 )
 from govdesk.chat.streaming import render_markdown, stream_answer
+from govdesk.core.app_settings import get_runtime_config
+from govdesk.core.audit import audit
 from govdesk.db.models import ChatConfig, MessageRole, ProjectRole
+from govdesk.editor.service import create_document as create_editor_document
+from govdesk.editor.service import save_document as save_editor_document
+from govdesk.rag.llm import llm_provider_from_config
 from govdesk.web.deps import render
+from govdesk.web.project_layout import is_section_visible
+
+
+def _strip_code_fence(text: str) -> str:
+    """Entfernt umschließende ```-Codeblöcke, die manche LLMs um Markdown legen."""
+    s = text.strip()
+    if not s.startswith("```"):
+        return s
+    lines = s.splitlines()
+    lines = lines[1:]  # öffnende Fence-Zeile (z. B. ```markdown) weg
+    if lines and lines[-1].strip().startswith("```"):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+_SUMMARY_SYSTEM = (
+    "Du fasst einen Chat-Verlauf zu einem strukturierten behördlichen Vermerk zusammen. "
+    "Antworte auf Deutsch in Markdown mit einer kurzen Überschrift, den wichtigsten "
+    "Erkenntnissen als Aufzählung und – falls vorhanden – offenen Punkten. Keine Erfindungen."
+)
 
 router = APIRouter()
 
@@ -96,6 +121,7 @@ async def chat_page(
     ]
     chats = await chat_sessions_for_project(db, project, user)
     can_edit = await has_min_role(db, project, user, ProjectRole.EDITOR)
+    editor_visible = await is_section_visible(db, project, user, "editor")
     return render(
         request,
         "chats/chat.html",
@@ -105,6 +131,7 @@ async def chat_page(
             "messages": messages,
             "chats": chats,
             "can_edit": can_edit,
+            "editor_visible": editor_visible,
         },
     )
 
@@ -129,6 +156,55 @@ async def chat_message(
         "partials/_chat_austausch.html",
         {"project": project, "chat": session, "frage": frage},
     )
+
+
+@router.post("/projects/{project_id}/chats/{chat_id}/als-dokument")
+async def chat_to_document(
+    project: ProjectViewer, user: CurrentUser, db: Db, chat_id: uuid.UUID
+) -> RedirectResponse:
+    """Fasst den Chat per KI zusammen und legt ein bearbeitbares Editor-Dokument an."""
+    if not await has_min_role(db, project, user, ProjectRole.EDITOR):
+        raise HTTPException(status_code=403, detail="Bearbeiter-Rolle erforderlich")
+    session = await _own_session(db, chat_id, project, user)
+    transcript = "\n\n".join(
+        f"{'Nutzer' if m.role == MessageRole.USER else 'Assistent'}: {m.content}"
+        for m in session.messages
+        if m.role in (MessageRole.USER, MessageRole.ASSISTANT)
+    )
+    if not transcript.strip():
+        raise HTTPException(status_code=422, detail="Der Chat enthält noch keine Nachrichten.")
+
+    cfg = await get_runtime_config(db)
+    try:
+        summary = await llm_provider_from_config(cfg).complete(
+            [
+                {"role": "system", "content": _SUMMARY_SYSTEM},
+                {"role": "user", "content": transcript[:12000]},
+            ],
+            model=cfg.chat_model,
+            temperature=0.3,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"Zusammenfassung fehlgeschlagen: {exc}"
+        ) from exc
+
+    title = f"Zusammenfassung: {session.title or 'Chat'}"[:300]
+    doc = await create_editor_document(db, project.id, user, title, is_private=False)
+    doc = await save_editor_document(
+        db, doc, user, render_markdown(_strip_code_fence(summary)), doc.version
+    )
+    await audit(
+        db,
+        "editor_document.from_chat",
+        actor_user_id=user.id,
+        project_id=project.id,
+        target_type="editor_document",
+        target_id=str(doc.id),
+        meta={"chat_id": str(chat_id)},
+    )
+    await db.commit()
+    return RedirectResponse(f"/projects/{project.id}/editor/{doc.id}", status_code=303)
 
 
 @router.get("/projects/{project_id}/chats/{chat_id}/stream")

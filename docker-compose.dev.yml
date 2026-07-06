@@ -28,8 +28,10 @@ services:
       - "BAAI/bge-reranker-v2-m3"
       - "--max-batch-tokens"
       - "4096"
+      # ≥ CANDIDATES_WITH_RERANK (24) im Retrieval — sonst 413 pro /rerank-Request.
+      # Kostet keinen extra Warmup-Speicher (der hängt an --max-batch-tokens).
       - "--max-client-batch-size"
-      - "8"
+      - "32"
       - "--auto-truncate"
     ports:
       - "8081:80"

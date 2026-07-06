@@ -38,8 +38,12 @@ PROJEKT=$(curl -sf -b "$JAR" -H "X-CSRF-Token: $CSRF" -o /dev/null -w '%{redirec
 [ -n "$PROJEKT" ] || fehler "Projekt anlegen"
 ok "Projekt: $PROJEKT"
 
-# 4) API-Key erstellen
-KEY=$(curl -sf -b "$JAR" -H "X-CSRF-Token: $CSRF" -X POST "$PROJEKT/api-keys" \
+# Projekt-ID + REST-API-Basis (Keys sind plattformweit, Projekt kommt aus dem Pfad)
+PROJECT_ID=$(basename "$PROJEKT")
+API="$BASE_URL/api/v1/projects/$PROJECT_ID"
+
+# 4) API-Key erstellen (zentral, Plattform-Admin)
+KEY=$(curl -sf -b "$JAR" -H "X-CSRF-Token: $CSRF" -X POST "$BASE_URL/admin/settings/api-keys" \
   -d "name=smoke&gueltig_tage=0&scopes=documents:read&scopes=documents:write&scopes=search:read" \
   | grep -o 'id="neuer-key">[^<]*' | sed 's/.*>//')
 [ -n "$KEY" ] || fehler "API-Key erstellen"
@@ -49,13 +53,13 @@ ok "API-Key erstellt"
 DOKUMENT=$(mktemp -t smoke.XXXXXX).txt
 printf '§ 1 Smoke-Test\nDie Antwortzeit des Systems beträgt höchstens dreißig Sekunden.\n' > "$DOKUMENT"
 DOC_ID=$(curl -sf -H "Authorization: Bearer $KEY" -F "datei=@$DOKUMENT" \
-  "$BASE_URL/api/v1/documents" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+  "$API/documents" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
 rm -f "$DOKUMENT"
 ok "Upload: $DOC_ID"
 
 # 6) Auf Ingestion warten
 for i in $(seq 1 60); do
-  STATUS=$(curl -sf -H "Authorization: Bearer $KEY" "$BASE_URL/api/v1/documents/$DOC_ID" \
+  STATUS=$(curl -sf -H "Authorization: Bearer $KEY" "$API/documents/$DOC_ID" \
     | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
   [ "$STATUS" = "ready" ] && break
   [ "$STATUS" = "failed" ] && fehler "Ingestion fehlgeschlagen"
@@ -66,7 +70,7 @@ ok "Ingestion: ready"
 
 # 7) Suche findet den Inhalt
 curl -sf -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
-  -X POST "$BASE_URL/api/v1/search" -d '{"query":"Wie schnell antwortet das System?","top_k":3}' \
+  -X POST "$API/search" -d '{"query":"Wie schnell antwortet das System?","top_k":3}' \
   | grep -q "dreißig Sekunden" || fehler "Suche findet Inhalt nicht"
 ok "Suche"
 

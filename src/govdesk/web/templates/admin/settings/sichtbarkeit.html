@@ -1,0 +1,24 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "sichtbarkeit" %}
+
+{% block settings_body %}
+<article class="round">
+  <h6><i>visibility</i> Sichtbarkeit für normale Nutzer</h6>
+  <p class="small-text">Legt fest, welche Projekt-Bereiche normale Projekt-Mitglieder
+     (Bearbeiter/Betrachter) sehen. Projekt-Administratoren und Plattform-Admins sehen
+     immer alles. Chat ist immer sichtbar; „Mitglieder" bleibt Administratoren vorbehalten.</p>
+  <form method="post" action="/admin/settings/sichtbarkeit">
+    {% for key, label in sections.items() %}
+    <label class="switch">
+      <input type="checkbox" name="sections" value="{{ key }}" {% if key in visible %}checked{% endif %}>
+      <span>{{ label }}</span>
+    </label>
+    {% endfor %}
+    <nav class="right-align">
+      <button type="submit"><i>save</i> Speichern</button>
+    </nav>
+  </form>
+</article>
+{% endblock %}

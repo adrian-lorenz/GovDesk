@@ -22,7 +22,7 @@ from govdesk.db.models import (
     CrawlSource,
 )
 from govdesk.web.deps import render
-from govdesk.web.project_layout import project_menu_context
+from govdesk.web.project_layout import ensure_section_visible, project_menu_context
 
 router = APIRouter()
 
@@ -31,6 +31,7 @@ router = APIRouter()
 async def crawler_page(
     request: Request, project: ProjectEditor, user: CurrentUser, db: Db
 ) -> HTMLResponse:
+    await ensure_section_visible(db, project, user, "crawler")
     collections = (
         (
             await db.execute(

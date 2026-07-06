@@ -16,6 +16,8 @@ from sqlalchemy import text as sql_text
 from govdesk.auth.deps import Db
 from govdesk.core.app_settings import get_runtime_config, set_setting
 from govdesk.core.config import get_settings
+from govdesk.core.password_policy import load_policy
+from govdesk.core.password_policy import validate as validate_password
 from govdesk.rag.llm import OllamaLLMProvider
 from govdesk.rag.reranker import RerankerClient
 from govdesk.rag.vectorstore import VectorStore
@@ -168,11 +170,12 @@ async def create_admin(
             {"schritt": 4, "error": "Die Passwörter stimmen nicht überein."},
             status_code=400,
         )
-    if len(password) < 12:
+    verstoesse = validate_password(password, await load_policy(db))
+    if verstoesse:
         return render(
             request,
             "setup/schritt4.html",
-            {"schritt": 4, "error": "Das Passwort muss mindestens 12 Zeichen lang sein."},
+            {"schritt": 4, "error": "Passwort-Richtlinie nicht erfüllt: " + ", ".join(verstoesse)},
             status_code=400,
         )
     await create_user(db, username, password, email.strip() or None, is_platform_admin=True)

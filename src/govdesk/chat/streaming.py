@@ -13,6 +13,7 @@ import markdown_it
 import nh3
 
 from govdesk.core.app_settings import get_runtime_config
+from govdesk.core.guardrails import check_input, load_guardrails, scope_prompt
 from govdesk.db.models import MessageRole, Project
 from govdesk.db.session import get_session_factory
 from govdesk.rag.llm import llm_provider_from_config
@@ -50,6 +51,7 @@ async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
     try:
         async with get_session_factory()() as db:
             cfg = await get_runtime_config(db)
+            guardrails = await load_guardrails(db)
             from govdesk.chat.service import get_chat_session, history_for_llm
             from govdesk.db.models import ChatConfig
 
@@ -59,42 +61,61 @@ async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
             if session is not None and session.chat_config_id is not None:
                 chat_config = await db.get(ChatConfig, session.chat_config_id)
 
-        system_prompt = (chat_config.system_prompt or None) if chat_config else None
-        model = (chat_config.model if chat_config else None) or cfg.chat_model
-        temperature = chat_config.temperature if chat_config else 0.2
-        top_n = chat_config.top_k if chat_config else 4
-        rerank = chat_config.rerank_enabled if chat_config else True
-        collection_ids = list(chat_config.collection_ids or []) if chat_config else None
+        # Guardrails: Eingabe VOR dem Sprachmodell prüfen.
+        guard_reason = check_input(question, guardrails)
+        if guard_reason is not None:
+            async with get_session_factory()() as db:
+                from govdesk.core.audit import audit
 
-        retrieval = await retrieve(
-            project,
-            question,
-            cfg,
-            top_n=top_n,
-            collection_ids=collection_ids or None,
-            rerank=rerank,
-        )
+                await audit(
+                    db, "guardrail.blocked", project_id=project.id, meta={"reason": guard_reason}
+                )
+                await db.commit()
+            answer_parts.append(guard_reason)
+            yield _sse("token", html.escape(guard_reason))
+        else:
+            system_prompt = (chat_config.system_prompt or None) if chat_config else None
+            model = (chat_config.model if chat_config else None) or cfg.chat_model
+            temperature = chat_config.temperature if chat_config else 0.2
+            top_n = chat_config.top_k if chat_config else 4
+            rerank = chat_config.rerank_enabled if chat_config else True
+            collection_ids = list(chat_config.collection_ids or []) if chat_config else None
 
-        messages = [{"role": "system", "content": system_prompt or SYSTEM_PROMPT}]
-        if retrieval.context:
-            messages.append(
-                {
-                    "role": "system",
-                    "content": f"Quellen:\n\n{retrieval.context}",
-                }
+            retrieval = await retrieve(
+                project,
+                question,
+                cfg,
+                top_n=top_n,
+                collection_ids=collection_ids or None,
+                rerank=rerank,
             )
-        messages.extend(history)
 
-        provider = llm_provider_from_config(cfg)
-        heartbeat = asyncio.get_event_loop().time()
+            base_system = system_prompt or SYSTEM_PROMPT
+            guard_scope = scope_prompt(guardrails)
+            if guard_scope:
+                base_system = f"{base_system}\n\n{guard_scope}"
+            messages = [{"role": "system", "content": base_system}]
+            if retrieval.context:
+                messages.append(
+                    {
+                        "role": "system",
+                        "content": f"Quellen:\n\n{retrieval.context}",
+                    }
+                )
+            messages.extend(history)
 
-        async for token in provider.stream_chat(messages, model=model, temperature=temperature):
-            answer_parts.append(token)
-            yield _sse("token", html.escape(token))
-            now = asyncio.get_event_loop().time()
-            if now - heartbeat > 15:
-                heartbeat = now
-                yield ": heartbeat\n\n"
+            provider = llm_provider_from_config(cfg)
+            heartbeat = asyncio.get_event_loop().time()
+
+            async for token in provider.stream_chat(
+                messages, model=model, temperature=temperature
+            ):
+                answer_parts.append(token)
+                yield _sse("token", html.escape(token))
+                now = asyncio.get_event_loop().time()
+                if now - heartbeat > 15:
+                    heartbeat = now
+                    yield ": heartbeat\n\n"
 
     except Exception:
         logger.exception("Chat-Streaming fehlgeschlagen (Session %s)", session_id)

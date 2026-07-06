@@ -6,6 +6,14 @@
 {% block content %}
 <nav>
   <h5 class="max">Projekte</h5>
+  <form method="post" action="/projects/import" enctype="multipart/form-data" class="no-margin"
+        id="import-form">
+    <input type="file" name="datei" accept=".zip" hidden id="import-file"
+           onchange="if(this.files.length){this.form.requestSubmit();}">
+    <button type="button" class="border" onclick="document.getElementById('import-file').click()">
+      <i>upload</i> Importieren
+    </button>
+  </form>
   <a class="button" href="/projects/neu"><i>add</i> Neues Projekt</a>
 </nav>
 

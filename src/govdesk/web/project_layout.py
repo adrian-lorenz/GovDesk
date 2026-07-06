@@ -18,7 +18,8 @@ from govdesk.db.models import Project, ProjectRole, User
 # Betrachter, nicht Projekt-Admin und nicht Plattform-Admin) konfigurierbar ist.
 # Chat ist immer sichtbar, Mitglieder nur für Admins.
 MEMBER_SECTIONS = {
-    "dokumente": "Dokumente",
+    "editor": "Dokumente",
+    "dokumente": "Wissensbasis",
     "crawler": "Internet-Agent",
     "connectors": "Connectoren",
     "chat-configs": "Chat-Profile",
@@ -33,6 +34,13 @@ async def visible_member_sections(db: AsyncSession) -> set[str]:
     if not isinstance(stored, list):
         return set(MEMBER_SECTIONS)  # noch nicht konfiguriert → alles sichtbar
     return {s for s in stored if s in MEMBER_SECTIONS}
+
+
+async def is_section_visible(db: AsyncSession, project: Project, user: User, section: str) -> bool:
+    """Ob dem Nutzer die Sektion angezeigt werden darf (privilegiert → immer)."""
+    if user.is_platform_admin or await has_min_role(db, project, user, ProjectRole.ADMIN):
+        return True
+    return section in await visible_member_sections(db)
 
 
 async def project_menu_context(
@@ -63,7 +71,5 @@ async def ensure_section_visible(
     db: AsyncSession, project: Project, user: User, section: str
 ) -> None:
     """Serverseitige Absicherung: 403, wenn die Sektion für diesen Nutzer verborgen ist."""
-    if await has_min_role(db, project, user, ProjectRole.ADMIN) or user.is_platform_admin:
-        return
-    if section not in await visible_member_sections(db):
+    if not await is_section_visible(db, project, user, section):
         raise HTTPException(status_code=403, detail="Dieser Bereich ist nicht freigegeben.")

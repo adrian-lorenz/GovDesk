@@ -1,0 +1,41 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "passwort" %}
+
+{% block settings_body %}
+<article class="round">
+  <h6><i>password</i> Passwort-Richtlinie</h6>
+  <p class="small-text">Gilt für lokale Konten (Ersteinrichtung und Nutzeranlage). Bei OIDC/SSO
+     liegt die Richtlinie beim Identity-Provider.</p>
+  <form method="post" action="/admin/settings/passwort">
+    <div class="field label border round">
+      <input type="number" name="pw_min_length" min="8" max="128" value="{{ policy.min_length }}">
+      <label>Mindestlänge (≥ 8)</label>
+    </div>
+    <label class="switch">
+      <input type="checkbox" name="pw_require_upper" value="true" {% if policy.require_upper %}checked{% endif %}>
+      <span>Großbuchstabe erforderlich</span>
+    </label>
+    <label class="switch">
+      <input type="checkbox" name="pw_require_lower" value="true" {% if policy.require_lower %}checked{% endif %}>
+      <span>Kleinbuchstabe erforderlich</span>
+    </label>
+    <label class="switch">
+      <input type="checkbox" name="pw_require_digit" value="true" {% if policy.require_digit %}checked{% endif %}>
+      <span>Ziffer erforderlich</span>
+    </label>
+    <label class="switch">
+      <input type="checkbox" name="pw_require_special" value="true" {% if policy.require_special %}checked{% endif %}>
+      <span>Sonderzeichen erforderlich</span>
+    </label>
+    <label class="switch">
+      <input type="checkbox" name="pw_block_common" value="true" {% if policy.block_common %}checked{% endif %}>
+      <span>Häufige/bekannte Passwörter sperren</span>
+    </label>
+    <nav class="right-align">
+      <button type="submit"><i>save</i> Speichern</button>
+    </nav>
+  </form>
+</article>
+{% endblock %}

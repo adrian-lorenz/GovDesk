@@ -44,6 +44,7 @@
     {% block nav %}{% endblock %}
     {% if current_user and current_user.is_platform_admin %}
     <a class="button circle transparent" href="/admin/users" title="Nutzerverwaltung"><i>group</i></a>
+    <a class="button circle transparent" href="/admin/audit" title="Audit-Log"><i>history</i></a>
     <a class="button circle transparent" href="/admin/settings" title="Einstellungen"><i>settings</i></a>
     {% endif %}
     <button class="circle transparent" onclick="gdToggleTheme()" title="Hell/Dunkel umschalten">

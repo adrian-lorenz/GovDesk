@@ -27,6 +27,7 @@ from govdesk.db.models.document import (
     DocumentSource,
     DocumentStatus,
 )
+from govdesk.db.models.editor import EditorDocument, EditorRevision
 from govdesk.db.models.project import ROLE_ORDER, Project, ProjectMember, ProjectRole
 from govdesk.db.models.settings import AppSetting
 from govdesk.db.models.user import AuthSession, OidcIdentity, User
@@ -55,6 +56,8 @@ __all__ = [
     "DocumentChunk",
     "DocumentSource",
     "DocumentStatus",
+    "EditorDocument",
+    "EditorRevision",
     "MessageRole",
     "OidcIdentity",
     "Project",

@@ -7,7 +7,16 @@
 
 {% block nav %}
 <a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
+{% if editor_visible %}
+<a class="button border small" href="/projects/{{ project.id }}/editor"><i>description</i> Dokumente</a>
+{% endif %}
 {% if can_edit %}
+<form method="post" action="/projects/{{ project.id }}/chats/{{ chat.id }}/als-dokument"
+      class="no-margin">
+  <button class="border small" title="Chat per KI zusammenfassen und als Dokument speichern">
+    <i>summarize</i> Als Dokument
+  </button>
+</form>
 <a class="button border small gd-zurueck" href="/projects/{{ project.id }}/dokumente">
   <i>settings</i> <span>{{ project.name }}</span> verwalten
 </a>
@@ -53,6 +62,19 @@
   /* Rechte Sidebar: Quellen */
   .gd-chat-aside .quelle { border-block-start: 1px solid var(--outline-variant); padding: 0.6rem 0; }
   .gd-chat-aside .quelle:first-of-type { border-block-start: 0; }
+
+  /* Desktop: Chat füllt den sichtbaren Bereich; nur der Verlauf scrollt, die
+     Eingabeleiste bleibt immer unten sichtbar. (Kopf 3.75rem + Innenabstände.) */
+  @media (min-width: 75rem) {
+    main.responsive:has(.gd-chat) { padding-block-end: 1.5rem; }
+    .gd-chat { block-size: calc(100dvh - 6.75rem); align-items: stretch; }
+    .gd-chat-main { display: flex; flex-direction: column; min-block-size: 0; }
+    .chat-verlauf { flex: 1 1 auto; overflow-y: auto; min-block-size: 0; }
+    .chat-eingabe { position: static; }
+    .gd-chat-nav, .gd-chat-aside {
+      align-self: stretch; overflow-y: auto; min-block-size: 0; max-block-size: 100%;
+    }
+  }
 
   @media (max-width: 75rem) {
     .gd-chat { grid-template-columns: 14rem minmax(0, 1fr); }
@@ -133,6 +155,22 @@
 <div id="gd-quelle-modal"></div>
 
 <script>
-  window.scrollTo(0, document.body.scrollHeight);
+  (function () {
+    var v = document.getElementById("nachrichten");
+    function toBottom() {
+      if (v && v.scrollHeight > v.clientHeight) {
+        v.scrollTop = v.scrollHeight;           // Desktop: innerer Verlauf scrollt
+      } else {
+        window.scrollTo(0, document.body.scrollHeight);  // schmale Screens: Seite scrollt
+      }
+    }
+    toBottom();
+    // Während des Token-Streamings bzw. bei neuen Nachrichten unten bleiben.
+    if (v) {
+      new MutationObserver(toBottom).observe(v, {
+        childList: true, subtree: true, characterData: true,
+      });
+    }
+  })();
 </script>
 {% endblock %}

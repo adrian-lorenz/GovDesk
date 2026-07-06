@@ -2,14 +2,15 @@
 {# SPDX-License-Identifier: EUPL-1.2 #}
 {% extends "projects/_layout.html" %}
 {% set active = "dokumente" %}
-{% set page_title = "Dokumente" %}
+{% set page_title = "Wissensbasis" %}
 
 {% block project_body %}
 <article class="round">
   <nav>
-    <h6 class="max"><i>description</i> Dokumente</h6>
+    <h6 class="max"><i>library_books</i> Wissensbasis</h6>
     <button class="small" data-ui="#doc-upload"><i>upload</i> Hochladen</button>
   </nav>
+  <p class="small-text">Quelldokumente, die für die KI eingebettet und durchsucht werden.</p>
   <dialog class="modal" id="doc-upload" style="width: 32rem; max-width: 92vw">
     <h5><i>upload</i> Dokument hochladen</h5>
     <form method="post" action="/projects/{{ project.id }}/documents" enctype="multipart/form-data">
@@ -26,9 +27,9 @@
       {% endif %}
       {# Nativer Datei-Input, bewusst NICHT in .field (Beers field-Klick-Handler
          würde den Klick abfangen). Auswahl startet den Upload sofort. #}
-      <label class="small-text gd-file-label">Datei (PDF, DOCX, ODT, TXT, MD, HTML)</label>
+      <label class="small-text gd-file-label">Datei (PDF, DOCX, XLSX, PPTX, ODT, TXT, MD, HTML)</label>
       <input type="file" name="datei" required class="gd-file-input"
-             accept=".pdf,.txt,.md,.docx,.doc,.odt,.html,.htm"
+             accept=".pdf,.txt,.md,.docx,.doc,.odt,.html,.htm,.xlsx,.pptx"
              onchange="if(this.files.length){this.closest('form').requestSubmit();}">
       <p class="small-text no-margin">Der Upload startet automatisch nach der Auswahl.</p>
       <nav class="right-align top-margin">
@@ -50,7 +51,7 @@
     </form>
   </details>
   {% if documents %}
-  <ul class="list border">
+  <ul class="gd-doc-liste">
     {% for document in documents %}
       {% include "partials/_dokument_zeile.html" %}
     {% endfor %}

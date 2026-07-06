@@ -18,7 +18,8 @@
 
 {% set items = [
   ("chat",         "",             "chat",          "Chat",          true),
-  ("dokumente",    "/dokumente",   "description",   "Dokumente",     can_edit and "dokumente" in sichtbar),
+  ("editor",       "/editor",      "description",   "Dokumente",     "editor" in sichtbar),
+  ("dokumente",    "/dokumente",   "library_books", "Wissensbasis",  can_edit and "dokumente" in sichtbar),
   ("crawler",      "/crawler",     "travel_explore","Internet-Agent",can_edit and "crawler" in sichtbar),
   ("connectors",   "/connectors",  "extension",     "Connectoren",   can_edit and connectors_available and "connectors" in sichtbar),
   ("chat-configs", "/chat-configs","tune",          "Chat-Profile",  can_edit and "chat-configs" in sichtbar),

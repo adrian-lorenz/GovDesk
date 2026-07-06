@@ -1,0 +1,34 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "projects/_layout.html" %}
+{% set active = "editor" %}
+{% set page_title = "Historie – " ~ doc.title %}
+
+{% block project_body %}
+<article class="round">
+  <nav>
+    <a class="button border small" href="/projects/{{ project.id }}/editor/{{ doc.id }}">
+      <i>arrow_back</i> Zum Dokument
+    </a>
+    <h6 class="max min-width-0 no-margin"><i>history</i> Historie – {{ doc.title }}</h6>
+  </nav>
+  <p class="small-text">Jede Speicherung erzeugt eine Version. Wer wann was geändert hat:</p>
+  <ul class="list border">
+    {% for r in revisions %}
+    <li>
+      <div class="max min-width-0">
+        <strong>v{{ r.version }}</strong>
+        <span class="small-text"> · {{ r.created_at.strftime("%d.%m.%Y %H:%M:%S") }}</span>
+        <span class="small-text"> · {{ names.get(r.author_id, "unbekannt") }}</span>
+        {% set text = r.content | striptags %}
+        <div class="small-text italic gd-rev-preview">
+          {{ (text[:200] ~ "…") if text|length > 200 else (text or "(leer)") }}
+        </div>
+      </div>
+    </li>
+    {% else %}
+    <li><span class="small-text">Noch keine Versionen.</span></li>
+    {% endfor %}
+  </ul>
+</article>
+{% endblock %}

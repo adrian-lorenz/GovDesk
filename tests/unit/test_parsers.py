@@ -45,9 +45,42 @@ def test_html_hauptinhalt():
     assert "Gehwege" in text
 
 
+def test_xlsx_parser():
+    import io
+
+    from openpyxl import Workbook
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Kosten"
+    ws.append(["Posten", "Betrag"])
+    ws.append(["Reinigung", 1200])
+    buf = io.BytesIO()
+    wb.save(buf)
+    parsed = parser_for("t.xlsx").parse(buf.getvalue())
+    assert any(b.text == "Kosten" and b.heading_level == 2 for b in parsed.blocks)
+    assert any("Reinigung | 1200" in b.text for b in parsed.blocks)
+
+
+def test_pptx_parser():
+    import io
+
+    from pptx import Presentation
+
+    prs = Presentation()
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
+    slide.shapes.title.text = "Vergabe 2026"
+    slide.placeholders[1].text = "Punkt eins"
+    buf = io.BytesIO()
+    prs.save(buf)
+    parsed = parser_for("t.pptx").parse(buf.getvalue())
+    assert any("Vergabe 2026" in b.text for b in parsed.blocks)
+    assert any("Punkt eins" in b.text for b in parsed.blocks)
+
+
 def test_registry_unbekanntes_format():
     with pytest.raises(UnsupportedFormatError, match="wird noch nicht unterstützt"):
-        parser_for("tabelle.xlsx")
+        parser_for("archiv.zip")
 
 
 def test_doc_legacy_ohne_flag_klare_meldung():

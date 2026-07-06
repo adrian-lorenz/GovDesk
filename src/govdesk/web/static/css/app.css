@@ -511,6 +511,148 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
   }
 }
 
+/* ==========================================================================
+   Dokumentenverwaltung
+   ========================================================================== */
+.gd-doc-liste { border: 0; }
+.gd-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 0.4rem;
+  border-block-end: 1px solid var(--outline-variant);
+}
+.gd-doc-row:last-child { border-block-end: 0; }
+.gd-doc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  flex: 0 0 auto;
+  border-radius: 0.6rem;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+.gd-doc-icon > i { font-size: 1.4rem; }
+.gd-doc-name { display: block; overflow-wrap: anywhere; }
+.gd-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  color: var(--on-surface-variant);
+  margin-block-start: 0.15rem;
+}
+.gd-doc-ext {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+.chip.tiny {
+  font-size: 0.7rem;
+  padding: 0.05rem 0.45rem;
+  block-size: auto;
+  min-block-size: 0;
+  border-radius: 0.4rem;
+}
+
+/* Dokumentenbibliothek (kollaborative Dokumente) — kompakte Zeilen, 1 pro Reihe */
+.gd-dok-kopf { margin-block-end: 1rem; }
+.gd-dok-neu { margin-block-end: 1.25rem; }
+.gd-doc-open { display: block; color: inherit; }
+.gd-doc-row:hover { background: var(--surface-container-low); }
+
+/* Inline editierbarer Dokumenttitel im Editor */
+.gd-editor-titel-input {
+  inline-size: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.4rem;
+}
+.gd-editor-titel-input:hover { border-color: var(--outline-variant); }
+.gd-editor-titel-input:focus-visible { outline: none; border-color: var(--primary); background: var(--surface-container-lowest); }
+
+/* ==========================================================================
+   Kollaborativer Editor
+   ========================================================================== */
+.gd-editor-kopf { display: flex; align-items: center; gap: 0.5rem; margin-block-end: 0.25rem; }
+.gd-editor-kopf h6 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gd-editor-presence { color: var(--on-surface-variant); min-block-size: 1.2rem; }
+
+/* Word-artige Bearbeitung: Ribbon oben (klebt), graue Arbeitsfläche, weiße Seite */
+.gd-rte-toolbar {
+  position: sticky;
+  top: 3.75rem;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.5rem;
+  background: var(--surface-container-high);
+  box-shadow: var(--elevate1);
+}
+.gd-rte-toolbar button { min-inline-size: 2.2rem; }
+.gd-rte-sep { inline-size: 1px; align-self: stretch; background: var(--outline-variant); margin-inline: 0.25rem; }
+
+.gd-editor-canvas {
+  margin-block-start: 1rem;
+  padding: 1.75rem;
+  background: var(--surface-dim);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+/* Die „Seite" — echtes A4 (21×29,7 cm) in natürlicher Größe, zentriert. */
+.gd-page {
+  inline-size: 21cm;
+  max-inline-size: 100%;
+  margin-inline: auto;
+  min-block-size: 29.7cm;
+  padding: 2cm 2.5cm;
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: 2px;
+  box-shadow: var(--elevate3);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.gd-page:focus-visible { outline: none; }
+.gd-page h1 { font-size: 18pt; margin-block: 0.6rem 0.3rem; }
+.gd-page h2 { font-size: 15pt; margin-block: 0.5rem 0.3rem; }
+.gd-page h3 { font-size: 13pt; margin-block: 0.4rem 0.2rem; }
+.gd-page p { margin-block: 0.35rem; }
+.gd-page ul, .gd-page ol { margin-block: 0.35rem; padding-inline-start: 1.6rem; }
+.gd-page blockquote { margin-block: 0.35rem; }
+.gd-page a { color: var(--primary); }
+
+@media (max-width: 50rem) {
+  .gd-editor-canvas { padding: 0.5rem; }
+  .gd-page { padding: 1.2cm 1cm; }
+}
+.gd-editor-conflict {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  background: var(--error-container);
+  color: var(--on-error-container);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  margin-block: 0.5rem;
+}
+.gd-editor-conflict[hidden] { display: none; }
+.gd-rev-preview { white-space: pre-wrap; overflow-wrap: anywhere; }
+
 /* Checkbox-Liste in Connector-Konfigurationsformularen */
 .gd-checkbox-liste {
   border: 1px solid var(--outline-variant);

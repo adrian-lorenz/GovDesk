@@ -1,0 +1,52 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "guardrails" %}
+
+{% block settings_body %}
+<article class="round">
+  <h6><i>shield</i> Guardrails</h6>
+  <p class="small-text">Regelbasierte Prüfung der Chat-Eingaben — lokal, ohne externen Dienst.
+     Greift vor dem Sprachmodell; blockierte Anfragen landen im Audit-Log.</p>
+  <form method="post" action="/admin/settings/guardrails">
+    <label class="switch">
+      <input type="checkbox" name="guardrails_enabled" value="true" {% if g.enabled %}checked{% endif %}>
+      <span>Guardrails aktiv</span>
+    </label>
+    <label class="switch">
+      <input type="checkbox" name="guardrail_detect_injection" value="true" {% if g.detect_injection %}checked{% endif %}>
+      <span>Prompt-Injection-/Jailbreak-Erkennung</span>
+    </label>
+    <div class="field label border round">
+      <input type="number" name="guardrail_max_input_chars" min="0" max="20000" value="{{ g.max_input_chars }}">
+      <label>Maximale Eingabelänge (Zeichen, 0 = unbegrenzt)</label>
+    </div>
+    <div class="field textarea label border round">
+      <textarea name="guardrail_blocklist" rows="3">{{ g.blocklist | join("\n") }}</textarea>
+      <label>Sperrbegriffe (einer pro Zeile)</label>
+    </div>
+
+    <div class="divider"></div>
+    <h6 class="small-margin">Themen-Grenzen</h6>
+    <p class="small-text">Ausgewählte Themen werden vom Assistenten abgelehnt (als Vorgabe im
+       System-Prompt).</p>
+    <fieldset class="gd-checkbox-liste">
+      <legend class="small-text">Verbotene Themen</legend>
+      {% for key, (label, _regel) in topics.items() %}
+      <label class="checkbox">
+        <input type="checkbox" name="guardrail_refusal_topics" value="{{ key }}"
+               {% if key in g.refusal_topics %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </fieldset>
+    <div class="field textarea label border round">
+      <textarea name="guardrail_scope_instructions" rows="3">{{ g.scope_instructions }}</textarea>
+      <label>Zusätzliche Vorgaben (Freitext, optional)</label>
+    </div>
+    <nav class="right-align">
+      <button type="submit"><i>save</i> Speichern</button>
+    </nav>
+  </form>
+</article>
+{% endblock %}

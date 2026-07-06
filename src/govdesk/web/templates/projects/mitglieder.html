@@ -6,6 +6,17 @@
 
 {% block project_body %}
 <article class="round">
+  <nav class="no-margin">
+    <h6 class="max no-margin"><i>archive</i> Projekt-Archiv</h6>
+    <a class="button border small" href="/projects/{{ project.id }}/export">
+      <i>download</i> Exportieren (.zip)
+    </a>
+  </nav>
+  <p class="small-text no-margin">Dokumente, Sammlungen und Chat-Profile als Archiv sichern —
+     vektorunabhängig, auf einer anderen Instanz re-importierbar.</p>
+</article>
+
+<article class="round">
   <h6><i>group</i> Mitglieder</h6>
   <ul class="list border">
     {% for eintrag in members %}

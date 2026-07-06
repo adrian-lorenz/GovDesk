@@ -1,0 +1,74 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "base.html" %}
+{% block title %}Audit-Log — {{ platform_name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
+<a class="button border small" href="/admin/users"><i>group</i> Nutzer</a>
+<a class="button border small" href="/admin/settings"><i>settings</i> Einstellungen</a>
+{% endblock %}
+
+{% block content %}
+<nav>
+  <h5 class="max no-margin"><i>history</i> Audit-Log</h5>
+  <span class="small-text">{{ total }} Ereignis(se)</span>
+</nav>
+<p class="small-text">Append-only-Protokoll sicherheitsrelevanter Aktionen.</p>
+
+<form method="get" action="/admin/audit" class="row wrap">
+  <div class="field label border round suffix max no-margin">
+    <select name="action" onchange="this.form.requestSubmit()">
+      <option value="">Alle Aktionen</option>
+      {% for a in actions %}
+      <option value="{{ a }}" {% if a == filter_action %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+    <label>Aktion</label>
+    <i>arrow_drop_down</i>
+  </div>
+  <button type="submit" class="small"><i>filter_alt</i> Filtern</button>
+</form>
+
+<article class="round">
+  <table class="stripes">
+    <thead>
+      <tr><th>Zeit</th><th>Aktion</th><th>Akteur</th><th>Ziel</th><th>Projekt</th><th>Details</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="small-text">{{ r.created_at.strftime("%d.%m.%Y %H:%M:%S") }}</td>
+        <td><code>{{ r.action }}</code></td>
+        <td class="small-text">
+          {% if r.actor_user_id %}{{ users.get(r.actor_user_id, "?") }}
+          {% elif r.actor_api_key_id %}<i>key</i> API-Key
+          {% else %}System{% endif %}
+        </td>
+        <td class="small-text">{{ r.target_type or "" }}{% if r.target_id %} · {{ r.target_id[:12] }}{% endif %}</td>
+        <td class="small-text">{{ projects.get(r.project_id, "") if r.project_id else "" }}</td>
+        <td class="small-text gd-audit-meta">{{ r.meta if r.meta else "" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="center-align small-text">Keine Einträge.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</article>
+
+{% if page > 1 or has_next %}
+<nav class="center-align">
+  {% if page > 1 %}
+  <a class="button border small" href="/admin/audit?page={{ page - 1 }}&action={{ filter_action }}">
+    <i>chevron_left</i> Neuer
+  </a>
+  {% endif %}
+  <span class="small-text">Seite {{ page }}</span>
+  {% if has_next %}
+  <a class="button border small" href="/admin/audit?page={{ page + 1 }}&action={{ filter_action }}">
+    Älter <i>chevron_right</i>
+  </a>
+  {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

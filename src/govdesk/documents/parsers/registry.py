@@ -12,7 +12,9 @@ from govdesk.documents.parsers.docx import DocxParser
 from govdesk.documents.parsers.html import HtmlParser
 from govdesk.documents.parsers.odt import OdtParser
 from govdesk.documents.parsers.pdf import PdfParser
+from govdesk.documents.parsers.pptx import PptxParser
 from govdesk.documents.parsers.text import MarkdownParser, TextParser
+from govdesk.documents.parsers.xlsx import XlsxParser
 
 _PARSERS: dict[str, DocumentParser] = {
     ".pdf": PdfParser(),
@@ -24,6 +26,8 @@ _PARSERS: dict[str, DocumentParser] = {
     ".odt": OdtParser(),
     ".html": HtmlParser(),
     ".htm": HtmlParser(),
+    ".xlsx": XlsxParser(),
+    ".pptx": PptxParser(),
 }
 
 SUPPORTED_EXTENSIONS = sorted(_PARSERS)

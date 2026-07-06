@@ -4,8 +4,8 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import func, select
 
 from govdesk.auth.deps import CurrentUser, Db, ProjectAdmin, ProjectEditor, ProjectViewer
@@ -20,6 +20,8 @@ from govdesk.db.models import (
     ProjectMember,
     User,
 )
+from govdesk.documents.service import enqueue_ingest
+from govdesk.porting import export_project_archive, import_project_archive
 from govdesk.projects.service import create_project, projects_for_user
 from govdesk.web.deps import render
 from govdesk.web.project_layout import ensure_section_visible, project_menu_context
@@ -96,6 +98,45 @@ async def project_create(
     return RedirectResponse(f"/projects/{project.id}", status_code=303)
 
 
+@router.post("/projects/import")
+async def project_import(user: CurrentUser, db: Db, datei: UploadFile) -> RedirectResponse:
+    """Projekt-Archiv importieren (neu-eingebettet mit dem Modell dieser Instanz)."""
+    data = await datei.read()
+    cfg = await get_runtime_config(db)
+    try:
+        project, doc_ids = await import_project_archive(
+            db, user, data, cfg.embedding_model, get_settings().embedding_dimensions
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Archiv nicht lesbar: {exc}") from exc
+    await audit(
+        db,
+        "project.import",
+        actor_user_id=user.id,
+        project_id=project.id,
+        target_type="project",
+        target_id=str(project.id),
+        meta={"name": project.name, "documents": len(doc_ids)},
+    )
+    await db.commit()
+    # Re-Ingest erst nach dem Commit einreihen (Worker muss die Zeilen sehen).
+    for did in doc_ids:
+        document = await db.get(Document, did)
+        if document is not None:
+            await enqueue_ingest(document)
+    return RedirectResponse(f"/projects/{project.id}", status_code=303)
+
+
+@router.get("/projects/{project_id}/export")
+async def project_export(project: ProjectAdmin, db: Db) -> Response:
+    data = await export_project_archive(db, project)
+    return Response(
+        content=data,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{project.slug}.govdesk.zip"'},
+    )
+
+
 @router.get("/projects/{project_id}")
 async def project_home(project: ProjectViewer, user: CurrentUser, db: Db) -> RedirectResponse:
     """Einstieg ins Projekt ist immer der Chat: zum jüngsten Chat springen bzw. neu anlegen."""
@@ -120,6 +161,7 @@ async def project_home(project: ProjectViewer, user: CurrentUser, db: Db) -> Red
 async def project_dokumente(
     request: Request, project: ProjectEditor, user: CurrentUser, db: Db
 ) -> HTMLResponse:
+    await ensure_section_visible(db, project, user, "dokumente")
     documents = list(
         (
             await db.execute(

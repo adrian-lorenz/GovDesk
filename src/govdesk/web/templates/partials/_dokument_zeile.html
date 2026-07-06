@@ -8,27 +8,38 @@
   "ready":     ("check_circle", "Bereit",     "green-text"),
   "failed":    ("error",        "Fehler",     "error-text"),
 } %}
+{% set icon_map = {
+  "pdf": "picture_as_pdf", "docx": "description", "doc": "description", "odt": "description",
+  "xlsx": "table_chart", "pptx": "co_present", "txt": "article", "md": "article",
+  "markdown": "article", "html": "language", "htm": "language",
+} %}
+{% set quelle_map = {"api": "API", "crawler": "Web", "connector": "Connector"} %}
+{% set ext = (document.filename.rsplit(".", 1)[-1] | lower) if "." in document.filename else "" %}
 {% set icon, label, farbe = status_map[document.status.value] %}
-<li id="doc-{{ document.id }}"
+<li class="gd-doc-row" id="doc-{{ document.id }}"
     {% if document.status.value not in ("ready", "failed") %}
     hx-get="/projects/{{ project.id }}/documents/{{ document.id }}/zeile"
     hx-trigger="every 2s" hx-swap="outerHTML"
     {% endif %}>
-  <i class="{{ farbe }}">{{ icon }}</i>
-  <div class="max">
-    <strong>{{ document.filename }}</strong>
-    <div class="small-text">
-      {{ (document.size_bytes or 0) // 1024 }} KB
-      {% if document.status.value == "ready" %} · {{ document.chunk_count }} Abschnitte{% endif %}
-      {% if document.status.value == "failed" %} · {{ document.error }}{% endif %}
+  <span class="gd-doc-icon"><i>{{ icon_map.get(ext, "draft") }}</i></span>
+  <div class="max min-width-0">
+    <strong class="gd-doc-name">{{ document.filename }}</strong>
+    <div class="small-text gd-doc-meta">
+      {% if ext %}<span class="gd-doc-ext">{{ ext | upper }}</span>{% endif %}
+      <span>{{ (document.size_bytes or 0) // 1024 }} KB</span>
+      {% if document.status.value == "ready" %}<span>{{ document.chunk_count }} Abschnitte</span>{% endif %}
+      {% if quelle_map.get(document.source_type.value) %}
+        <span class="chip tiny">{{ quelle_map[document.source_type.value] }}</span>
+      {% endif %}
+      {% if document.status.value == "failed" %}<span class="error-text">{{ document.error }}</span>{% endif %}
     </div>
   </div>
   <span class="chip small {{ farbe }}">
-    {{ label }}
-    {% if document.status.value not in ("ready", "failed") %}
-      <progress class="circle small"></progress>
-    {% endif %}
+    <i>{{ icon }}</i> {{ label }}
+    {% if document.status.value not in ("ready", "failed") %}<progress class="circle small"></progress>{% endif %}
   </span>
+  <a class="button circle transparent small" title="Herunterladen"
+     href="/projects/{{ project.id }}/documents/{{ document.id }}/download"><i>download</i></a>
   {% if can_edit %}
   <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/reindex" class="no-margin">
     <button class="circle transparent small" title="Neu einlesen"><i>refresh</i></button>
