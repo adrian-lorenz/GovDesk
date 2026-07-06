@@ -17,11 +17,11 @@
     <h6 class="max min-width-0 no-margin">{{ doc.title }}</h6>
     {% endif %}
     <span id="editor-status" class="chip small">—</span>
-    <a class="button border small" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=pdf"
+    <a class="button border small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=pdf"
        title="Als PDF herunterladen"><i>picture_as_pdf</i> PDF</a>
-    <a class="button border small" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=docx"
+    <a class="button border small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=docx"
        title="Als Word (DOCX) herunterladen"><i>download</i> DOCX</a>
-    <a class="button border small" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=odf"
+    <a class="button border small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=odf"
        title="Als OpenDocument (ODT) herunterladen">ODT</a>
     <a class="button border small" href="/projects/{{ project.id }}/editor/{{ doc.id }}/historie">
       <i>history</i> Historie

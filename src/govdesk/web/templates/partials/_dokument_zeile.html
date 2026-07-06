@@ -38,7 +38,7 @@
     <i>{{ icon }}</i> {{ label }}
     {% if document.status.value not in ("ready", "failed") %}<progress class="circle small"></progress>{% endif %}
   </span>
-  <a class="button circle transparent small" title="Herunterladen"
+  <a class="button circle transparent small" hx-boost="false" title="Herunterladen"
      href="/projects/{{ project.id }}/documents/{{ document.id }}/download"><i>download</i></a>
   {% if can_edit %}
   <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/reindex" class="no-margin">

@@ -7,7 +7,7 @@
 <nav>
   <h5 class="max">Projekte</h5>
   <form method="post" action="/projects/import" enctype="multipart/form-data" class="no-margin"
-        id="import-form">
+        hx-boost="false" id="import-form">
     <input type="file" name="datei" accept=".zip" hidden id="import-file"
            onchange="if(this.files.length){this.form.requestSubmit();}">
     <button type="button" class="border" onclick="document.getElementById('import-file').click()">
