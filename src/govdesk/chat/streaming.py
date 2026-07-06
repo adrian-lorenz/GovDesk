@@ -132,5 +132,6 @@ async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
     final_html = templates.env.get_template("partials/_antwort_final.html").render(
         html_content=render_markdown(answer),
         citations=citations,
+        project_id=project.id,
     )
     yield _sse("done", final_html)

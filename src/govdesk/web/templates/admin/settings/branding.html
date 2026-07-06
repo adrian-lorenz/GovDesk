@@ -1,0 +1,25 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "branding" %}
+
+{% block settings_body %}
+<article class="round">
+  <h6><i>badge</i> Branding</h6>
+  <p class="small-text">Name und Untertitel der Plattform (Login- und Startseite).</p>
+  <form method="post" action="/admin/settings/branding">
+    <div class="field label border round">
+      <input type="text" name="platform_name" value="{{ platform_name }}" maxlength="80" placeholder=" ">
+      <label>Plattform-Name</label>
+    </div>
+    <div class="field label border round">
+      <input type="text" name="platform_subtitle" value="{{ platform_subtitle or '' }}"
+             maxlength="160" placeholder=" ">
+      <label>Untertitel (Login/Start, optional)</label>
+    </div>
+    <nav class="right-align">
+      <button type="submit"><i>save</i> Speichern</button>
+    </nav>
+  </form>
+</article>
+{% endblock %}

@@ -1,14 +1,11 @@
 {# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
 {# SPDX-License-Identifier: EUPL-1.2 #}
-{% extends "base.html" %}
-{% block title %}Internet-Agent — {{ project.name }}{% endblock %}
+{% extends "projects/_layout.html" %}
+{% set active = "crawler" %}
+{% set page_title = "Internet-Agent" %}
 
-{% block nav %}
-<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
-{% endblock %}
-
-{% block content %}
-<h5><i>travel_explore</i> Internet-Agent</h5>
+{% block project_body %}
+<h6 class="no-margin"><i>travel_explore</i> Internet-Agent</h6>
 <p class="small-text">Geben Sie eine Webseite und optional einen Suchauftrag an. Mit
    „Unterseiten einbeziehen“ folgt der Agent Links und sucht — vom Suchauftrag geleitet —
    selbstständig passende Informationen zusammen und bettet sie ein. robots.txt wird respektiert.</p>

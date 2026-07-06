@@ -1,0 +1,54 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Quellen-Modal: PDF-Seite mit markierter Fundstelle oder Text-Ausschnitt. #}
+<div class="gd-overlay" data-gd-dismissable role="dialog" aria-modal="true"
+     aria-labelledby="gd-quelle-titel">
+  <div class="gd-dialog gd-dialog-wide">
+    <nav class="gd-quelle-kopf">
+      <div class="max min-width-0">
+        <h6 id="gd-quelle-titel" class="no-margin"><i>description</i> {{ document.filename }}</h6>
+        <div class="small-text gd-quelle-meta">
+          {% if target.heading_path %}<span>{{ target.heading_path }}</span>{% endif %}
+          {% if target.page_no %}<span><i>article</i> Seite {{ target.page_no }}</span>{% endif %}
+        </div>
+      </div>
+      {% if document.source_url %}
+      <a class="button border small" href="{{ document.source_url }}" target="_blank" rel="noopener">
+        <i>open_in_new</i> Original
+      </a>
+      {% endif %}
+      <button type="button" class="circle transparent" data-gd-dismiss title="Schließen">
+        <i>close</i>
+      </button>
+    </nav>
+
+    <div class="gd-quelle-body">
+    {% if page_highlight %}
+      <figure class="gd-pdf-figur no-margin" style="aspect-ratio: {{ page_highlight.aspect_ratio }};">
+        <img class="gd-pdf-bild" src="{{ page_highlight.image_data_uri }}"
+             alt="Seite {{ target.page_no }} von {{ document.filename }}">
+        {% for r in page_highlight.rects %}
+        <span class="gd-pdf-mark"
+              style="left:{{ (r.left * 100) }}%;top:{{ (r.top * 100) }}%;width:{{ (r.width * 100) }}%;height:{{ (r.height * 100) }}%;"></span>
+        {% endfor %}
+      </figure>
+      {% if not page_highlight.rects %}
+      <p class="small-text italic gd-quelle-hinweis">
+        <i>info</i> Die genaue Fundstelle konnte auf der Seite nicht automatisch markiert werden —
+        der zitierte Abschnitt ist unten hervorgehoben.
+      </p>
+      <div class="gd-quelle-text">
+        <mark>{{ target.text }}</mark>
+      </div>
+      {% endif %}
+    {% else %}
+      {# Kein PDF (oder Vorschau nicht möglich): Text im Kontext der Nachbar-Chunks. #}
+      <div class="gd-quelle-text">
+        {% if before %}<p class="gd-quelle-umfeld">…{{ before.text[-320:] }}</p>{% endif %}
+        <mark>{{ target.text }}</mark>
+        {% if after %}<p class="gd-quelle-umfeld">{{ after.text[:320] }}…</p>{% endif %}
+      </div>
+    {% endif %}
+    </div>
+  </div>
+</div>

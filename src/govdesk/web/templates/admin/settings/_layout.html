@@ -1,0 +1,41 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Gemeinsames Layout der Einstellungs-Subpages: linkes Untermenü + Inhalt.
+   `active` markiert den aktiven Eintrag; `settings_body` liefert den Inhalt. #}
+{% extends "base.html" %}
+{% block title %}Einstellungen — {{ platform_name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
+<a class="button border small" href="/admin/users"><i>group</i> Nutzer</a>
+{% endblock %}
+
+{% block content %}
+<nav>
+  <h5 class="max no-margin"><i>settings</i> Plattform-Einstellungen</h5>
+</nav>
+
+{% set items = [
+  ("branding", "badge", "Branding"),
+  ("ki", "smart_toy", "KI & Modelle"),
+  ("reranking", "sort", "Reranking"),
+  ("connectoren", "extension", "Connectoren"),
+  ("api-keys", "key", "API-Keys"),
+  ("anmeldung", "lock", "Anmeldung"),
+  ("system", "monitor_heart", "System & Dienste"),
+] %}
+
+<div class="gd-sidenav">
+  <aside class="gd-sidenav-menu">
+    {% for key, icon, label in items %}
+    <a href="/admin/settings/{{ key }}" class="{{ 'aktiv' if active == key }}">
+      <i>{{ icon }}</i> {{ label }}
+    </a>
+    {% endfor %}
+  </aside>
+
+  <div class="gd-sidenav-body">
+    {% block settings_body %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

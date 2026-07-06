@@ -115,6 +115,32 @@
     gdConfirm(e.detail.question, function () { e.detail.issueRequest(true); });
   });
 
+  // Schließbare Overlays (z. B. Quellen-Modal): Klick auf Backdrop oder auf ein
+  // [data-gd-dismiss]-Element sowie Escape entfernen das Overlay wieder.
+  function gdCloseDismissable() {
+    document.querySelectorAll(".gd-overlay[data-gd-dismissable]").forEach(function (o) {
+      o.remove();
+    });
+  }
+  document.body.addEventListener("click", function (e) {
+    var dismiss = e.target.closest("[data-gd-dismiss]");
+    if (dismiss) {
+      var ov = dismiss.closest(".gd-overlay");
+      if (ov) ov.remove();
+      return;
+    }
+    if (
+      e.target.classList &&
+      e.target.classList.contains("gd-overlay") &&
+      e.target.hasAttribute("data-gd-dismissable")
+    ) {
+      e.target.remove();
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") gdCloseDismissable();
+  });
+
   document.body.addEventListener("htmx:beforeRequest", function () { setBusy(1); });
   document.body.addEventListener("htmx:afterRequest", function (e) {
     setBusy(-1);

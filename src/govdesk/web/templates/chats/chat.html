@@ -6,7 +6,12 @@
 {% block main_class %}responsive max{% endblock %}
 
 {% block nav %}
-<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
+<a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
+{% if can_edit %}
+<a class="button border small gd-zurueck" href="/projects/{{ project.id }}/dokumente">
+  <i>settings</i> <span>{{ project.name }}</span> verwalten
+</a>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -17,6 +22,9 @@
      (höhere Spezifität → !important nötig); das versetzt die Spalten. */
   .gd-chat > * { margin-block-start: 0 !important; }
   .gd-chat-main { min-width: 0; }
+  /* Zurück-Button: Projektname einzeilig, bei Überlänge mit Ellipsis statt Umbruch */
+  .gd-zurueck span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                     max-width: 16rem; }
   .chat-verlauf { max-width: 52rem; margin: 0 auto; }
   .msg-user { background: var(--primary-container); color: var(--on-primary-container);
               border-radius: 0.75rem 0.75rem 0.2rem 0.75rem; padding: 0.75rem 1rem;
@@ -121,6 +129,8 @@
     </article>
   </aside>
 </div>
+
+<div id="gd-quelle-modal"></div>
 
 <script>
   window.scrollTo(0, document.body.scrollHeight);

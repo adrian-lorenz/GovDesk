@@ -22,12 +22,15 @@ from govdesk.db.models import (
     CrawlSource,
 )
 from govdesk.web.deps import render
+from govdesk.web.project_layout import project_menu_context
 
 router = APIRouter()
 
 
 @router.get("/projects/{project_id}/crawler", response_class=HTMLResponse)
-async def crawler_page(request: Request, project: ProjectEditor, db: Db) -> HTMLResponse:
+async def crawler_page(
+    request: Request, project: ProjectEditor, user: CurrentUser, db: Db
+) -> HTMLResponse:
     collections = (
         (
             await db.execute(
@@ -39,14 +42,11 @@ async def crawler_page(request: Request, project: ProjectEditor, db: Db) -> HTML
         .scalars()
         .all()
     )
+    ctx = await project_menu_context(db, project, user, "crawler")
     return render(
         request,
         "projects/crawler.html",
-        {
-            "project": project,
-            "rows": await list_sources_with_jobs(db, project.id),
-            "collections": collections,
-        },
+        {**ctx, "rows": await list_sources_with_jobs(db, project.id), "collections": collections},
     )
 
 

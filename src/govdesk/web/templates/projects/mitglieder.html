@@ -1,0 +1,56 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "projects/_layout.html" %}
+{% set active = "mitglieder" %}
+{% set page_title = "Mitglieder" %}
+
+{% block project_body %}
+<article class="round">
+  <h6><i>group</i> Mitglieder</h6>
+  <ul class="list border">
+    {% for eintrag in members %}
+    <li>
+      <i>{{ "star" if eintrag.member.role.value == "owner" else "person" }}</i>
+      <div class="max">
+        <strong>{{ eintrag.user.username }}</strong>
+        <div class="small-text">{{ {"owner": "Eigentümer", "admin": "Administrator",
+             "editor": "Bearbeiter", "viewer": "Betrachter"}[eintrag.member.role.value] }}</div>
+      </div>
+      {% if eintrag.member.role.value != "owner" %}
+      <form method="post" action="/projects/{{ project.id }}/members/{{ eintrag.member.id }}/role"
+            class="no-margin">
+        <select name="role" onchange="this.form.requestSubmit()" class="border small">
+          {% for wert, label in [("admin", "Administrator"), ("editor", "Bearbeiter"), ("viewer", "Betrachter")] %}
+          <option value="{{ wert }}" {% if eintrag.member.role.value == wert %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <form method="post" action="/projects/{{ project.id }}/members/{{ eintrag.member.id }}/entfernen"
+            class="no-margin">
+        <button class="circle transparent small" title="Entfernen"><i>person_remove</i></button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/projects/{{ project.id }}/members" class="row">
+    <div class="field label border round small max no-margin">
+      <select name="username" required>
+        <option value="" disabled selected>Benutzer wählen …</option>
+        {% for u in available_users %}
+        <option value="{{ u.username }}">{{ u.username }}</option>
+        {% endfor %}
+      </select>
+      <label>Benutzer</label>
+    </div>
+    <div class="field border round small no-margin">
+      <select name="role">
+        <option value="viewer">Betrachter</option>
+        <option value="editor">Bearbeiter</option>
+        <option value="admin">Administrator</option>
+      </select>
+    </div>
+    <button type="submit" class="small"><i>person_add</i> Hinzufügen</button>
+  </form>
+</article>
+{% endblock %}

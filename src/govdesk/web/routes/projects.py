@@ -8,23 +8,21 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, select
 
-from govdesk.agents.crawler.service import list_sources_with_jobs
-from govdesk.auth.deps import CurrentUser, Db, ProjectViewer
-from govdesk.chat.service import chat_sessions_for_project
+from govdesk.auth.deps import CurrentUser, Db, ProjectAdmin, ProjectEditor, ProjectViewer
+from govdesk.chat.service import chat_sessions_for_project, create_chat_session
 from govdesk.core.app_settings import get_runtime_config
 from govdesk.core.audit import audit
 from govdesk.core.config import get_settings
 from govdesk.db.models import (
-    ROLE_ORDER,
     ChatConfig,
     Collection,
     Document,
     ProjectMember,
-    ProjectRole,
     User,
 )
 from govdesk.projects.service import create_project, projects_for_user
 from govdesk.web.deps import render
+from govdesk.web.project_layout import ensure_section_visible, project_menu_context
 
 router = APIRouter()
 
@@ -98,32 +96,60 @@ async def project_create(
     return RedirectResponse(f"/projects/{project.id}", status_code=303)
 
 
-@router.get("/projects/{project_id}", response_class=HTMLResponse)
-async def project_detail(
-    request: Request, project: ProjectViewer, user: CurrentUser, db: Db
+@router.get("/projects/{project_id}")
+async def project_home(project: ProjectViewer, user: CurrentUser, db: Db) -> RedirectResponse:
+    """Einstieg ins Projekt ist immer der Chat: zum jüngsten Chat springen bzw. neu anlegen."""
+    sessions = await chat_sessions_for_project(db, project, user)
+    if sessions:
+        target = sessions[0].id
+    else:
+        default = (
+            await db.execute(
+                select(ChatConfig).where(ChatConfig.project_id == project.id, ChatConfig.is_default)
+            )
+        ).scalar_one_or_none()
+        session = await create_chat_session(
+            db, project, user, chat_config_id=default.id if default else None
+        )
+        await db.commit()
+        target = session.id
+    return RedirectResponse(f"/projects/{project.id}/chats/{target}", status_code=303)
+
+
+@router.get("/projects/{project_id}/dokumente", response_class=HTMLResponse)
+async def project_dokumente(
+    request: Request, project: ProjectEditor, user: CurrentUser, db: Db
 ) -> HTMLResponse:
-    documents_result = await db.execute(
-        select(Document)
-        .where(Document.project_id == project.id)
-        .order_by(Document.created_at.desc())
-    )
-    documents = list(documents_result.scalars())
-    crawl_rows = await list_sources_with_jobs(db, project.id)
-    chats = await chat_sessions_for_project(db, project, user)
-    collections_result = await db.execute(
-        select(Collection).where(Collection.project_id == project.id).order_by(Collection.name)
-    )
-    collections = list(collections_result.scalars())
-    chat_configs = list(
+    documents = list(
         (
             await db.execute(
-                select(ChatConfig)
-                .where(ChatConfig.project_id == project.id)
-                .order_by(ChatConfig.name)
+                select(Document)
+                .where(Document.project_id == project.id)
+                .order_by(Document.created_at.desc())
             )
         ).scalars()
     )
+    collections = list(
+        (
+            await db.execute(
+                select(Collection)
+                .where(Collection.project_id == project.id)
+                .order_by(Collection.name)
+            )
+        ).scalars()
+    )
+    ctx = await project_menu_context(db, project, user, "dokumente")
+    return render(
+        request,
+        "projects/dokumente.html",
+        {**ctx, "documents": documents, "collections": collections},
+    )
 
+
+@router.get("/projects/{project_id}/mitglieder", response_class=HTMLResponse)
+async def project_mitglieder(
+    request: Request, project: ProjectAdmin, user: CurrentUser, db: Db
+) -> HTMLResponse:
     members_result = await db.execute(
         select(ProjectMember, User)
         .join(User, ProjectMember.user_id == User.id)
@@ -141,29 +167,9 @@ async def project_detail(
             )
         ).scalars()
     )
-    my_role = next(
-        (m["member"].role for m in members if m["user"].id == user.id),
-        ProjectRole.OWNER if user.is_platform_admin else None,
-    )
-    can_manage = user.is_platform_admin or (
-        my_role is not None and ROLE_ORDER[my_role] >= ROLE_ORDER[ProjectRole.ADMIN]
-    )
-    can_edit = user.is_platform_admin or (
-        my_role is not None and ROLE_ORDER[my_role] >= ROLE_ORDER[ProjectRole.EDITOR]
-    )
+    ctx = await project_menu_context(db, project, user, "mitglieder")
     return render(
         request,
-        "projects/detail.html",
-        {
-            "project": project,
-            "documents": documents,
-            "crawl_rows": crawl_rows,
-            "chats": chats,
-            "collections": collections,
-            "chat_configs": chat_configs,
-            "members": members,
-            "available_users": available_users,
-            "can_manage": can_manage,
-            "can_edit": can_edit,
-        },
+        "projects/mitglieder.html",
+        {**ctx, "members": members, "available_users": available_users},
     )

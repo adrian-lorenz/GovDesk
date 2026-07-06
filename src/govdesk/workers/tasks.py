@@ -314,6 +314,114 @@ async def crawl_source(job_id: str) -> None:
             await db.commit()
 
 
+@queue.task(name="govdesk.run_connector_job")
+async def run_connector_job(job_id: str) -> None:
+    """Führt einen Connector-Lauf aus: Plugin.fetch_items → Delta-Check → Ingestion."""
+    import hashlib
+    from datetime import UTC, datetime
+
+    from sqlalchemy import select
+
+    from govdesk.connectors.registry import UnknownConnectorError, get_connector
+    from govdesk.connectors.service import upsert_item_document
+    from govdesk.db.models import (
+        ConnectorItem,
+        ConnectorJob,
+        ConnectorJobStatus,
+        ConnectorSource,
+    )
+
+    def now():
+        return datetime.now(UTC).replace(tzinfo=None)
+
+    async with get_session_factory()() as db:
+        job = await db.get(ConnectorJob, uuid.UUID(job_id))
+        if job is None or job.status != ConnectorJobStatus.QUEUED:
+            return
+        source = await db.get(ConnectorSource, job.connector_source_id)
+        assert source is not None
+        job.status = ConnectorJobStatus.RUNNING
+        job.started_at = now()
+        source_id = source.id
+        project_id = source.project_id
+        connector_type = source.connector_type
+        config = dict(source.config or {})
+        collection_id = source.collection_id
+        await db.commit()
+
+    found = ingested = skipped = 0
+    error: str | None = None
+
+    try:
+        plugin = get_connector(connector_type)
+        async for item in plugin.fetch_items(config):
+            found += 1
+
+            # Abbruch-Flag aus der UI prüfen
+            async with get_session_factory()() as db:
+                current = await db.get(ConnectorJob, uuid.UUID(job_id))
+                if current is None or current.status == ConnectorJobStatus.CANCELLED:
+                    return
+
+            new_hash = item.content_hash or hashlib.sha256(item.data).hexdigest()
+            async with get_session_factory()() as db:
+                existing = (
+                    await db.execute(
+                        select(ConnectorItem).where(
+                            ConnectorItem.connector_source_id == source_id,
+                            ConnectorItem.external_id == item.external_id,
+                        )
+                    )
+                ).scalar_one_or_none()
+                if existing is None:
+                    existing = ConnectorItem(
+                        connector_source_id=source_id, external_id=item.external_id
+                    )
+                    db.add(existing)
+                existing.last_seen_at = now()
+
+                document_to_ingest = None
+                if existing.content_hash == new_hash and existing.document_id:
+                    skipped += 1  # unverändert
+                else:
+                    project = await db.get(Project, project_id)
+                    assert project is not None
+                    document_to_ingest = await upsert_item_document(
+                        db, project, item, existing.document_id, collection_id
+                    )
+                    if document_to_ingest is not None:
+                        existing.content_hash = new_hash
+                        existing.document_id = document_to_ingest.id
+                        ingested += 1
+                    else:
+                        skipped += 1
+
+                job_row = await db.get(ConnectorJob, uuid.UUID(job_id))
+                if job_row is not None:
+                    job_row.items_found = found
+                    job_row.items_ingested = ingested
+                    job_row.items_skipped = skipped
+                await db.commit()
+                if document_to_ingest is not None:
+                    await ingest_document.defer_async(document_id=str(document_to_ingest.id))
+    except UnknownConnectorError as exc:
+        error = str(exc)
+    except Exception as exc:
+        logger.exception("Connector-Job %s fehlgeschlagen", job_id)
+        error = str(exc)[:2000]
+
+    async with get_session_factory()() as db:
+        job_row = await db.get(ConnectorJob, uuid.UUID(job_id))
+        if job_row is not None and job_row.status != ConnectorJobStatus.CANCELLED:
+            job_row.status = ConnectorJobStatus.FAILED if error else ConnectorJobStatus.DONE
+            job_row.error = error
+            job_row.finished_at = now()
+            job_row.items_found = found
+            job_row.items_ingested = ingested
+            job_row.items_skipped = skipped
+            await db.commit()
+
+
 @queue.periodic(cron="*/15 * * * *")
 @queue.task(name="govdesk.schedule_recrawls")
 async def schedule_recrawls(timestamp: int) -> None:

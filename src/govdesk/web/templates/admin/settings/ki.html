@@ -1,0 +1,89 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "ki" %}
+
+{% block settings_body %}
+<form method="post" action="/admin/settings/ki">
+  <article class="round">
+    <h6><i>dns</i> Ollama</h6>
+    <div class="field label border round">
+      <input type="url" name="ollama_base_url" value="{{ cfg.ollama_base_url }}" required>
+      <label>Ollama-Adresse</label>
+    </div>
+    <div class="field label border round">
+      <input type="password" name="ollama_api_key" value="{{ cfg.ollama_api_key or '' }}" placeholder=" ">
+      <label>API-Schlüssel (nur Ollama Cloud)</label>
+    </div>
+    <button type="button" class="border"
+            hx-post="/admin/settings/ollama-test"
+            hx-include="closest form"
+            hx-target="#testergebnis" hx-swap="innerHTML">
+      <i>network_check</i> Verbindung testen
+    </button>
+    <div id="testergebnis"></div>
+  </article>
+
+  <article class="round">
+    <h6><i>model_training</i> Modelle</h6>
+    <div class="field label border round suffix">
+      <select name="default_llm_model">
+        {% for model in installed %}
+        <option value="{{ model }}" {% if model == cfg.default_llm_model %}selected{% endif %}>{{ model }}</option>
+        {% endfor %}
+        {% if cfg.default_llm_model not in installed %}
+        <option value="{{ cfg.default_llm_model }}" selected>{{ cfg.default_llm_model }} (nicht installiert)</option>
+        {% endif %}
+      </select>
+      <label>Standard-Sprachmodell (Ollama)</label>
+      <i>arrow_drop_down</i>
+    </div>
+    <p class="small-text no-margin">Embedding-Modell: <strong>{{ cfg.embedding_model }}</strong> —
+       pro Projekt eingefroren, Wechsel erfordert Neuaufbau.</p>
+  </article>
+
+  <article class="round">
+    <h6><i>cloud</i> Externer LLM-Provider (OpenAI-kompatibel)</h6>
+    <p class="small-text">Optional: Mistral-API, Teuken via vLLM oder andere souveräne,
+       OpenAI-kompatible Endpunkte. Embeddings laufen weiterhin über Ollama.</p>
+    <div class="field label border round suffix">
+      <select name="llm_provider">
+        <option value="ollama" {% if cfg.llm_provider != 'openai' %}selected{% endif %}>Ollama (lokal)</option>
+        <option value="openai" {% if cfg.llm_provider == 'openai' %}selected{% endif %}>Extern (OpenAI-kompatibel)</option>
+      </select>
+      <label>Aktiver Chat-Provider</label>
+      <i>arrow_drop_down</i>
+    </div>
+    <div class="field label border round">
+      <input type="url" name="openai_base_url" value="{{ cfg.openai_base_url or '' }}"
+             placeholder="https://api.mistral.ai/v1">
+      <label>Endpunkt-URL</label>
+    </div>
+    <div class="field label border round">
+      <input type="password" name="openai_api_key" value="{{ cfg.openai_api_key or '' }}" placeholder=" ">
+      <label>API-Schlüssel</label>
+    </div>
+    <div class="field label border round">
+      <input type="text" name="openai_model" value="{{ cfg.openai_model or '' }}"
+             placeholder="z. B. mistral-large-latest" list="ext-models">
+      <label>Modell</label>
+    </div>
+    {% if external_models %}
+    <datalist id="ext-models">
+      {% for m in external_models %}<option value="{{ m }}"></option>{% endfor %}
+    </datalist>
+    {% endif %}
+    <button type="button" class="border"
+            hx-post="/admin/settings/openai-test"
+            hx-include="closest form"
+            hx-target="#ext-testergebnis" hx-swap="innerHTML">
+      <i>network_check</i> Verbindung testen
+    </button>
+    <div id="ext-testergebnis"></div>
+  </article>
+
+  <nav class="right-align">
+    <button type="submit"><i>save</i> Speichern</button>
+  </nav>
+</form>
+{% endblock %}

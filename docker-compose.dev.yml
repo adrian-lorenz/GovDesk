@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 # Entwicklung: nur die Dienste, App/Worker laufen lokal via `uv run govdesk …`
-# Nutzung: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres qdrant ollama reranker
+# Ollama läuft extern und wird per IP verbunden (GOVDESK_OLLAMA_BASE_URL in .env).
+# Nutzung: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres qdrant reranker
 
 services:
   postgres:
@@ -15,12 +16,20 @@ services:
     ports:
       - "6333:6333"
 
-  ollama:
-    ports:
-      - "11434:11434"
-
   reranker:
     # TEI liefert kein arm64-CPU-Image — auf Apple Silicon via Rosetta emulieren
     platform: linux/amd64
+    # Rosetta-Overhead + fp32-Gewichte sprengen beim Warmup sonst die Docker-VM (OOM/Exit 137).
+    # Warmup-Batch klein halten, damit die Speicher-Spitze passt.
+    # --auto-truncate nötig, weil max-batch-tokens < model max_input_length (8192);
+    # RAG-Chunks sind klein, längere Eingaben werden auf die Batch-Grenze gekürzt.
+    command:
+      - "--model-id"
+      - "BAAI/bge-reranker-v2-m3"
+      - "--max-batch-tokens"
+      - "4096"
+      - "--max-client-batch-size"
+      - "8"
+      - "--auto-truncate"
     ports:
       - "8081:80"

@@ -7,6 +7,12 @@
 from govdesk.db.models.apikey import API_SCOPES, ApiKey
 from govdesk.db.models.audit import AuditLog
 from govdesk.db.models.chat import ChatConfig, ChatMessage, ChatSession, MessageRole
+from govdesk.db.models.connector import (
+    ConnectorItem,
+    ConnectorJob,
+    ConnectorJobStatus,
+    ConnectorSource,
+)
 from govdesk.db.models.crawler import (
     CrawlJob,
     CrawlJobStatus,
@@ -36,6 +42,10 @@ __all__ = [
     "ChatMessage",
     "ChatSession",
     "Collection",
+    "ConnectorItem",
+    "ConnectorJob",
+    "ConnectorJobStatus",
+    "ConnectorSource",
     "CrawlJob",
     "CrawlJobStatus",
     "CrawlMode",

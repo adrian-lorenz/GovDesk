@@ -1,0 +1,42 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Gemeinsames Layout der Projekt-Subpages: linkes Seitenmenü + Inhalt.
+   `active` markiert den aktiven Eintrag; `project_body` liefert den Inhalt.
+   Erwartet zusätzlich can_edit, can_manage, connectors_available im Kontext
+   (siehe web/project_layout.py). #}
+{% extends "base.html" %}
+{% block title %}{{ page_title or project.name }} — {{ platform_name }}{% endblock %}
+
+{% block nav %}
+<a class="button border small" href="/projects/{{ project.id }}"><i>chat</i> Zum Chat</a>
+{% endblock %}
+
+{% block content %}
+<nav>
+  <h5 class="max no-margin"><i>folder</i> {{ project.name }}</h5>
+</nav>
+
+{% set items = [
+  ("chat",         "",             "chat",          "Chat",          true),
+  ("dokumente",    "/dokumente",   "description",   "Dokumente",     can_edit and "dokumente" in sichtbar),
+  ("crawler",      "/crawler",     "travel_explore","Internet-Agent",can_edit and "crawler" in sichtbar),
+  ("connectors",   "/connectors",  "extension",     "Connectoren",   can_edit and connectors_available and "connectors" in sichtbar),
+  ("chat-configs", "/chat-configs","tune",          "Chat-Profile",  can_edit and "chat-configs" in sichtbar),
+  ("retrieval",    "/retrieval",   "manage_search", "Retrieval-Test",can_edit and "retrieval" in sichtbar),
+  ("mitglieder",   "/mitglieder",  "group",         "Mitglieder",    can_manage),
+] %}
+
+<div class="gd-sidenav">
+  <aside class="gd-sidenav-menu">
+    {% for key, sub, icon, label, show in items if show %}
+    <a href="/projects/{{ project.id }}{{ sub }}" class="{{ 'aktiv' if active == key }}">
+      <i>{{ icon }}</i> {{ label }}
+    </a>
+    {% endfor %}
+  </aside>
+
+  <div class="gd-sidenav-body">
+    {% block project_body %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

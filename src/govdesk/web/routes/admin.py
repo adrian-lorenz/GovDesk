@@ -12,6 +12,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select, text
 
 from govdesk.auth.deps import Db, PlatformAdmin
+from govdesk.connectors.registry import all_connectors
+from govdesk.connectors.service import ENABLED_SETTING_KEY, enabled_type_ids
 from govdesk.core.app_settings import RuntimeConfig, get_runtime_config, set_setting
 from govdesk.core.audit import audit
 from govdesk.core.config import get_settings
@@ -171,8 +173,19 @@ async def user_toggle_admin(admin: PlatformAdmin, db: Db, user_id: uuid.UUID) ->
     return RedirectResponse("/admin/users", status_code=303)
 
 
-@router.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
+@router.get("/settings")
+async def settings_index(admin: PlatformAdmin) -> RedirectResponse:
+    return RedirectResponse("/admin/settings/branding", status_code=307)
+
+
+@router.get("/settings/branding", response_class=HTMLResponse)
+async def settings_branding(request: Request, admin: PlatformAdmin) -> HTMLResponse:
+    # platform_name / platform_subtitle liefert render() global aus request.state.
+    return render(request, "admin/settings/branding.html")
+
+
+@router.get("/settings/ki", response_class=HTMLResponse)
+async def settings_ki(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
     cfg = await get_runtime_config(db)
     try:
         installed = await OllamaLLMProvider(cfg.ollama_base_url, cfg.ollama_api_key).list_models()
@@ -186,17 +199,34 @@ async def settings_page(request: Request, admin: PlatformAdmin, db: Db) -> HTMLR
             ).list_models()
         except Exception:
             external_models = []
+    return render(
+        request,
+        "admin/settings/ki.html",
+        {"cfg": cfg, "installed": installed, "external_models": external_models},
+    )
+
+
+@router.get("/settings/reranking", response_class=HTMLResponse)
+async def settings_reranking(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
+    cfg = await get_runtime_config(db)
     reranker_ok = await RerankerClient(cfg.reranker_url).is_available()
-    services = await _service_status(db, cfg)
+    return render(
+        request, "admin/settings/reranking.html", {"cfg": cfg, "reranker_ok": reranker_ok}
+    )
+
+
+@router.get("/settings/connectoren", response_class=HTMLResponse)
+async def settings_connectoren(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
+    return render(
+        request,
+        "admin/settings/connectoren.html",
+        {"connectors": all_connectors(), "enabled": set(await enabled_type_ids(db))},
+    )
+
+
+@router.get("/settings/anmeldung", response_class=HTMLResponse)
+async def settings_anmeldung(request: Request, admin: PlatformAdmin) -> HTMLResponse:
     env = get_settings()
-    cookies = "ja" if env.cookie_secure else "nein"
-    env_info = [
-        {"label": "Sichere Cookies", "value": cookies},
-        {"label": "Session-Leerlauf", "value": f"{env.session_idle_hours} h"},
-        {"label": "Session-Maximaldauer", "value": f"{env.session_max_days} Tage"},
-        {"label": "Embedding-Dimensionen", "value": env.embedding_dimensions},
-        {"label": "Datenverzeichnis", "value": str(env.data_dir)},
-    ]
     try:
         redirect_uri = str(request.url_for("oidc_callback"))
     except Exception:
@@ -208,18 +238,25 @@ async def settings_page(request: Request, admin: PlatformAdmin, db: Db) -> HTMLR
         "client_id": env.oidc_client_id or "—",
         "redirect_uri": redirect_uri,
     }
+    return render(request, "admin/settings/anmeldung.html", {"oidc_info": oidc_info})
+
+
+@router.get("/settings/system", response_class=HTMLResponse)
+async def settings_system(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
+    cfg = await get_runtime_config(db)
+    services = await _service_status(db, cfg)
+    env = get_settings()
+    env_info = [
+        {"label": "Sichere Cookies", "value": "ja" if env.cookie_secure else "nein"},
+        {"label": "Session-Leerlauf", "value": f"{env.session_idle_hours} h"},
+        {"label": "Session-Maximaldauer", "value": f"{env.session_max_days} Tage"},
+        {"label": "Embedding-Dimensionen", "value": env.embedding_dimensions},
+        {"label": "Datenverzeichnis", "value": str(env.data_dir)},
+    ]
     return render(
         request,
-        "admin/settings.html",
-        {
-            "cfg": cfg,
-            "installed": installed,
-            "external_models": external_models,
-            "reranker_ok": reranker_ok,
-            "services": services,
-            "env_info": env_info,
-            "oidc_info": oidc_info,
-        },
+        "admin/settings/system.html",
+        {"cfg": cfg, "services": services, "env_info": env_info},
     )
 
 
@@ -261,30 +298,35 @@ async def settings_openai_test(
     return render(request, "setup/_testergebnis.html", {"ok": ok, "detail": detail})
 
 
-@router.post("/settings")
-async def settings_save(
-    request: Request,
+@router.post("/settings/branding")
+async def settings_branding_save(
     admin: PlatformAdmin,
     db: Db,
-    ollama_base_url: Annotated[str, Form()],
-    default_llm_model: Annotated[str, Form()],
-    reranker_url: Annotated[str, Form()],
-    ollama_api_key: Annotated[str, Form()] = "",
-    reranker_enabled: Annotated[bool, Form()] = False,
-    llm_provider: Annotated[str, Form()] = "ollama",
-    openai_base_url: Annotated[str, Form()] = "",
-    openai_api_key: Annotated[str, Form()] = "",
-    openai_model: Annotated[str, Form()] = "",
     platform_name: Annotated[str, Form()] = "",
     platform_subtitle: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
     await set_setting(db, "platform_name", platform_name.strip() or None)
     await set_setting(db, "platform_subtitle", platform_subtitle.strip() or None)
+    await audit(db, "settings.update", actor_user_id=admin.id, meta={"section": "branding"})
+    await db.commit()
+    return RedirectResponse("/admin/settings/branding", status_code=303)
+
+
+@router.post("/settings/ki")
+async def settings_ki_save(
+    admin: PlatformAdmin,
+    db: Db,
+    ollama_base_url: Annotated[str, Form()],
+    default_llm_model: Annotated[str, Form()],
+    ollama_api_key: Annotated[str, Form()] = "",
+    llm_provider: Annotated[str, Form()] = "ollama",
+    openai_base_url: Annotated[str, Form()] = "",
+    openai_api_key: Annotated[str, Form()] = "",
+    openai_model: Annotated[str, Form()] = "",
+) -> RedirectResponse:
     await set_setting(db, "ollama_base_url", ollama_base_url.strip())
     await set_setting(db, "ollama_api_key", ollama_api_key.strip() or None)
     await set_setting(db, "default_llm_model", default_llm_model.strip())
-    await set_setting(db, "reranker_url", reranker_url.strip())
-    await set_setting(db, "reranker_enabled", reranker_enabled)
     await set_setting(db, "llm_provider", "openai" if llm_provider == "openai" else "ollama")
     await set_setting(db, "openai_base_url", openai_base_url.strip() or None)
     await set_setting(db, "openai_api_key", openai_api_key.strip() or None)
@@ -293,7 +335,37 @@ async def settings_save(
         db,
         "settings.update",
         actor_user_id=admin.id,
-        meta={"llm_provider": llm_provider, "default_llm_model": default_llm_model.strip()},
+        meta={"section": "ki", "llm_provider": llm_provider},
     )
     await db.commit()
-    return RedirectResponse("/admin/settings", status_code=303)
+    return RedirectResponse("/admin/settings/ki", status_code=303)
+
+
+@router.post("/settings/reranking")
+async def settings_reranking_save(
+    admin: PlatformAdmin,
+    db: Db,
+    reranker_url: Annotated[str, Form()],
+    reranker_enabled: Annotated[bool, Form()] = False,
+) -> RedirectResponse:
+    await set_setting(db, "reranker_url", reranker_url.strip())
+    await set_setting(db, "reranker_enabled", reranker_enabled)
+    await audit(db, "settings.update", actor_user_id=admin.id, meta={"section": "reranking"})
+    await db.commit()
+    return RedirectResponse("/admin/settings/reranking", status_code=303)
+
+
+@router.post("/settings/connectoren")
+async def settings_connectoren_save(
+    request: Request, admin: PlatformAdmin, db: Db
+) -> RedirectResponse:
+    form = await request.form()
+    enabled = [
+        c.type_id
+        for c in all_connectors()
+        if form.get(f"connector_enabled_{c.type_id}") is not None
+    ]
+    await set_setting(db, ENABLED_SETTING_KEY, enabled)
+    await audit(db, "settings.update", actor_user_id=admin.id, meta={"section": "connectoren"})
+    await db.commit()
+    return RedirectResponse("/admin/settings/connectoren", status_code=303)

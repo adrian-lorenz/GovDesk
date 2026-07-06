@@ -1,0 +1,28 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "anmeldung" %}
+
+{% block settings_body %}
+<article class="round">
+  <nav class="no-margin">
+    <h6 class="max no-margin"><i>lock</i> Anmeldung (OIDC / SSO)</h6>
+    {% if oidc_info.enabled %}<span class="chip small green-text"><i>check</i> aktiv</span>
+    {% else %}<span class="chip small">deaktiviert</span>{% endif %}
+  </nav>
+  <ul class="list border">
+    <li><div class="max"><strong class="small-text">Lokale Anmeldung</strong></div>
+      <span class="small-text">{{ "erlaubt" if oidc_info.local_login else "gesperrt" }}</span></li>
+    <li><div class="max"><strong class="small-text">Issuer</strong>
+      <div class="small-text">{{ oidc_info.issuer }}</div></div></li>
+    <li><div class="max"><strong class="small-text">Client-ID</strong>
+      <div class="small-text">{{ oidc_info.client_id }}</div></div></li>
+    <li><div class="max"><strong class="small-text">Redirect-URI</strong>
+      <div class="small-text">{{ oidc_info.redirect_uri }}</div></div></li>
+  </ul>
+  <p class="small-text no-margin">OIDC wird aus Sicherheitsgründen über die Server-Umgebung
+    konfiguriert: <code>GOVDESK_OIDC_ENABLED</code>, <code>GOVDESK_OIDC_ISSUER</code>,
+    <code>GOVDESK_OIDC_CLIENT_ID</code>, <code>GOVDESK_OIDC_CLIENT_SECRET</code>,
+    <code>GOVDESK_LOCAL_LOGIN_ENABLED</code>.</p>
+</article>
+{% endblock %}

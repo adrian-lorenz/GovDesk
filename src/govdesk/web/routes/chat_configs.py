@@ -20,13 +20,14 @@ from govdesk.db.models import ChatConfig, Collection, Document
 from govdesk.rag.llm import llm_provider_from_config
 from govdesk.rag.retrieval import retrieve
 from govdesk.web.deps import render
+from govdesk.web.project_layout import project_menu_context
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-async def _page_context(request: Request, project, db: Db, edit: ChatConfig | None = None):
+async def _page_context(request: Request, project, user, db: Db, edit: ChatConfig | None = None):
     configs = list(
         (
             await db.execute(
@@ -50,8 +51,9 @@ async def _page_context(request: Request, project, db: Db, edit: ChatConfig | No
         models = await llm_provider_from_config(cfg).list_models()
     except Exception:
         models = []
+    menu = await project_menu_context(db, project, user, "chat-configs")
     return {
-        "project": project,
+        **menu,
         "configs": configs,
         "collections": collections,
         "models": models,
@@ -61,8 +63,12 @@ async def _page_context(request: Request, project, db: Db, edit: ChatConfig | No
 
 
 @router.get("/projects/{project_id}/chat-configs", response_class=HTMLResponse)
-async def config_list(request: Request, project: ProjectEditor, db: Db) -> HTMLResponse:
-    return render(request, "projects/chat_configs.html", await _page_context(request, project, db))
+async def config_list(
+    request: Request, project: ProjectEditor, user: CurrentUser, db: Db
+) -> HTMLResponse:
+    return render(
+        request, "projects/chat_configs.html", await _page_context(request, project, user, db)
+    )
 
 
 def _parse_draft(raw: str, project) -> dict:
@@ -99,6 +105,7 @@ def _parse_draft(raw: str, project) -> dict:
 async def config_generate(
     request: Request,
     project: ProjectEditor,
+    user: CurrentUser,
     db: Db,
     ziel: Annotated[str, Form()] = "",
 ) -> HTMLResponse:
@@ -127,7 +134,7 @@ async def config_generate(
         "Antworte AUSSCHLIESSLICH mit einem einzigen JSON-Objekt, ohne Markdown, ohne Erklärung."
     )
     zweck = ziel.strip() or "allgemeiner Fachassistent für dieses Projekt"
-    user = (
+    user_prompt = (
         f"Projekt: {project.name}\n"
         f"Beschreibung: {project.description or '—'}\n"
         f"Dokumente: {', '.join(filenames) or '—'}\n"
@@ -142,7 +149,7 @@ async def config_generate(
     draft = None
     try:
         raw = await llm_provider_from_config(cfg).complete(
-            [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            [{"role": "system", "content": system}, {"role": "user", "content": user_prompt}],
             model=cfg.chat_model,
             temperature=0.3,
         )
@@ -150,7 +157,7 @@ async def config_generate(
     except Exception:
         logger.exception("Profilgenerierung per LLM fehlgeschlagen")
 
-    ctx = await _page_context(request, project, db)
+    ctx = await _page_context(request, project, user, db)
     ctx["draft"] = draft
     ctx["generate_error"] = draft is None
     return render(request, "projects/chat_configs.html", ctx)
@@ -158,13 +165,13 @@ async def config_generate(
 
 @router.get("/projects/{project_id}/chat-configs/{config_id}", response_class=HTMLResponse)
 async def config_edit(
-    request: Request, project: ProjectEditor, db: Db, config_id: uuid.UUID
+    request: Request, project: ProjectEditor, user: CurrentUser, db: Db, config_id: uuid.UUID
 ) -> HTMLResponse:
     config = await _load_config(db, project, config_id)
     return render(
         request,
         "projects/chat_configs.html",
-        await _page_context(request, project, db, edit=config),
+        await _page_context(request, project, user, db, edit=config),
     )
 
 

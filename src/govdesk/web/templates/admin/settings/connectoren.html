@@ -1,0 +1,28 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "connectoren" %}
+
+{% block settings_body %}
+<article class="round">
+  <h6><i>extension</i> Connectoren</h6>
+  <p class="small-text">Abschaltbare Quellen-Erweiterungen. Freigeschaltete Connectoren stehen in
+     den Projekten unter „Connectoren" zur Verfügung.</p>
+  {% if connectors %}
+  <form method="post" action="/admin/settings/connectoren">
+    {% for c in connectors %}
+    <label class="switch">
+      <input type="checkbox" name="connector_enabled_{{ c.type_id }}" value="true"
+             {% if c.type_id in enabled %}checked{% endif %}>
+      <span><strong>{{ c.label }}</strong> — {{ c.description }}</span>
+    </label>
+    {% endfor %}
+    <nav class="right-align">
+      <button type="submit"><i>save</i> Speichern</button>
+    </nav>
+  </form>
+  {% else %}
+  <p class="center-align small-text">Derzeit sind keine Connectoren installiert.</p>
+  {% endif %}
+</article>
+{% endblock %}

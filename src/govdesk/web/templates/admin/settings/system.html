@@ -1,0 +1,39 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "system" %}
+
+{% block settings_body %}
+<article class="round">
+  <nav class="no-margin">
+    <h6 class="max no-margin"><i>monitor_heart</i> Dienste-Status</h6>
+    <a class="button circle transparent small" href="/admin/settings/system" title="Aktualisieren"><i>refresh</i></a>
+  </nav>
+  <ul class="list border">
+    {% for s in services %}
+    <li>
+      {% if s.ok %}<i class="green-text">check_circle</i>
+      {% else %}<i class="error-text">cancel</i>{% endif %}
+      <div class="max">
+        <strong>{{ s.name }}</strong>
+        <div class="small-text">{{ s.detail }}</div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="small-text no-margin">Aktives Chat-Modell: <strong>{{ cfg.chat_model }}</strong></p>
+</article>
+
+<article class="round">
+  <h6><i>info</i> System-Info</h6>
+  <ul class="list border">
+    {% for e in env_info %}
+    <li>
+      <div class="max"><strong class="small-text">{{ e.label }}</strong></div>
+      <span class="small-text">{{ e.value }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="small-text no-margin">Werte aus der Server-Umgebung (.env) — nur lesbar.</p>
+</article>
+{% endblock %}

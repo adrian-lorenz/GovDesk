@@ -15,6 +15,7 @@ class DocumentSource(enum.StrEnum):
     UPLOAD = "upload"
     API = "api"
     CRAWLER = "crawler"
+    CONNECTOR = "connector"
 
 
 class DocumentStatus(enum.StrEnum):

@@ -27,6 +27,17 @@ Empfehlungen des BSI (IT-Grundschutz).
 - Erzwungener Wechsel initialer Admin-Passwörter beim ersten Login
 - Greift nur für lokale Konten; bei OIDC bleibt die Richtlinie beim Identity-Provider
 
+## 🔵 Guardrails (Ein- & Ausgabe-Absicherung)
+
+Konfigurierbare Leitplanken für Chat-Ein- und -Ausgaben, damit der Assistent im
+behördlichen Einsatz kontrollierbar und rechtssicher bleibt.
+
+- Eingabe-Prüfung: Prompt-Injection- und Jailbreak-Erkennung, Blocklisten, Themen-/Scope-Begrenzung pro Chat-Profil
+- Ausgabe-Prüfung: Filter gegen unbelegte Aussagen (nur aus Quellen antworten), Sperrbegriffe, Ton-/Format-Vorgaben
+- PII-Erkennung und optionales Schwärzen (Namen, Aktenzeichen, Kontaktdaten) in Ein- und Ausgaben
+- Zentrale Konfiguration in den Plattform-Einstellungen, pro Projekt/Chat-Profil überschreibbar; ausgelöste Guardrails landen im Audit-Log
+- Lokal/souverän lauffähig (kein externer Moderations-Dienst) — regelbasiert plus optional ein kleines lokales Klassifikationsmodell
+
 ## 🔵 Massen-Import & Sync-Agent
 
 Über den bestehenden Internet-Agent hinaus ein Agent, der große Bestände
@@ -47,6 +58,18 @@ Backups und Air-Gap-Übergaben.
 - Re-Import auf einer anderen Instanz inkl. Neu-Einbettung (vektorunabhängig, damit das Ziel ein anderes Embedding-Modell nutzen kann)
 - Selektiver Export (einzelne Sammlungen) und Trockenlauf zur Vorschau
 - CLI-Kommandos für automatisierte Backups (`govdesk export` / `govdesk import`)
+
+## 🔵 Kollaborativer Chat- & Dokumenten-Editor
+
+Ein gemeinsamer Arbeitsbereich, in dem mehrere Nutzer zusammen mit dem Chat in
+Echtzeit an einem Dokument schreiben — der Chat wird vom reinen Frage-Antwort-
+Werkzeug zum Ko-Autor für Vermerke, Bescheide und Vorlagen.
+
+- Echtzeit-Kollaboration mehrerer Nutzer über Socket.IO (Live-Cursor, Präsenz, gemeinsames Bearbeiten)
+- Konfliktfreies Zusammenführen paralleler Änderungen (CRDT/OT), damit gleichzeitige Edits nicht verloren gehen
+- Der Chat schreibt und überarbeitet direkt im Dokument (Textstellen einfügen/umformulieren) — mit Quellenbezug aus dem RAG
+- Export des fertigen Dokuments als **PDF, DOCX und ODF** (behördentaugliche, weiterverarbeitbare Formate)
+- Rechte pro Dokument (Lesen/Kommentieren/Bearbeiten); Änderungen fließen ins bestehende Audit-Log
 
 ## 🔵 Kubernetes- & Podman-Kompatibilität
 

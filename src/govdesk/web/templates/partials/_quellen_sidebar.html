@@ -1,9 +1,28 @@
 {# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
 {# SPDX-License-Identifier: EUPL-1.2 #}
-{# Quellen der jeweils letzten Antwort — für die Sidebar der Chat-Ansicht. #}
+{# Quellen der jeweils letzten Antwort — für die Sidebar der Chat-Ansicht.
+   project_id kommt aus dem Streaming-Kontext, sonst aus dem project-Objekt. #}
+{% set pid = project.id if project is defined else project_id %}
 {% if citations %}
   {% for citation in citations %}
+  {% set klickbar = pid and citation.document_id and citation.chunk_index is defined and citation.chunk_index is not none %}
   <div class="quelle">
+    {% if klickbar %}
+    <div class="quelle-trigger" role="button" tabindex="0"
+         hx-get="/projects/{{ pid }}/documents/{{ citation.document_id }}/passage?chunk={{ citation.chunk_index }}"
+         hx-target="#gd-quelle-modal" hx-swap="innerHTML"
+         hx-trigger="click, keyup[key=='Enter']"
+         title="Fundstelle im Dokument anzeigen">
+      <div class="row no-space">
+        <span class="chip small">[{{ citation.number }}]</span>
+        <strong class="max small-text">{{ citation.filename }}</strong>
+        <i class="small-text">open_in_full</i>
+      </div>
+      {% if citation.heading_path %}<div class="small-text">{{ citation.heading_path }}</div>{% endif %}
+      {% if citation.page_no %}<div class="small-text">Seite {{ citation.page_no }}</div>{% endif %}
+      <div class="small-text italic">{{ citation.snippet[:180] }}…</div>
+    </div>
+    {% else %}
     <div class="row no-space">
       <span class="chip small">[{{ citation.number }}]</span>
       <strong class="max small-text">{{ citation.filename }}</strong>
@@ -11,6 +30,7 @@
     {% if citation.heading_path %}<div class="small-text">{{ citation.heading_path }}</div>{% endif %}
     {% if citation.page_no %}<div class="small-text">Seite {{ citation.page_no }}</div>{% endif %}
     <div class="small-text italic">{{ citation.snippet[:180] }}…</div>
+    {% endif %}
     {% if citation.source_url %}
     <a class="small-text" href="{{ citation.source_url }}" target="_blank" rel="noopener">
       <i>open_in_new</i> Quelle öffnen

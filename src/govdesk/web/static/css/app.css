@@ -380,3 +380,157 @@ form.htmx-request button[type="submit"] {
 @media (prefers-reduced-motion: reduce) {
   body.gd-loading #gd-progress { animation: none; background: var(--primary); }
 }
+
+/* ==========================================================================
+   Quellen-Modal — PDF-Seite mit markierter Fundstelle bzw. Text-Ausschnitt
+   ========================================================================== */
+.min-width-0 { min-inline-size: 0; }
+
+.gd-dialog-wide {
+  inline-size: 60rem;
+  max-inline-size: 94vw;
+  max-block-size: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.gd-quelle-kopf {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-block-end: 0.75rem;
+  border-block-end: 1px solid var(--outline-variant);
+  margin-block-end: 0.75rem;
+}
+.gd-quelle-kopf h6 { overflow-wrap: anywhere; }
+.gd-quelle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  color: var(--on-surface-variant);
+  margin-block-start: 0.25rem;
+}
+.gd-quelle-meta i { font-size: 1rem; vertical-align: -0.15rem; }
+
+/* Scroll-Bereich für lange Seiten/Texte */
+.gd-quelle-body { overflow: auto; min-block-size: 0; }
+
+/* PDF-Seite: Bild + absolut positionierte Markierungen darüber */
+.gd-pdf-figur {
+  position: relative;
+  inline-size: 100%;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+.gd-pdf-bild { display: block; inline-size: 100%; height: auto; }
+.gd-pdf-mark {
+  position: absolute;
+  background: rgb(255 214 0 / 0.38);
+  outline: 1px solid rgb(230 170 0 / 0.65);
+  border-radius: 2px;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3); }
+
+.gd-quelle-hinweis { margin-block: 0.75rem 0.25rem; }
+.gd-quelle-hinweis i { font-size: 1rem; vertical-align: -0.15rem; }
+
+/* Text-Ansicht (Nicht-PDF oder Fallback) */
+.gd-quelle-text { line-height: 1.6; white-space: pre-wrap; }
+.gd-quelle-text mark {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  padding: 0.1rem 0.15rem;
+  border-radius: 0.2rem;
+}
+.gd-quelle-umfeld { color: var(--on-surface-variant); white-space: pre-wrap; }
+
+/* ==========================================================================
+   Seitenmenü-Layout (Einstellungen + Projekt) — vertikales Untermenü + Inhalt
+   ========================================================================== */
+.gd-sidenav {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Untermenü: gerahmte Links auf die Subpages */
+.gd-sidenav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  position: sticky;
+  top: 5rem;
+}
+.gd-sidenav-menu a {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: start;
+  gap: 0.6rem;
+  min-inline-size: 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.5rem;
+  background: var(--surface-container-low);
+  color: var(--on-surface-variant);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.gd-sidenav-menu a > i { font-size: 1.25rem; flex: 0 0 auto; }
+.gd-sidenav-menu a:hover { background: var(--surface-container-high); border-color: var(--outline); }
+.gd-sidenav-menu a.aktiv {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Gleichmäßige vertikale Rhythmik in den Karten — überschreibt Beers
+   uneinheitliche Feld-/Element-Abstände durch einen einheitlichen 1rem-Gap. */
+.gd-sidenav-body > form > * + *,
+.gd-sidenav-body > article + article { margin-block-start: 1rem; }
+.gd-sidenav-body article > *,
+.gd-sidenav-body article > form > * { margin-block: 0; }
+.gd-sidenav-body article > * + *,
+.gd-sidenav-body article > form > * + * { margin-block-start: 1rem; }
+/* Leere HTMX-Zielcontainer (Testergebnis) sollen keinen Phantom-Abstand erzeugen. */
+.gd-sidenav-body div:empty { margin: 0; }
+
+@media (max-width: 60rem) {
+  .gd-sidenav { grid-template-columns: 1fr; }
+  .gd-sidenav-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+  }
+}
+
+/* Checkbox-Liste in Connector-Konfigurationsformularen */
+.gd-checkbox-liste {
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.gd-checkbox-liste legend { padding-inline: 0.35rem; color: var(--on-surface-variant); }
+
+/* Klickbare Quelle in der Sidebar */
+.quelle-trigger {
+  display: block;
+  padding: 0.3rem;
+  margin: -0.3rem -0.3rem 0;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: background var(--speed1) ease;
+}
+.quelle-trigger:hover { background: var(--surface-container-high); }
+.quelle-trigger:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.quelle-trigger .row > i { color: var(--primary); }

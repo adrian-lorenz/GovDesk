@@ -25,6 +25,7 @@ CONTEXT_TOKEN_BUDGET = 2400
 class Citation:
     number: int
     document_id: str
+    chunk_index: int
     filename: str
     heading_path: str | None
     page_no: int | None
@@ -36,6 +37,7 @@ class Citation:
         return {
             "number": self.number,
             "document_id": self.document_id,
+            "chunk_index": self.chunk_index,
             "filename": self.filename,
             "heading_path": self.heading_path,
             "page_no": self.page_no,
@@ -98,6 +100,7 @@ async def retrieve(
             Citation(
                 number=number,
                 document_id=hit.document_id,
+                chunk_index=hit.chunk_index,
                 filename=hit.filename,
                 heading_path=hit.heading_path,
                 page_no=hit.page_no,

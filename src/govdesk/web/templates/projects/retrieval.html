@@ -1,14 +1,11 @@
 {# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
 {# SPDX-License-Identifier: EUPL-1.2 #}
-{% extends "base.html" %}
-{% block title %}Retrieval-Test — {{ project.name }}{% endblock %}
+{% extends "projects/_layout.html" %}
+{% set active = "retrieval" %}
+{% set page_title = "Retrieval-Test" %}
 
-{% block nav %}
-<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
-{% endblock %}
-
-{% block content %}
-<h5><i>manage_search</i> Retrieval-Test</h5>
+{% block project_body %}
+<h6 class="no-margin"><i>manage_search</i> Retrieval-Test</h6>
 <p class="small-text">Zeigt die gerankten Textabschnitte für eine Suchanfrage —
    ohne Sprachmodell. Nützlich zum Prüfen der Trefferqualität.</p>
 

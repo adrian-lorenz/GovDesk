@@ -1,14 +1,11 @@
 {# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
 {# SPDX-License-Identifier: EUPL-1.2 #}
-{% extends "base.html" %}
-{% block title %}Chat-Profile — {{ project.name }}{% endblock %}
+{% extends "projects/_layout.html" %}
+{% set active = "chat-configs" %}
+{% set page_title = "Chat-Profile" %}
 
-{% block nav %}
-<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
-{% endblock %}
-
-{% block content %}
-<h5><i>tune</i> Chat-Profile</h5>
+{% block project_body %}
+<h6 class="no-margin"><i>tune</i> Chat-Profile</h6>
 <p class="small-text">Profile legen fest, wie ein Chat antwortet: System-Prompt,
    Modell, Kreativität und welche Sammlungen durchsucht werden.</p>
 

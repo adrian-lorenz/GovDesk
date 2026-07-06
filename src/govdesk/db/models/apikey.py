@@ -21,14 +21,12 @@ API_SCOPES = {
 
 
 class ApiKey(Base, UUIDPrimaryKeyMixin, TimestampMixin):
-    """Projekt-gebundener API-Key. Es wird nur der SHA-256-Hash gespeichert;
-    der Klartext-Schlüssel ist ausschließlich bei der Erzeugung sichtbar."""
+    """Plattformweiter API-Key. Es wird nur der SHA-256-Hash gespeichert; der
+    Klartext-Schlüssel ist ausschließlich bei der Erzeugung sichtbar. Das Projekt
+    wird pro Request über den Pfad gewählt (/api/v1/projects/{project_id}/…)."""
 
     __tablename__ = "api_keys"
 
-    project_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), index=True
-    )
     name: Mapped[str] = mapped_column(String(150))
     key_prefix: Mapped[str] = mapped_column(String(20), index=True)
     key_hash: Mapped[str] = mapped_column(String(64), unique=True)

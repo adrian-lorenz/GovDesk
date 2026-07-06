@@ -1,17 +1,17 @@
 {# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
 {# SPDX-License-Identifier: EUPL-1.2 #}
-{% extends "base.html" %}
-{% block title %}API-Keys — {{ project.name }}{% endblock %}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "api-keys" %}
 
-{% block nav %}
-<a class="button border small" href="/projects/{{ project.id }}"><i>arrow_back</i> {{ project.name }}</a>
-{% endblock %}
-
-{% block content %}
-<h5><i>key</i> API-Keys</h5>
-<p class="small-text">Für Fachverfahren und Skripte: Dokumente per REST-API hochladen
-   und durchsuchen. Doku unter <a href="/api/docs" target="_blank">/api/docs</a>.
-   Authentifizierung: <code>Authorization: Bearer &lt;Key&gt;</code></p>
+{% block settings_body %}
+<article class="round">
+  <h6><i>key</i> API-Keys</h6>
+  <p class="small-text">Plattformweite Schlüssel für Fachverfahren und Skripte (REST-API).
+     Das Zielprojekt wird pro Aufruf über den Pfad gewählt:
+     <code>/api/v1/projects/&lt;id&gt;/…</code>. Doku unter
+     <a href="/api/docs" target="_blank" rel="noopener">/api/docs</a>.
+     Authentifizierung: <code>Authorization: Bearer &lt;Key&gt;</code></p>
+</article>
 
 {% if neuer_key %}
 <article class="round border primary-container">
@@ -29,7 +29,7 @@
 
 <article class="round">
   <h6>Neuen Key erstellen</h6>
-  <form method="post" action="/projects/{{ project.id }}/api-keys">
+  <form method="post" action="/admin/settings/api-keys">
     <nav class="row wrap">
       <div class="field label border round max">
         <input type="text" name="name" required maxlength="150">
@@ -69,12 +69,13 @@
         <td class="small-text">{{ key.last_used_at.strftime("%d.%m.%Y %H:%M") if key.last_used_at else "nie" }}</td>
         <td>
           {% if key.revoked_at %}<span class="error-text">widerrufen</span>
-          {% elif key.expires_at and key.expires_at < now %}<span class="amber-text">abgelaufen</span>
-          {% else %}<span class="green-text">aktiv</span>{% endif %}
+          {% else %}<span class="green-text">aktiv</span>
+            {% if key.expires_at %}<span class="small-text"> (bis {{ key.expires_at.strftime("%d.%m.%Y") }})</span>{% endif %}
+          {% endif %}
         </td>
         <td class="right-align">
           {% if not key.revoked_at %}
-          <form method="post" action="/projects/{{ project.id }}/api-keys/{{ key.id }}/widerrufen"
+          <form method="post" action="/admin/settings/api-keys/{{ key.id }}/widerrufen"
                 class="no-margin" onsubmit="return confirm('Key „{{ key.name }}“ widerrufen?')">
             <button class="border small"><i>block</i> Widerrufen</button>
           </form>

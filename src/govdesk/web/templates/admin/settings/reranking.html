@@ -1,0 +1,27 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "reranking" %}
+
+{% block settings_body %}
+<article class="round">
+  <h6><i>sort</i> Reranking</h6>
+  <p class="small-text">Der Reranker (TEI mit bge-reranker) sortiert die Treffer vor der Antwort neu.</p>
+  <form method="post" action="/admin/settings/reranking">
+    <div class="field label border round">
+      <input type="url" name="reranker_url" value="{{ cfg.reranker_url }}" required>
+      <label>Reranker-Adresse (TEI)</label>
+    </div>
+    <label class="switch">
+      <input type="checkbox" name="reranker_enabled" value="true" {% if cfg.reranker_enabled %}checked{% endif %}>
+      <span>Reranker verwenden
+        {% if reranker_ok %}<span class="chip small green-text"><i>check</i> erreichbar</span>
+        {% else %}<span class="chip small amber-text"><i>warning</i> derzeit nicht erreichbar</span>{% endif %}
+      </span>
+    </label>
+    <nav class="right-align">
+      <button type="submit"><i>save</i> Speichern</button>
+    </nav>
+  </form>
+</article>
+{% endblock %}

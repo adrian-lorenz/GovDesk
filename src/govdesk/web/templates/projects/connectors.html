@@ -1,0 +1,112 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "projects/_layout.html" %}
+{% set active = "connectors" %}
+{% set page_title = "Connectoren" %}
+
+{% block project_body %}
+<h6 class="no-margin"><i>extension</i> Connectoren</h6>
+<p class="small-text">Externe Quellen automatisch ins Projekt einspeisen. Verfügbare Connectoren
+   schaltet die Plattform-Administration frei.</p>
+
+{% macro config_field(f) %}
+  {% if f.kind == "bool" %}
+  <label class="switch">
+    <input type="checkbox" name="config_{{ f.key }}" value="true" {% if f.default %}checked{% endif %}>
+    <span>{{ f.label }}</span>
+  </label>
+  {% elif f.kind == "checkboxes" %}
+  <fieldset class="gd-checkbox-liste">
+    <legend class="small-text">{{ f.label }}</legend>
+    {% for val, text in f.choices %}
+    <label class="checkbox">
+      <input type="checkbox" name="config_{{ f.key }}" value="{{ val }}"
+             {% if val in (f.default or []) %}checked{% endif %}>
+      <span>{{ text }}</span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  {% elif f.kind == "list" %}
+  <div class="field textarea label border round">
+    <textarea name="config_{{ f.key }}" rows="2">{{ (f.default or []) | join(", ") }}</textarea>
+    <label>{{ f.label }}</label>
+  </div>
+  {% elif f.kind == "select" %}
+  <div class="field label border round suffix">
+    <select name="config_{{ f.key }}">
+      {% for val, text in f.choices %}
+      <option value="{{ val }}" {% if val == f.default %}selected{% endif %}>{{ text }}</option>
+      {% endfor %}
+    </select>
+    <label>{{ f.label }}</label>
+    <i>arrow_drop_down</i>
+  </div>
+  {% else %}
+  <div class="field label border round">
+    <input type="{{ 'number' if f.kind == 'number' else 'text' }}" name="config_{{ f.key }}"
+           value="{{ f.default if f.default is not none else '' }}"
+           {% if f.required %}required{% endif %} placeholder=" ">
+    <label>{{ f.label }}</label>
+  </div>
+  {% endif %}
+  {% if f.help %}<p class="small-text no-margin">{{ f.help }}</p>{% endif %}
+{% endmacro %}
+
+<div class="grid">
+  <div class="s12 l7">
+    <article class="round">
+      <h6><i>list</i> Quellen</h6>
+      {% if rows %}
+      {% for row in rows %}
+        {% include "partials/_connector_quelle.html" %}
+      {% endfor %}
+      {% else %}
+      <p class="center-align small-text">Noch keine Connector-Quellen.</p>
+      {% endif %}
+    </article>
+  </div>
+
+  <div class="s12 l5">
+    <article class="round">
+      <h6><i>add</i> Neue Quelle</h6>
+      {% if available %}
+      {% for c in available %}
+      <details class="gd-connector-neu">
+        <summary><strong>{{ c.label }}</strong><span class="small-text"> — {{ c.description }}</span></summary>
+        <form method="post" action="/projects/{{ project.id }}/connectors">
+          <input type="hidden" name="connector_type" value="{{ c.type_id }}">
+          <div class="field label border round">
+            <input type="text" name="name" required placeholder=" ">
+            <label>Bezeichnung</label>
+          </div>
+          {% for f in c.config_fields() %}
+            {{ config_field(f) }}
+          {% endfor %}
+          {% if collections %}
+          <div class="field label border round suffix">
+            <select name="collection_id">
+              <option value="">— keine Sammlung —</option>
+              {% for col in collections %}<option value="{{ col.id }}">{{ col.name }}</option>{% endfor %}
+            </select>
+            <label>Sammlung (optional)</label>
+            <i>arrow_drop_down</i>
+          </div>
+          {% endif %}
+          <div class="field label border round">
+            <input type="number" name="sync_interval_hours" value="0" min="0">
+            <label>Automatischer Sync alle … Stunden (0 = manuell)</label>
+          </div>
+          <nav class="right-align">
+            <button type="submit"><i>play_arrow</i> Anlegen &amp; starten</button>
+          </nav>
+        </form>
+      </details>
+      {% endfor %}
+      {% else %}
+      <p class="small-text">Es sind keine Connectoren freigeschaltet. Die Plattform-Administration
+         kann sie unter <a href="/admin/settings/connectoren">Einstellungen → Connectoren</a> aktivieren.</p>
+      {% endif %}
+    </article>
+  </div>
+</div>
+{% endblock %}

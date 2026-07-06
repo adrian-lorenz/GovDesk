@@ -9,7 +9,7 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from sqlalchemy import select
 
-from govdesk.auth.deps import CurrentUser, Db, ProjectViewer
+from govdesk.auth.deps import CurrentUser, Db, ProjectViewer, has_min_role
 from govdesk.chat.service import (
     add_message,
     chat_sessions_for_project,
@@ -20,7 +20,7 @@ from govdesk.chat.service import (
     last_message,
 )
 from govdesk.chat.streaming import render_markdown, stream_answer
-from govdesk.db.models import ChatConfig, MessageRole
+from govdesk.db.models import ChatConfig, MessageRole, ProjectRole
 from govdesk.web.deps import render
 
 router = APIRouter()
@@ -95,10 +95,17 @@ async def chat_page(
         for m in session.messages
     ]
     chats = await chat_sessions_for_project(db, project, user)
+    can_edit = await has_min_role(db, project, user, ProjectRole.EDITOR)
     return render(
         request,
         "chats/chat.html",
-        {"project": project, "chat": session, "messages": messages, "chats": chats},
+        {
+            "project": project,
+            "chat": session,
+            "messages": messages,
+            "chats": chats,
+            "can_edit": can_edit,
+        },
     )
 
 

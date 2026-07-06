@@ -30,32 +30,19 @@ services:
       timeout: 3s
       retries: 10
 
-  ollama:
-    image: ollama/ollama:latest
-    volumes:
-      - ollama_models:/root/.ollama
-    # Für GPU-Betrieb: siehe README (deploy.resources / device_requests)
-
   reranker:
     image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
+    # Defaults sind für echte amd64-Hosts mit genug RAM ausgelegt (voller Durchsatz).
+    # Auf ressourcenarmen oder emulierten Hosts (z. B. Apple Silicon via Rosetta) sprengt
+    # der Warmup sonst den Speicher (OOM/Exit 137) — dort greift docker-compose.dev.yml
+    # mit kleinerem --max-batch-tokens und --auto-truncate.
+    # Hinweis: Das BAAI-Repo hat keine ONNX-Dateien; die 404-Meldungen beim Start sind
+    # erwartet, TEI fällt automatisch auf die safetensors-Gewichte (Candle-Backend) zurück.
     command: ["--model-id", "BAAI/bge-reranker-v2-m3"]
     volumes:
       - reranker_cache:/data
     environment:
       HF_HUB_CACHE: /data
-
-  # Optional: Keycloak für SSO — Start mit `docker compose --profile keycloak up`
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    profiles: ["keycloak"]
-    command: ["start-dev", "--import-realm"]
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-    volumes:
-      - ./deploy/keycloak:/opt/keycloak/data/import:ro
-    ports:
-      - "8180:8080"
 
   app:
     build: .
@@ -64,7 +51,8 @@ services:
       GOVDESK_SECRET_KEY: ${GOVDESK_SECRET_KEY:?GOVDESK_SECRET_KEY muss gesetzt sein (siehe .env.example)}
       GOVDESK_DATABASE_URL: postgresql+psycopg://govdesk:${POSTGRES_PASSWORD:-govdesk}@postgres:5432/govdesk
       GOVDESK_QDRANT_URL: http://qdrant:6333
-      GOVDESK_OLLAMA_BASE_URL: ${GOVDESK_OLLAMA_BASE_URL:-http://ollama:11434}
+      # Ollama läuft extern und wird per IP verbunden — in .env setzen (siehe .env.example)
+      GOVDESK_OLLAMA_BASE_URL: ${GOVDESK_OLLAMA_BASE_URL:?GOVDESK_OLLAMA_BASE_URL muss gesetzt sein, z. B. http://192.168.1.10:11434}
       GOVDESK_OLLAMA_API_KEY: ${GOVDESK_OLLAMA_API_KEY:-}
       GOVDESK_RERANKER_URL: http://reranker:80
       GOVDESK_COOKIE_SECURE: ${GOVDESK_COOKIE_SECURE:-false}
@@ -97,6 +85,5 @@ services:
 volumes:
   pgdata:
   qdrant_data:
-  ollama_models:
   reranker_cache:
   govdesk_data:

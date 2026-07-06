@@ -11,12 +11,35 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from govdesk.db.models import Document, DocumentSource, DocumentStatus, Project
+from govdesk.db.models.document import DocumentChunk
 from govdesk.documents import storage
 from govdesk.documents.parsers.registry import parser_for
 
 
 class DuplicateDocumentError(Exception):
     """Identische Datei existiert bereits im Projekt."""
+
+
+async def load_chunk_context(
+    db: AsyncSession, document_id: uuid.UUID, chunk_index: int
+) -> tuple[DocumentChunk | None, DocumentChunk | None, DocumentChunk | None]:
+    """Lädt den zitierten Chunk samt direktem Vorgänger/Nachfolger (für die Kontext-Ansicht)."""
+    result = await db.execute(
+        select(DocumentChunk)
+        .where(
+            DocumentChunk.document_id == document_id,
+            DocumentChunk.chunk_index.in_(
+                [chunk_index - 1, chunk_index, chunk_index + 1]
+            ),
+        )
+        .order_by(DocumentChunk.chunk_index)
+    )
+    chunks = {c.chunk_index: c for c in result.scalars().all()}
+    return (
+        chunks.get(chunk_index),
+        chunks.get(chunk_index - 1),
+        chunks.get(chunk_index + 1),
+    )
 
 
 async def create_document(
