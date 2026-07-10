@@ -57,7 +57,14 @@ async def create_document(
     Der eigentliche Ingest (Parsen → Chunken → Embedden) läuft im Worker;
     der Aufrufer muss nach dem Commit `enqueue_ingest` aufrufen.
     """
-    parser_for(filename)  # wirft UnsupportedFormatError vor dem Speichern
+    # Bilddateien laufen über den OCR-Pfad des Workers, alles andere braucht
+    # einen Parser (wirft UnsupportedFormatError vor dem Speichern).
+    from pathlib import PurePosixPath
+
+    from govdesk.documents.ocr import IMAGE_EXTENSIONS
+
+    if PurePosixPath(filename.lower()).suffix not in IMAGE_EXTENSIONS:
+        parser_for(filename)
 
     sha256 = hashlib.sha256(data).hexdigest()
     existing = await db.execute(

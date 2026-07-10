@@ -547,7 +547,11 @@ async def settings_ki_save(
     openai_base_url: Annotated[str, Form()] = "",
     openai_api_key: Annotated[str, Form()] = "",
     openai_model: Annotated[str, Form()] = "",
+    ocr_enabled: Annotated[bool, Form()] = False,
+    ocr_model: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
+    await set_setting(db, "ocr_enabled", ocr_enabled)
+    await set_setting(db, "ocr_model", ocr_model.strip() or "glm-ocr:latest")
     await set_setting(db, "ollama_base_url", ollama_base_url.strip())
     await set_setting(db, "ollama_api_key", ollama_api_key.strip() or None)
     await set_setting(db, "default_llm_model", default_llm_model.strip())
@@ -593,3 +597,171 @@ async def settings_connectoren_save(
     await audit(db, "settings.update", actor_user_id=admin.id, meta={"section": "connectoren"})
     await db.commit()
     return RedirectResponse("/admin/settings/connectoren", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Warteschlange: Auslastung + globaler Job-Verlauf (procrastinate)
+# ---------------------------------------------------------------------------
+
+# Sprechende Namen für die Task-Anzeige (Fallback: technischer Name).
+_TASK_LABELS = {
+    "govdesk.ingest_document": "Dokument einbetten",
+    "govdesk.crawl_source": "Webseite crawlen",
+    "govdesk.run_connector_job": "Connector-Sync",
+    "govdesk.schedule_connector_syncs": "Connector-Zeitplan",
+    "govdesk.schedule_recrawls": "Re-Crawl-Zeitplan",
+    "govdesk.summarize_chat": "Chat-Zusammenfassung",
+    "govdesk.ping": "Selbsttest",
+}
+
+_STATUS_LABELS = {
+    "todo": ("wartend", "info"),
+    "doing": ("läuft", "warning"),
+    "succeeded": ("erledigt", "success"),
+    "failed": ("fehlgeschlagen", "danger"),
+    "cancelled": ("abgebrochen", "danger"),
+    "aborting": ("wird abgebrochen", "warning"),
+    "aborted": ("abgebrochen", "danger"),
+}
+
+
+async def _queue_context(db) -> dict:
+    """Kennzahlen + Verlauf aus den procrastinate-Tabellen (gleiche Datenbank)."""
+    zaehler = {
+        status: n
+        for status, n in (
+            await db.execute(
+                text("SELECT status::text, count(*) FROM procrastinate_jobs GROUP BY status")
+            )
+        ).all()
+    }
+    je_queue = (
+        await db.execute(
+            text(
+                "SELECT queue_name, task_name, status::text, count(*) "
+                "FROM procrastinate_jobs GROUP BY 1, 2, 3 ORDER BY 1, 2"
+            )
+        )
+    ).all()
+    # Aufschlüsselung je Task: {task: {status: n}}
+    tasks: dict[str, dict[str, int]] = {}
+    for _queue_name, task_name, status, n in je_queue:
+        tasks.setdefault(task_name, {})[status] = tasks.setdefault(task_name, {}).get(
+            status, 0
+        ) + n
+
+    verlauf = (
+        await db.execute(
+            text(
+                """
+                SELECT j.id, j.queue_name, j.task_name, j.status::text, j.attempts,
+                       j.args::text,
+                       (SELECT min(at) FROM procrastinate_events e
+                         WHERE e.job_id = j.id) AS eingereiht,
+                       (SELECT max(at) FROM procrastinate_events e
+                         WHERE e.job_id = j.id AND e.type = 'started') AS gestartet,
+                       (SELECT max(at) FROM procrastinate_events e
+                         WHERE e.job_id = j.id
+                           AND e.type::text IN ('succeeded','failed','cancelled','aborted')
+                       ) AS beendet
+                FROM procrastinate_jobs j
+                ORDER BY j.id DESC
+                LIMIT 100
+                """
+            )
+        )
+    ).all()
+    eintraege = []
+    for row in verlauf:
+        dauer = None
+        if row.gestartet and row.beendet:
+            dauer = (row.beendet - row.gestartet).total_seconds()
+        label, ton = _STATUS_LABELS.get(row.status, (row.status, "info"))
+        # Einbettungs-Jobs verweisen auf ihr Dokument → Chunking-Vorschau.
+        doc_id = None
+        if row.task_name == "govdesk.ingest_document":
+            import json
+
+            try:
+                doc_id = json.loads(row.args).get("document_id")
+            except (ValueError, AttributeError):
+                doc_id = None
+        eintraege.append(
+            {
+                "id": row.id,
+                "queue": row.queue_name,
+                "task": _TASK_LABELS.get(row.task_name, row.task_name),
+                "status": row.status,
+                "status_label": label,
+                "status_ton": ton,
+                "attempts": row.attempts,
+                "args": row.args,
+                "eingereiht": row.eingereiht,
+                "gestartet": row.gestartet,
+                "dauer": dauer,
+                "doc_id": doc_id,
+            }
+        )
+    return {
+        "wartend": zaehler.get("todo", 0),
+        "laufend": zaehler.get("doing", 0),
+        "erledigt": zaehler.get("succeeded", 0),
+        "fehlgeschlagen": zaehler.get("failed", 0)
+        + zaehler.get("cancelled", 0)
+        + zaehler.get("aborted", 0),
+        "tasks": [
+            {
+                "name": _TASK_LABELS.get(task, task),
+                "wartend": st.get("todo", 0),
+                "laufend": st.get("doing", 0),
+                "erledigt": st.get("succeeded", 0),
+                "fehlgeschlagen": st.get("failed", 0),
+            }
+            for task, st in sorted(tasks.items())
+        ],
+        "verlauf": eintraege,
+    }
+
+
+@router.get("/settings/queue", response_class=HTMLResponse)
+async def settings_queue(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
+    ctx = await _queue_context(db)
+    return render(request, "admin/settings/queue.html", ctx)
+
+
+@router.get("/settings/queue/inhalt", response_class=HTMLResponse)
+async def settings_queue_partial(
+    request: Request, admin: PlatformAdmin, db: Db
+) -> HTMLResponse:
+    """HTMX-Partial für die automatische Aktualisierung alle 5 s."""
+    ctx = await _queue_context(db)
+    return render(request, "admin/settings/_queue_inhalt.html", ctx)
+
+
+@router.get("/settings/queue/chunks/{document_id}", response_class=HTMLResponse)
+async def settings_queue_chunks(
+    request: Request, admin: PlatformAdmin, db: Db, document_id: uuid.UUID
+) -> HTMLResponse:
+    """Chunking-Vorschau zu einem Einbettungs-Job: alle erzeugten Chunks."""
+    from govdesk.db.models import Document, DocumentChunk
+
+    document = await db.get(Document, document_id)
+    chunks: list[DocumentChunk] = []
+    projekt = None
+    if document is not None:
+        projekt = await db.get(Project, document.project_id)
+        chunks = list(
+            (
+                await db.execute(
+                    select(DocumentChunk)
+                    .where(DocumentChunk.document_id == document_id)
+                    .order_by(DocumentChunk.chunk_index)
+                    .limit(200)
+                )
+            ).scalars()
+        )
+    return render(
+        request,
+        "admin/settings/_queue_chunks.html",
+        {"document": document, "chunks": chunks, "projekt": projekt},
+    )

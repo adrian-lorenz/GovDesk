@@ -45,7 +45,11 @@
   .msg-assistant { background: var(--kern-color-layout-background-hued);
                    border-radius: 0.75rem 0.75rem 0.75rem 0.2rem; padding: 0.75rem 1rem;
                    margin: 0.75rem auto 0.75rem 0; max-width: 100%; }
-  .stream-text { white-space: pre-wrap; }
+  /* Während des Streamings sammelt .stream-text die rohen Tokens (unsichtbar);
+     .stream-preview zeigt die live gerenderte Markdown-Vorschau. */
+  .stream-text { display: none; }
+  .stream-preview p, .stream-preview li { line-height: 1.55; }
+  .stream-preview > :first-child { margin-block-start: 0; }
   .chat-eingabe { position: sticky; bottom: 0; z-index: 5;
                   background: var(--kern-color-layout-background-default); padding: 1rem 0 0.5rem; }
   .chat-eingabe form { max-width: 52rem; margin: 0 auto; }
@@ -176,10 +180,28 @@
         window.scrollTo(0, document.body.scrollHeight);  // schmale Screens: Seite scrollt
       }
     }
+    // Live-Vorschau: die (unsichtbaren) Roh-Tokens in .stream-text werden bei
+    // jeder Änderung als Markdown gerendert in .stream-preview gespiegelt.
+    // Das done-Event ersetzt beides durch das serverseitig gerenderte HTML.
+    function renderStreams() {
+      if (!v || !window.gdMarkdownLight) return;
+      v.querySelectorAll(".stream-text").forEach(function (st) {
+        var prev = st.previousElementSibling;
+        if (!prev || !prev.classList.contains("stream-preview")) {
+          prev = document.createElement("div");
+          prev.className = "stream-preview";
+          st.parentNode.insertBefore(prev, st);
+        }
+        var html = window.gdMarkdownLight(st.textContent);
+        // Nur bei echter Änderung schreiben — sonst löst die Vorschau selbst
+        // wieder den MutationObserver aus (Endlosschleife).
+        if (prev._gdHtml !== html) { prev._gdHtml = html; prev.innerHTML = html; }
+      });
+    }
     toBottom();
     // Während des Token-Streamings bzw. bei neuen Nachrichten unten bleiben.
     if (v) {
-      new MutationObserver(toBottom).observe(v, {
+      new MutationObserver(function () { renderStreams(); toBottom(); }).observe(v, {
         childList: true, subtree: true, characterData: true,
       });
     }

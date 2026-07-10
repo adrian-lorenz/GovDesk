@@ -105,6 +105,35 @@
     </div>
   </div>
 
+  <div class="kern-card kern-card--hug">
+    <div class="kern-card__container">
+      <div class="kern-card__header">
+        <h2 class="kern-heading-small"><i aria-hidden="true">document_scanner</i> OCR (Scans &amp; Bilder)</h2>
+        <p class="kern-body--small kern-body--muted">Liest beim Einbetten Bilddateien (PNG, JPG, …)
+           und PDF-Seiten ohne Textebene per Vision-Modell aus — lokal über Ollama, läuft im
+           Hintergrund über die Warteschlange.</p>
+      </div>
+      <div class="kern-card__body">
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="ki-ocr-enabled"
+                 name="ocr_enabled" value="true" {% if cfg.ocr_enabled %}checked{% endif %}>
+          <label class="kern-label" for="ki-ocr-enabled">OCR-Modus aktivieren</label>
+        </div>
+        <div class="kern-form-input">
+          <label class="kern-label" for="ki-ocr-modell">OCR-Modell (Ollama, Vision)</label>
+          <input class="kern-form-input__input" type="text" id="ki-ocr-modell" name="ocr_model"
+                 value="{{ cfg.ocr_model }}" placeholder="glm-ocr:latest" list="ocr-models">
+          <datalist id="ocr-models">
+            {% for m in installed %}<option value="{{ m }}"></option>{% endfor %}
+          </datalist>
+          <p class="kern-hint">Das Modell muss auf der Ollama-Instanz installiert sein
+             (z. B. <code>ollama pull glm-ocr:latest</code>). Pro Dokument werden maximal
+             40 Scan-Seiten gelesen.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="gd-dialog-actions">
     <button type="submit" class="kern-btn kern-btn--primary">
       <i aria-hidden="true">save</i><span class="kern-label">Speichern</span>

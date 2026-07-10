@@ -20,33 +20,13 @@ from govdesk.chat.service import (
     last_message,
 )
 from govdesk.chat.streaming import render_markdown, stream_answer
-from govdesk.core.app_settings import get_runtime_config
+from govdesk.chat.zusammenfassung import PLATZHALTER_HTML, transcript_for
 from govdesk.core.audit import audit
 from govdesk.db.models import ChatConfig, MessageRole, ProjectRole
 from govdesk.editor.service import create_document as create_editor_document
 from govdesk.editor.service import save_document as save_editor_document
-from govdesk.rag.llm import llm_provider_from_config
 from govdesk.web.deps import render
 from govdesk.web.project_layout import is_section_visible
-
-
-def _strip_code_fence(text: str) -> str:
-    """Entfernt umschließende ```-Codeblöcke, die manche LLMs um Markdown legen."""
-    s = text.strip()
-    if not s.startswith("```"):
-        return s
-    lines = s.splitlines()
-    lines = lines[1:]  # öffnende Fence-Zeile (z. B. ```markdown) weg
-    if lines and lines[-1].strip().startswith("```"):
-        lines = lines[:-1]
-    return "\n".join(lines).strip()
-
-
-_SUMMARY_SYSTEM = (
-    "Du fasst einen Chat-Verlauf zu einem strukturierten behördlichen Vermerk zusammen. "
-    "Antworte auf Deutsch in Markdown mit einer kurzen Überschrift, den wichtigsten "
-    "Erkenntnissen als Aufzählung und – falls vorhanden – offenen Punkten. Keine Erfindungen."
-)
 
 router = APIRouter()
 
@@ -166,34 +146,15 @@ async def chat_to_document(
     if not await has_min_role(db, project, user, ProjectRole.EDITOR):
         raise HTTPException(status_code=403, detail="Bearbeiter-Rolle erforderlich")
     session = await _own_session(db, chat_id, project, user)
-    transcript = "\n\n".join(
-        f"{'Nutzer' if m.role == MessageRole.USER else 'Assistent'}: {m.content}"
-        for m in session.messages
-        if m.role in (MessageRole.USER, MessageRole.ASSISTANT)
-    )
-    if not transcript.strip():
+    if not transcript_for(session).strip():
         raise HTTPException(status_code=422, detail="Der Chat enthält noch keine Nachrichten.")
 
-    cfg = await get_runtime_config(db)
-    try:
-        summary = await llm_provider_from_config(cfg).complete(
-            [
-                {"role": "system", "content": _SUMMARY_SYSTEM},
-                {"role": "user", "content": transcript[:12000]},
-            ],
-            model=cfg.chat_model,
-            temperature=0.3,
-        )
-    except Exception as exc:
-        raise HTTPException(
-            status_code=502, detail=f"Zusammenfassung fehlgeschlagen: {exc}"
-        ) from exc
-
+    # Die eigentliche Zusammenfassung läuft im Worker (Queue) — der Klick legt
+    # nur das Platzhalter-Dokument an und blockiert die Oberfläche nicht. Der
+    # Editor-Long-Poll ersetzt den Platzhalter, sobald der Job fertig ist.
     title = f"Zusammenfassung: {session.title or 'Chat'}"[:300]
     doc = await create_editor_document(db, project.id, user, title, is_private=False)
-    doc = await save_editor_document(
-        db, doc, user, render_markdown(_strip_code_fence(summary)), doc.version
-    )
+    doc = await save_editor_document(db, doc, user, PLATZHALTER_HTML, doc.version)
     await audit(
         db,
         "editor_document.from_chat",
@@ -204,6 +165,12 @@ async def chat_to_document(
         meta={"chat_id": str(chat_id)},
     )
     await db.commit()
+    # Erst nach dem Commit einreihen — der Worker muss die Zeilen sehen.
+    from govdesk.workers.tasks import summarize_chat
+
+    await summarize_chat.defer_async(
+        chat_id=str(chat_id), document_id=str(doc.id), user_id=str(user.id)
+    )
     return RedirectResponse(f"/projects/{project.id}/editor/{doc.id}", status_code=303)
 
 

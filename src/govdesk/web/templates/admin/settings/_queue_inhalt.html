@@ -1,0 +1,104 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Inhalt der Warteschlangen-Seite — wird per HTMX alle 5 s neu geladen. #}
+
+<div class="gd-cards">
+  <div class="kern-card"><div class="kern-card__container">
+    <span class="kern-body--small kern-body--muted">Wartend</span>
+    <span class="kern-heading-large">{{ wartend }}</span>
+  </div></div>
+  <div class="kern-card"><div class="kern-card__container">
+    <span class="kern-body--small kern-body--muted">Läuft gerade</span>
+    <span class="kern-heading-large">{{ laufend }}</span>
+  </div></div>
+  <div class="kern-card"><div class="kern-card__container">
+    <span class="kern-body--small kern-body--muted">Erledigt</span>
+    <span class="kern-heading-large">{{ erledigt }}</span>
+  </div></div>
+  <div class="kern-card"><div class="kern-card__container">
+    <span class="kern-body--small kern-body--muted">Fehlgeschlagen</span>
+    <span class="kern-heading-large {% if fehlgeschlagen %}gd-error-text{% endif %}">{{ fehlgeschlagen }}</span>
+  </div></div>
+</div>
+
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container">
+    <h2 class="kern-heading-small"><i aria-hidden="true">stacked_bar_chart</i> Auslastung je Aufgabe</h2>
+    {% if tasks %}
+    <div class="kern-table-responsive">
+      <table class="kern-table kern-table--small">
+        <thead class="kern-table__header"><tr class="kern-table__row">
+          <th class="kern-table__cell">Aufgabe</th>
+          <th class="kern-table__cell kern-table__cell--numeric">Wartend</th>
+          <th class="kern-table__cell kern-table__cell--numeric">Läuft</th>
+          <th class="kern-table__cell kern-table__cell--numeric">Erledigt</th>
+          <th class="kern-table__cell kern-table__cell--numeric">Fehlgeschlagen</th>
+        </tr></thead>
+        <tbody class="kern-table__body">
+          {% for t in tasks %}
+          <tr class="kern-table__row">
+            <td class="kern-table__cell">{{ t.name }}</td>
+            <td class="kern-table__cell kern-table__cell--numeric">{{ t.wartend }}</td>
+            <td class="kern-table__cell kern-table__cell--numeric">{{ t.laufend }}</td>
+            <td class="kern-table__cell kern-table__cell--numeric">{{ t.erledigt }}</td>
+            <td class="kern-table__cell kern-table__cell--numeric {% if t.fehlgeschlagen %}gd-error-text{% endif %}">{{ t.fehlgeschlagen }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="kern-body--small kern-body--muted">Noch keine Jobs eingereiht.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container">
+    <h2 class="kern-heading-small"><i aria-hidden="true">history</i> Verlauf (letzte 100 Jobs)</h2>
+    {% if verlauf %}
+    <div class="kern-table-responsive">
+      <table class="kern-table kern-table--small kern-table--striped">
+        <thead class="kern-table__header"><tr class="kern-table__row">
+          <th class="kern-table__cell kern-table__cell--numeric">#</th>
+          <th class="kern-table__cell">Aufgabe</th>
+          <th class="kern-table__cell">Status</th>
+          <th class="kern-table__cell">Eingereiht</th>
+          <th class="kern-table__cell">Gestartet</th>
+          <th class="kern-table__cell kern-table__cell--numeric">Dauer</th>
+          <th class="kern-table__cell kern-table__cell--numeric">Versuche</th>
+          <th class="kern-table__cell kern-table__cell--action"><span class="kern-sr-only">Vorschau</span></th>
+        </tr></thead>
+        <tbody class="kern-table__body">
+          {% for j in verlauf %}
+          <tr class="kern-table__row">
+            <td class="kern-table__cell kern-table__cell--numeric">{{ j.id }}</td>
+            <td class="kern-table__cell" title="{{ j.args }}">{{ j.task }}</td>
+            <td class="kern-table__cell">
+              <span class="kern-badge kern-badge--{{ j.status_ton }} kern-badge--small">
+                <span class="kern-label">{{ j.status_label }}</span>
+              </span>
+            </td>
+            <td class="kern-table__cell">{{ j.eingereiht.strftime("%d.%m. %H:%M:%S") if j.eingereiht else "—" }}</td>
+            <td class="kern-table__cell">{{ j.gestartet.strftime("%d.%m. %H:%M:%S") if j.gestartet else "—" }}</td>
+            <td class="kern-table__cell kern-table__cell--numeric">{{ "%.1f s"|format(j.dauer) if j.dauer is not none else "—" }}</td>
+            <td class="kern-table__cell kern-table__cell--numeric">{{ j.attempts }}</td>
+            <td class="kern-table__cell kern-table__cell--action">
+              {% if j.doc_id %}
+              <button type="button" class="gd-icon-btn" title="Chunking-Vorschau"
+                      hx-get="/admin/settings/queue/chunks/{{ j.doc_id }}"
+                      hx-target="#gd-queue-modal" hx-swap="innerHTML">
+                <i>splitscreen</i>
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="kern-body--small kern-body--muted">Noch kein Verlauf vorhanden.</p>
+    {% endif %}
+  </div>
+</div>

@@ -112,8 +112,89 @@
     ok.focus();
   }
 
+  // Eigenes Hinweis-Modal statt window.alert (gleiches Muster wie gdConfirm).
+  function gdAlert(text) {
+    var overlay = document.getElementById("gd-alert-overlay");
+    var textEl = document.getElementById("gd-alert-text");
+    var ok = document.getElementById("gd-alert-ok");
+    if (!overlay) { window.alert(text); return; }
+    textEl.textContent = text;
+    overlay.hidden = false;
+    function cleanup() {
+      overlay.hidden = true;
+      ok.removeEventListener("click", cleanup);
+      overlay.removeEventListener("click", backdrop);
+    }
+    function backdrop(e) { if (e.target === overlay) cleanup(); }
+    ok.addEventListener("click", cleanup);
+    overlay.addEventListener("click", backdrop);
+    ok.focus();
+  }
+
   // Auch für Seiten-Skripte nutzbar (z. B. Explorer-Kontextmenü).
   window.gdConfirm = gdConfirm;
+  window.gdAlert = gdAlert;
+
+  // Leichter Markdown-Renderer für LIVE-Vorschau während des Token-Streamings
+  // (Chat + Editor-KI-Panel). Die fertige Antwort rendert weiterhin der Server
+  // (markdown-it + nh3) — das hier überbrückt nur die Streaming-Phase.
+  // Eingabe wird zuerst escaped; es entsteht ausschließlich eigenes Markup.
+  window.gdMarkdownLight = function (src) {
+    function esc(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function inline(s) {
+      s = esc(s);
+      s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+      s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      s = s.replace(/(^|[^*\w])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+      return s;
+    }
+    var out = [], para = [], codeBuf = [];
+    var inCode = false, listTyp = null;
+    function closePara() {
+      if (para.length) { out.push("<p>" + inline(para.join(" ")) + "</p>"); para = []; }
+    }
+    function closeList() {
+      if (listTyp) { out.push("</" + listTyp + ">"); listTyp = null; }
+    }
+    var lines = String(src).split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i];
+      if (/^\s*```/.test(l)) {
+        if (inCode) {
+          out.push("<pre><code>" + esc(codeBuf.join("\n")) + "</code></pre>");
+          codeBuf = []; inCode = false;
+        } else { closePara(); closeList(); inCode = true; }
+        continue;
+      }
+      if (inCode) { codeBuf.push(l); continue; }
+      var h = l.match(/^(#{1,4})\s+(.*)/);
+      if (h) {
+        closePara(); closeList();
+        var stufe = Math.min(h[1].length + 2, 6);
+        out.push("<h" + stufe + ">" + inline(h[2]) + "</h" + stufe + ">");
+        continue;
+      }
+      var ul = l.match(/^\s*[-*+]\s+(.*)/);
+      var ol = ul ? null : l.match(/^\s*\d+[.)]\s+(.*)/);
+      if (ul || ol) {
+        closePara();
+        var typ = ul ? "ul" : "ol";
+        if (listTyp !== typ) { closeList(); out.push("<" + typ + ">"); listTyp = typ; }
+        out.push("<li>" + inline((ul || ol)[1]) + "</li>");
+        continue;
+      }
+      var bq = l.match(/^\s*&gt;\s?(.*)/) || l.match(/^\s*>\s?(.*)/);
+      if (bq) { closePara(); closeList(); out.push("<blockquote><p>" + inline(bq[1]) + "</p></blockquote>"); continue; }
+      if (/^\s*$/.test(l)) { closePara(); closeList(); continue; }
+      para.push(l.trim());
+    }
+    // Offener Codeblock am Streaming-Ende: trotzdem schon als Code zeigen.
+    if (inCode) out.push("<pre><code>" + esc(codeBuf.join("\n")) + "</code></pre>");
+    closePara(); closeList();
+    return out.join("\n");
+  };
 
   document.body.addEventListener("htmx:confirm", function (e) {
     if (!e.detail.question) { return; }  // kein hx-confirm → normal weiter

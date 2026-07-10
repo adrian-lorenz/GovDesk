@@ -1,0 +1,26 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "queue" %}
+
+{% block settings_body %}
+<div class="gd-row gd-mb">
+  <div class="gd-grow">
+    <h2 class="kern-heading-small"><i aria-hidden="true">pending_actions</i> Warteschlange</h2>
+    <p class="kern-body--small">Alle Hintergrund-Jobs (Einbetten, Crawls, Connector-Syncs,
+       Zusammenfassungen) laufen über die Postgres-Queue und blockieren die Oberfläche nicht.
+       Die Ansicht aktualisiert sich alle 5 Sekunden.</p>
+  </div>
+</div>
+
+<div id="queue-inhalt"
+     hx-get="/admin/settings/queue/inhalt"
+     hx-trigger="every 5s"
+     hx-swap="innerHTML">
+  {% include "admin/settings/_queue_inhalt.html" %}
+</div>
+
+{# Ziel für die Chunking-Vorschau (Modal) — liegt außerhalb des Auto-Refresh-
+   Bereichs, damit das offene Modal nicht alle 5 s weggewischt wird. #}
+<div id="gd-queue-modal"></div>
+{% endblock %}

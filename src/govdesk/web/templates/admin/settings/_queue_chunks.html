@@ -1,0 +1,57 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Chunking-Vorschau (Modal) — erzeugte Chunks eines Einbettungs-Jobs. #}
+<div class="gd-overlay" data-gd-dismissable role="dialog" aria-modal="true"
+     aria-labelledby="gd-chunks-titel">
+  <div class="gd-dialog gd-dialog-wide">
+    <div class="gd-quelle-kopf">
+      <div class="gd-grow min-width-0">
+        <h2 id="gd-chunks-titel" class="kern-heading-small">
+          <i aria-hidden="true">splitscreen</i> Chunking-Vorschau
+        </h2>
+        {% if document %}
+        <div class="kern-body--small gd-quelle-meta">
+          <span><i aria-hidden="true">description</i> {{ document.filename }}</span>
+          {% if projekt %}<span><i aria-hidden="true">folder</i> {{ projekt.name }}</span>{% endif %}
+          <span>{{ document.chunk_count }} Chunks</span>
+          <span>Status: {{ document.status.value }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <button type="button" class="gd-icon-btn" data-gd-dismiss title="Schließen">
+        <i>close</i>
+      </button>
+    </div>
+
+    <div class="gd-quelle-body">
+      {% if document is none %}
+      <p class="kern-body">Das Dokument existiert nicht mehr (gelöscht oder Projekt entfernt).</p>
+      {% elif document.error %}
+      <div class="kern-alert kern-alert--danger" role="alert">
+        <div class="kern-alert__body">{{ document.error }}</div>
+      </div>
+      {% elif not chunks %}
+      <p class="kern-body">Noch keine Chunks vorhanden — der Job läuft noch oder hat keinen Text gefunden.</p>
+      {% else %}
+      <ul class="gd-doc-liste">
+        {% for c in chunks %}
+        <li class="gd-doc-row" style="align-items: flex-start">
+          <span class="kern-badge kern-badge--small"><span class="kern-label">#{{ c.chunk_index + 1 }}</span></span>
+          <div class="gd-grow min-width-0">
+            <div class="kern-body--small gd-doc-meta">
+              {% if c.heading_path %}<span>{{ c.heading_path }}</span>{% endif %}
+              {% if c.page_no %}<span>Seite {{ c.page_no }}</span>{% endif %}
+              {% if c.token_count %}<span>~{{ c.token_count }} Tokens</span>{% endif %}
+            </div>
+            <div class="kern-body--small gd-quelle-text">{{ c.text }}</div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if chunks | length == 200 %}
+      <p class="kern-body--small kern-body--muted gd-mt">Es werden die ersten 200 Chunks angezeigt.</p>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>

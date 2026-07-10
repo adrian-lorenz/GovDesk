@@ -135,7 +135,7 @@
     var url = typ === "ordner"
       ? "/projects/" + pid() + "/editor/ordner/" + id + "/loeschen"
       : "/projects/" + pid() + "/editor/" + id + "/loeschen";
-    try { await post(url); neuLaden(); } catch (err) { window.alert("Löschen fehlgeschlagen."); }
+    try { await post(url); neuLaden(); } catch (err) { (window.gdAlert || window.alert)("Löschen fehlgeschlagen."); }
   }
 
   document.addEventListener("submit", function (e) {
@@ -148,7 +148,7 @@
     felder[form.dataset.feld] = name;
     post(form.dataset.url, felder)
       .then(neuLaden)
-      .catch(function () { window.alert("Umbenennen fehlgeschlagen."); });
+      .catch(function () { (window.gdAlert || window.alert)("Umbenennen fehlgeschlagen."); });
   });
 
   // --- Drag & Drop ----------------------------------------------------------
@@ -212,7 +212,7 @@
       await post(url, zielOrdner ? { ziel: zielOrdner } : {});
       neuLaden();
     } catch (err) {
-      window.alert("Verschieben fehlgeschlagen.");
+      (window.gdAlert || window.alert)("Verschieben fehlgeschlagen.");
     }
   }
 })();

@@ -34,9 +34,9 @@
         </div>
         {% endif %}
         {# Nativer Datei-Input — Auswahl startet den Upload sofort. #}
-        <label class="kern-body--small gd-file-label" for="upload-datei">Datei (PDF, DOCX, XLSX, PPTX, ODT, TXT, MD, HTML)</label>
+        <label class="kern-body--small gd-file-label" for="upload-datei">Datei (PDF, DOCX, XLSX, PPTX, ODT, TXT, MD, HTML — mit OCR auch PNG/JPG)</label>
         <input type="file" name="datei" id="upload-datei" required class="gd-file-input"
-               accept=".pdf,.txt,.md,.docx,.doc,.odt,.html,.htm,.xlsx,.pptx"
+               accept=".pdf,.txt,.md,.docx,.doc,.odt,.html,.htm,.xlsx,.pptx,.png,.jpg,.jpeg,.webp,.bmp,.tif,.tiff"
                onchange="if(this.files.length){this.closest('form').requestSubmit();}">
         <p class="kern-hint">Der Upload startet automatisch nach der Auswahl.</p>
         <div class="gd-dialog-actions">

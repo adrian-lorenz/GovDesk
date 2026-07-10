@@ -52,6 +52,10 @@ class RuntimeConfig:
     openai_base_url: str | None
     openai_api_key: str | None
     openai_model: str | None
+    # OCR beim Einbetten: Bilddateien und PDF-Seiten ohne Textebene (Scans)
+    # per Vision-Modell (Ollama) auslesen.
+    ocr_enabled: bool
+    ocr_model: str
 
     @property
     def chat_model(self) -> str:
@@ -76,4 +80,6 @@ async def get_runtime_config(db: AsyncSession) -> RuntimeConfig:
         openai_base_url=stored.get("openai_base_url") or None,
         openai_api_key=stored.get("openai_api_key") or None,
         openai_model=stored.get("openai_model") or None,
+        ocr_enabled=bool(stored.get("ocr_enabled", False)),
+        ocr_model=stored.get("ocr_model") or "glm-ocr:latest",
     )

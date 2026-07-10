@@ -16,7 +16,7 @@ ohne Cloud-Zwang, ohne Telemetrie.
 ## Funktionsumfang
 
 - 📁 **Projekte** mit Rollen und Berechtigungen (Eigentümer, Admin, Bearbeiter, Betrachter)
-- 📄 **Dokument-Ingestion**: PDF, DOCX, ODT, TXT, Markdown, HTML — per UI oder REST-API mit API-Keys
+- 📄 **Dokument-Ingestion**: PDF, DOCX, ODT, TXT, Markdown, HTML — per UI oder REST-API mit API-Keys; optionaler **OCR-Modus** (Vision-Modell via Ollama, z. B. glm-ocr) liest Bilder und gescannte PDF-Seiten aus
 - 🔍 **RAG-Suche** mit Qdrant (Vektordatenbank), bge-m3-Embeddings und Reranker (bge-reranker-v2-m3)
 - 💬 **Konfigurierbare Chats** pro Projekt: System-Prompt, Modell, Temperatur, Quellenauswahl — Antworten mit Zitaten
 - 🌐 **Internet-Agent**: Webseiten crawlen, extrahieren und einbetten — wahlweise **KI-geführt**: Sie geben eine Start-URL und einen Suchauftrag an, der Agent entscheidet selbst, welchen Links er folgt und welche Inhalte relevant sind. Inkl. periodischem Re-Crawl (robots.txt wird respektiert)

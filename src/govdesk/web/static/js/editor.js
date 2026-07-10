@@ -357,7 +357,12 @@
                     + text.length + " Zeichen"
                 );
               } else {
-                antwortEl.textContent = text;
+                // Live-Markdown statt Rohtext (final rendert der Server).
+                if (window.gdMarkdownLight) {
+                  antwortEl.innerHTML = window.gdMarkdownLight(text);
+                } else {
+                  antwortEl.textContent = text;
+                }
                 verlauf.scrollTop = verlauf.scrollHeight;
               }
             } else if (event === "done") {

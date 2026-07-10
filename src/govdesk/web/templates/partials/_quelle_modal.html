@@ -41,6 +41,21 @@
         <mark>{{ target.text }}</mark>
       </div>
       {% endif %}
+    {% elif bild_vorschau %}
+      {# Bilddokument (OCR): Original-Bild als Vorschau, darunter der erkannte Text. #}
+      <figure class="gd-pdf-figur" style="margin: 0">
+        <img class="gd-pdf-bild" loading="lazy"
+             src="/projects/{{ project.id }}/documents/{{ document.id }}/vorschau"
+             alt="Vorschau von {{ document.filename }}">
+      </figure>
+      <p class="kern-body--small kern-body--muted gd-quelle-hinweis">
+        <i aria-hidden="true">document_scanner</i> Per OCR erkannter Text (zitierter Abschnitt hervorgehoben):
+      </p>
+      <div class="gd-quelle-text">
+        {% if before %}<p class="gd-quelle-umfeld">…{{ before.text[-320:] }}</p>{% endif %}
+        <mark>{{ target.text }}</mark>
+        {% if after %}<p class="gd-quelle-umfeld">{{ after.text[:320] }}…</p>{% endif %}
+      </div>
     {% else %}
       {# Kein PDF (oder Vorschau nicht möglich): Text im Kontext der Nachbar-Chunks. #}
       <div class="gd-quelle-text">

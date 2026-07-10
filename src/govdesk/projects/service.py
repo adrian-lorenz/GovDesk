@@ -97,7 +97,8 @@ async def delete_project_permanently(db: AsyncSession, project: Project) -> None
         )
     ).scalars()
     for pfad in pfade:
-        delete_file(pfad)
+        if pfad:
+            delete_file(pfad)
 
     store = VectorStore()
     try:

@@ -58,17 +58,44 @@ async def ingest_document(document_id: str) -> None:
         source_url = document.source_url
 
     try:
-        # 1) Parsen
+        # 1) Parsen — Bilddateien laufen komplett über OCR (Vision-Modell);
+        #    bei PDFs werden Seiten ohne Textebene (Scans) per OCR ergänzt.
+        from pathlib import PurePosixPath
+
+        from govdesk.documents.ocr import (
+            IMAGE_EXTENSIONS,
+            ocr_image_to_blocks,
+            ocr_missing_pdf_pages,
+        )
+        from govdesk.documents.parsers.base import ParsedDocument
+
         await _set_status(doc_id, DocumentStatus.PARSING)
         assert file_path is not None
         data = storage.read_file(file_path)
-        parsed = parser_for(filename).parse(data)
+        suffix = PurePosixPath(filename.lower()).suffix
+        if suffix in IMAGE_EXTENSIONS:
+            if not cfg.ocr_enabled:
+                raise ValueError(
+                    "Bilddatei — der OCR-Modus ist deaktiviert "
+                    "(Einstellungen → KI & Modelle → OCR)."
+                )
+            parsed = ParsedDocument(blocks=await ocr_image_to_blocks(cfg, data))
+        else:
+            parsed = parser_for(filename).parse(data)
+            if suffix == ".pdf" and cfg.ocr_enabled:
+                parsed = ParsedDocument(
+                    blocks=await ocr_missing_pdf_pages(cfg, data, list(parsed.blocks))
+                )
 
         # 2) Chunken
         await _set_status(doc_id, DocumentStatus.CHUNKING)
         chunks = chunk_blocks(parsed.blocks)
         if not chunks:
-            raise ValueError("Kein Textinhalt gefunden — ist das Dokument leer oder ein Scan?")
+            hinweis = (
+                "" if cfg.ocr_enabled else " Für Scans/Bilder den OCR-Modus aktivieren "
+                "(Einstellungen → KI & Modelle)."
+            )
+            raise ValueError(f"Kein Textinhalt gefunden — ist das Dokument leer?{hinweis}")
 
         # 3) Embedden
         await _set_status(doc_id, DocumentStatus.EMBEDDING)
@@ -127,7 +154,10 @@ async def ingest_document(document_id: str) -> None:
 
     except Exception as exc:
         logger.exception("Ingest von %s fehlgeschlagen", filename)
-        await _set_status(doc_id, DocumentStatus.FAILED, error=str(exc)[:2000])
+        # str() mancher Exceptions (z. B. httpx.ReadTimeout) ist leer — dann
+        # wenigstens den Typ nennen, sonst steht in der UI „kein Fehler".
+        grund = str(exc).strip() or f"{type(exc).__name__} (z. B. Zeitüberschreitung/Verbindung)"
+        await _set_status(doc_id, DocumentStatus.FAILED, error=grund[:2000])
         raise
 
 
@@ -523,4 +553,48 @@ async def schedule_recrawls(timestamp: int) -> None:
                 await db.flush()
                 await crawl_source.defer_async(job_id=str(job.id))
                 logger.info("Re-Crawl eingeplant: %s", source.name)
+        await db.commit()
+
+
+@queue.task(name="govdesk.summarize_chat", retry=1)
+async def summarize_chat(chat_id: str, document_id: str, user_id: str) -> None:
+    """Fasst einen Chat im Hintergrund zusammen und füllt das (bereits angelegte)
+    Editor-Dokument. Der Editor aktualisiert sich über den Long-Poll von selbst,
+    sobald die Version steigt — der Nutzer sieht die Zusammenfassung „eintreffen"."""
+    from govdesk.chat.service import get_chat_session
+    from govdesk.chat.streaming import render_markdown
+    from govdesk.chat.zusammenfassung import (
+        strip_code_fence,
+        summarize_transcript,
+        transcript_for,
+    )
+    from govdesk.db.models import EditorDocument, User
+    from govdesk.editor.service import save_document
+
+    async with get_session_factory()() as db:
+        session = await get_chat_session(db, uuid.UUID(chat_id), with_messages=True)
+        doc = await db.get(EditorDocument, uuid.UUID(document_id))
+        user = await db.get(User, uuid.UUID(user_id))
+        if doc is None or user is None:
+            logger.warning("summarize_chat: Dokument/Nutzer fehlt — übersprungen")
+            return
+        cfg = await get_runtime_config(db)
+        transcript = transcript_for(session) if session is not None else ""
+
+        try:
+            if not transcript.strip():
+                raise ValueError("Der Chat enthält keine Nachrichten.")
+            summary = await summarize_transcript(cfg, transcript)
+            html = render_markdown(strip_code_fence(summary))
+        except Exception as exc:
+            logger.exception("Chat-Zusammenfassung fehlgeschlagen (Chat %s)", chat_id)
+            html = (
+                "<p><strong>Die Zusammenfassung ist fehlgeschlagen.</strong> "
+                f"Grund: {str(exc)[:300]} — Sie können dieses Dokument löschen "
+                "und es erneut versuchen.</p>"
+            )
+
+        # Immer auf die aktuelle Version speichern: der Platzhalter darf auch
+        # dann ersetzt werden, wenn zwischenzeitlich jemand tippte.
+        await save_document(db, doc, user, html, doc.version)
         await db.commit()

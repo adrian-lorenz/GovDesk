@@ -41,6 +41,16 @@ def _is_pdf(document: Document) -> bool:
     ).lower().endswith(".pdf")
 
 
+def _is_image(document: Document) -> bool:
+    from pathlib import PurePosixPath
+
+    from govdesk.documents.ocr import IMAGE_EXTENSIONS
+
+    if (document.content_type or "").startswith("image/"):
+        return True
+    return PurePosixPath((document.filename or "").lower()).suffix in IMAGE_EXTENSIONS
+
+
 @router.post("/projects/{project_id}/documents")
 async def upload_document(
     request: Request,
@@ -141,6 +151,7 @@ async def document_passage(
             "before": before,
             "after": after,
             "page_highlight": page_highlight,
+            "bild_vorschau": _is_image(document) and bool(document.file_path),
         },
     )
 
@@ -161,6 +172,25 @@ async def document_download(
         content=data,
         media_type=document.content_type or "application/octet-stream",
         headers={"Content-Disposition": f'attachment; filename="{document.filename}"'},
+    )
+
+
+@router.get("/projects/{project_id}/documents/{document_id}/vorschau")
+async def document_preview(
+    project: ProjectViewer, db: Db, document_id: uuid.UUID
+) -> Response:
+    """Liefert Bilddokumente inline — für die Vorschau im Quellen-Modal."""
+    document = await _load_document(db, project, document_id)
+    if not document.file_path or not _is_image(document):
+        raise HTTPException(status_code=404, detail="Keine Bildvorschau verfügbar")
+    try:
+        data = await asyncio.to_thread(storage.read_file, document.file_path)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden") from exc
+    return Response(
+        content=data,
+        media_type=document.content_type or "image/png",
+        headers={"Content-Disposition": "inline"},
     )
 
 

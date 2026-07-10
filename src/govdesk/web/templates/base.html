@@ -26,18 +26,41 @@
 <span id="gd-csrf" data-token="{{ csrf_token or '' }}" hidden></span>
 <div id="gd-progress" aria-hidden="true"></div>
 
-{# Eigenes Bestätigungs-Modal statt window.confirm — von theme.js gesteuert #}
+{# Eigene Bestätigungs-/Hinweis-Modals statt window.confirm/alert — theme.js #}
 <div id="gd-confirm-overlay" class="gd-overlay" hidden>
   <div class="gd-dialog" role="alertdialog" aria-modal="true" aria-labelledby="gd-confirm-text">
-    <p id="gd-confirm-text" class="kern-body--bold"></p>
-    <nav class="gd-dialog-actions">
+    <div class="gd-dialog-kopf">
+      <span class="gd-dialog-icon"><i aria-hidden="true">help</i></span>
+      <div class="gd-dialog-text">
+        <h2 class="kern-heading-small">Bestätigung</h2>
+        <p id="gd-confirm-text" class="kern-body"></p>
+      </div>
+    </div>
+    <div class="gd-dialog-actions">
       <button type="button" class="kern-btn kern-btn--secondary" id="gd-confirm-cancel">
         <span class="kern-label">Abbrechen</span>
       </button>
       <button type="button" class="kern-btn kern-btn--primary" id="gd-confirm-ok">
         <i aria-hidden="true">check</i><span class="kern-label">Bestätigen</span>
       </button>
-    </nav>
+    </div>
+  </div>
+</div>
+
+<div id="gd-alert-overlay" class="gd-overlay" hidden>
+  <div class="gd-dialog" role="alertdialog" aria-modal="true" aria-labelledby="gd-alert-text">
+    <div class="gd-dialog-kopf">
+      <span class="gd-dialog-icon gd-dialog-icon--warnung"><i aria-hidden="true">error</i></span>
+      <div class="gd-dialog-text">
+        <h2 class="kern-heading-small">Hinweis</h2>
+        <p id="gd-alert-text" class="kern-body"></p>
+      </div>
+    </div>
+    <div class="gd-dialog-actions">
+      <button type="button" class="kern-btn kern-btn--primary" id="gd-alert-ok">
+        <span class="kern-label">Verstanden</span>
+      </button>
+    </div>
   </div>
 </div>
 
