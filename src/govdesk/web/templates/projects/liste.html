@@ -4,43 +4,86 @@
 {% block title %}Projekte — {{ platform_name }}{% endblock %}
 
 {% block content %}
-<nav>
-  <h5 class="max">Projekte</h5>
-  <form method="post" action="/projects/import" enctype="multipart/form-data" class="no-margin"
+<div class="gd-page-head">
+  <h1 class="kern-heading-large gd-grow">Projekte</h1>
+  <form method="post" action="/projects/import" enctype="multipart/form-data"
         hx-boost="false" id="import-form">
     <input type="file" name="datei" accept=".zip" hidden id="import-file"
            onchange="if(this.files.length){this.form.requestSubmit();}">
-    <button type="button" class="border" onclick="document.getElementById('import-file').click()">
-      <i>upload</i> Importieren
+    <button type="button" class="kern-btn kern-btn--secondary" onclick="document.getElementById('import-file').click()">
+      <i aria-hidden="true">upload</i><span class="kern-label">Importieren</span>
     </button>
   </form>
-  <a class="button" href="/projects/neu"><i>add</i> Neues Projekt</a>
-</nav>
+  <a class="kern-btn kern-btn--primary" href="/projects/neu">
+    <i aria-hidden="true">add</i><span class="kern-label">Neues Projekt</span>
+  </a>
+</div>
 
 {% if projects %}
-<div class="projekt-liste">
+<div class="gd-cards">
   {% for item in projects %}
   {% set project = item.project %}
   <a href="/projects/{{ project.id }}">
-    <article class="round border projekt-kachel">
-      <h6 class="no-margin"><i>folder</i> {{ project.name }}</h6>
-      <p class="small-text projekt-beschreibung">{{ project.description or "Keine Beschreibung" }}</p>
-      <nav class="small-text projekt-infos no-margin">
-        <span title="Dokumente"><i>description</i> {{ item.documents }}</span>
-        <span title="Mitglieder"><i>group</i> {{ item.members }}</span>
-        <div class="max"></div>
-        <span title="Zuletzt verwendet">{{ item.last_used.strftime("%d.%m.%Y") }}</span>
-      </nav>
-    </article>
+    <div class="kern-card projekt-kachel">
+      <div class="kern-card__container">
+        <h2 class="kern-heading-small"><i aria-hidden="true">folder</i> {{ project.name }}</h2>
+        <p class="kern-body--small projekt-beschreibung">{{ project.description or "Keine Beschreibung" }}</p>
+        <div class="kern-body--small projekt-infos gd-grow">
+          <span title="Dokumente"><i aria-hidden="true">description</i> {{ item.documents }}</span>
+          <span title="Mitglieder"><i aria-hidden="true">group</i> {{ item.members }}</span>
+          <span class="gd-grow"></span>
+          <span title="Zuletzt verwendet">{{ item.last_used.strftime("%d.%m.%Y") }}</span>
+        </div>
+      </div>
+    </div>
   </a>
   {% endfor %}
 </div>
 {% else %}
-<article class="round large-padding center-align">
-  <i class="extra">folder_open</i>
-  <h6>Noch keine Projekte</h6>
-  <p>Legen Sie Ihr erstes Projekt an, um Dokumente einzubetten und Chats zu starten.</p>
-  <a class="button" href="/projects/neu"><i>add</i> Erstes Projekt anlegen</a>
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container gd-center" style="align-items: center">
+    <i aria-hidden="true" style="font-size: 3rem">folder_open</i>
+    <h2 class="kern-heading-small">Noch keine Projekte</h2>
+    <p class="kern-body">Legen Sie Ihr erstes Projekt an, um Dokumente einzubetten und Chats zu starten.</p>
+    <a class="kern-btn kern-btn--primary" href="/projects/neu">
+      <i aria-hidden="true">add</i><span class="kern-label">Erstes Projekt anlegen</span>
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{% if archiv %}
+{# Nur Plattform-Admins: archivierte Projekte mit behaltener Wissensbasis. #}
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container">
+    <h2 class="kern-heading-small"><i aria-hidden="true">archive</i> Archiv — behaltene Wissensbasen</h2>
+    <p class="kern-body--small">Diese Projekte wurden gelöscht, ihre Wissensbasis (Collection)
+       aber behalten. <strong>Wiederherstellen</strong> verknüpft die Collection wieder mit dem
+       Projekt und macht es erneut nutzbar.</p>
+    <ul class="gd-doc-liste">
+      {% for p in archiv %}
+      <li class="gd-doc-row">
+        <span class="gd-doc-icon"><i aria-hidden="true">inventory_2</i></span>
+        <div class="gd-grow">
+          <strong class="gd-doc-name">{{ p.name }}</strong>
+          <div class="kern-body--small gd-doc-meta">
+            <span>Collection: {{ p.qdrant_collection }}</span>
+            <span>archiviert {{ p.updated_at.strftime("%d.%m.%Y %H:%M") }}</span>
+          </div>
+        </div>
+        <form method="post" action="/projects/archiv/{{ p.id }}/wiederherstellen">
+          <button class="kern-btn kern-btn--secondary kern-btn--x-small">
+            <i aria-hidden="true">restore</i><span class="kern-label">Wiederherstellen</span>
+          </button>
+        </form>
+        <form method="post" action="/projects/archiv/{{ p.id }}/loeschen"
+              hx-confirm="„{{ p.name }}“ mitsamt Wissensbasis ENDGÜLTIG löschen?">
+          <button class="gd-icon-btn" title="Endgültig löschen"><i>delete_forever</i></button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
 {% endif %}
 {% endblock %}

@@ -23,7 +23,7 @@ ohne Cloud-Zwang, ohne Telemetrie.
 - 🤖 **Ollama** lokal oder Cloud; Provider-Abstraktion für OpenAI-kompatible Endpunkte
 - 🔐 **Eigene Nutzerverwaltung** plus optionale **Keycloak/OIDC**-Anbindung
 - 🧙 **Einrichtungs-Wizard** beim ersten Start: Verbindungstests, Modellauswahl mit Download-Fortschritt, Admin-Konto
-- 🌓 Material-Design-Oberfläche (Beer CSS) mit Hell/Dunkel-Umschaltung, alle Assets lokal (kein CDN)
+- 🌓 Oberfläche nach dem [KERN UX-Standard](https://www.kern-ux.de/) der deutschen Verwaltung, mit Hell/Dunkel-Umschaltung, alle Assets lokal (kein CDN)
 
 ## Schnellstart
 

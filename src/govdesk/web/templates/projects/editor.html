@@ -3,182 +3,146 @@
 {% extends "projects/_layout.html" %}
 {% set active = "editor" %}
 {% set page_title = doc.title %}
+{# Im Editor zählt die Arbeitsfläche: Seitenleiste standardmäßig als Minibar. #}
+{% set sidenav_mini_default = true %}
 
 {% block project_body %}
 <div id="gd-editor" data-pid="{{ project.id }}" data-did="{{ doc.id }}"
      data-version="{{ doc.version }}" data-can-edit="{{ '1' if can_edit else '0' }}">
-  <nav class="gd-editor-kopf">
-    <a class="button border small" href="/projects/{{ project.id }}/editor"><i>arrow_back</i></a>
-    {% if doc.is_private %}<i class="amber-text" title="privat">lock</i>{% endif %}
+  <div class="gd-editor-kopf">
+    <a class="gd-icon-btn" href="/projects/{{ project.id }}/editor" title="Zur Dokumentbibliothek"><i>arrow_back</i></a>
+    {% if doc.is_private %}<i title="privat" class="gd-warning-text">lock</i>{% endif %}
     {% if can_edit %}
-    <input id="editor-titel" class="gd-editor-titel-input max min-width-0" type="text"
+    <input id="editor-titel" class="gd-editor-titel-input gd-grow" type="text"
            value="{{ doc.title }}" maxlength="300" title="Titel bearbeiten (Umbenennen)">
     {% else %}
-    <h6 class="max min-width-0 no-margin">{{ doc.title }}</h6>
+    <h2 class="kern-heading-small gd-grow">{{ doc.title }}</h2>
     {% endif %}
-    <span id="editor-status" class="chip small">—</span>
-    <a class="button border small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=pdf"
-       title="Als PDF herunterladen"><i>picture_as_pdf</i> PDF</a>
-    <a class="button border small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=docx"
-       title="Als Word (DOCX) herunterladen"><i>download</i> DOCX</a>
-    <a class="button border small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=odf"
-       title="Als OpenDocument (ODT) herunterladen">ODT</a>
-    <a class="button border small" href="/projects/{{ project.id }}/editor/{{ doc.id }}/historie">
-      <i>history</i> Historie
+    <span class="kern-badge kern-badge--small"><span class="kern-label" id="editor-status">—</span></span>
+    <a class="kern-btn kern-btn--secondary kern-btn--x-small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=pdf"
+       title="Als PDF herunterladen"><i aria-hidden="true">picture_as_pdf</i><span class="kern-label">PDF</span></a>
+    <a class="kern-btn kern-btn--secondary kern-btn--x-small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=docx"
+       title="Als Word (DOCX) herunterladen"><i aria-hidden="true">download</i><span class="kern-label">DOCX</span></a>
+    <a class="kern-btn kern-btn--secondary kern-btn--x-small" hx-boost="false" href="/projects/{{ project.id }}/editor/{{ doc.id }}/export?format=odf"
+       title="Als OpenDocument (ODT) herunterladen"><span class="kern-label">ODT</span></a>
+    <a class="kern-btn kern-btn--secondary kern-btn--x-small" href="/projects/{{ project.id }}/editor/{{ doc.id }}/historie">
+      <i aria-hidden="true">history</i><span class="kern-label">Historie</span>
     </a>
-  </nav>
-  <div id="editor-presence" class="small-text gd-editor-presence"></div>
+    {% if can_edit %}
+    <button type="button" class="gd-icon-btn" id="ki-toggle" title="KI-Assistent ein-/ausblenden">
+      <i>robot_2</i>
+    </button>
+    {% endif %}
+  </div>
+  <div id="editor-presence" class="kern-body--small gd-editor-presence"></div>
 
   <div id="editor-conflict" class="gd-editor-conflict" hidden>
-    <span class="max"><i>merge</i> Ein anderer Nutzer hat zwischenzeitlich gespeichert.</span>
-    <button type="button" class="border small" id="conflict-theirs">Deren Fassung laden</button>
-    <button type="button" class="small" id="conflict-mine">Meine behalten &amp; überschreiben</button>
+    <span class="gd-grow"><i aria-hidden="true">merge</i> Ein anderer Nutzer hat zwischenzeitlich gespeichert.</span>
+    <button type="button" class="kern-btn kern-btn--secondary kern-btn--x-small" id="conflict-theirs">
+      <span class="kern-label">Deren Fassung laden</span>
+    </button>
+    <button type="button" class="kern-btn kern-btn--primary kern-btn--x-small" id="conflict-mine">
+      <span class="kern-label">Meine behalten &amp; überschreiben</span>
+    </button>
   </div>
 
-  {% if can_edit %}
-  <div class="gd-rte-toolbar" role="toolbar">
-    <button type="button" class="border small" data-cmd="bold" title="Fett (Strg+B)"><b>F</b></button>
-    <button type="button" class="border small" data-cmd="italic" title="Kursiv (Strg+I)"><i>format_italic</i></button>
-    <button type="button" class="border small" data-cmd="underline" title="Unterstrichen"><i>format_underlined</i></button>
-    <div class="gd-rte-sep"></div>
-    <button type="button" class="border small" data-block="h2" title="Überschrift">H1</button>
-    <button type="button" class="border small" data-block="h3" title="Zwischenüberschrift">H2</button>
-    <button type="button" class="border small" data-block="p" title="Fließtext"><i>notes</i></button>
-    <div class="gd-rte-sep"></div>
-    <button type="button" class="border small" data-cmd="insertUnorderedList" title="Liste"><i>format_list_bulleted</i></button>
-    <button type="button" class="border small" data-cmd="insertOrderedList" title="Nummerierte Liste"><i>format_list_numbered</i></button>
-    <div class="gd-rte-sep"></div>
-    <button type="button" class="border small" data-link="1" title="Link einfügen"><i>link</i></button>
-    <button type="button" class="border small" data-cmd="removeFormat" title="Formatierung entfernen"><i>format_clear</i></button>
-  </div>
-  {% endif %}
+  <div class="gd-editor-layout{% if not can_edit %} gd-ki-zu{% endif %}" id="editor-layout">
+    <div class="gd-editor-haupt">
+      {% if can_edit %}
+      {# Word-ähnliches Ribbon: Gruppen mit Beschriftung, klebt beim Scrollen oben. #}
+      <div class="gd-ribbon" role="toolbar" aria-label="Formatierung">
+        <div class="gd-ribbon-group">
+          <div class="gd-ribbon-row">
+            <button type="button" class="gd-ribbon-btn" data-cmd="undo" title="Rückgängig (Strg+Z)"><i>undo</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="redo" title="Wiederholen (Strg+Y)"><i>redo</i></button>
+          </div>
+          <span class="gd-ribbon-caption">Verlauf</span>
+        </div>
+        <div class="gd-ribbon-group">
+          <div class="gd-ribbon-row">
+            <select class="gd-ribbon-select" id="ribbon-format" title="Formatvorlage" aria-label="Formatvorlage">
+              <option value="p">Fließtext</option>
+              <option value="h1">Überschrift 1</option>
+              <option value="h2">Überschrift 2</option>
+              <option value="h3">Überschrift 3</option>
+              <option value="blockquote">Zitat</option>
+              <option value="pre">Quelltext</option>
+            </select>
+          </div>
+          <span class="gd-ribbon-caption">Formatvorlage</span>
+        </div>
+        <div class="gd-ribbon-group">
+          <div class="gd-ribbon-row">
+            <button type="button" class="gd-ribbon-btn" data-cmd="bold" data-zustand="bold" title="Fett (Strg+B)"><i>format_bold</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="italic" data-zustand="italic" title="Kursiv (Strg+I)"><i>format_italic</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="underline" data-zustand="underline" title="Unterstrichen (Strg+U)"><i>format_underlined</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="strikeThrough" data-zustand="strikeThrough" title="Durchgestrichen"><i>strikethrough_s</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="removeFormat" title="Formatierung entfernen"><i>format_clear</i></button>
+          </div>
+          <span class="gd-ribbon-caption">Schrift</span>
+        </div>
+        <div class="gd-ribbon-group">
+          <div class="gd-ribbon-row">
+            <button type="button" class="gd-ribbon-btn" data-cmd="insertUnorderedList" data-zustand="insertUnorderedList" title="Aufzählung"><i>format_list_bulleted</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="insertOrderedList" data-zustand="insertOrderedList" title="Nummerierte Liste"><i>format_list_numbered</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="outdent" title="Einzug verkleinern"><i>format_indent_decrease</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="indent" title="Einzug vergrößern"><i>format_indent_increase</i></button>
+          </div>
+          <span class="gd-ribbon-caption">Absatz</span>
+        </div>
+        <div class="gd-ribbon-group">
+          <div class="gd-ribbon-row">
+            <button type="button" class="gd-ribbon-btn" data-link="1" title="Link einfügen"><i>link</i></button>
+            <button type="button" class="gd-ribbon-btn" data-cmd="unlink" title="Link entfernen"><i>link_off</i></button>
+          </div>
+          <span class="gd-ribbon-caption">Einfügen</span>
+        </div>
+      </div>
+      {% endif %}
 
-  <div class="gd-editor-canvas">
-    <div id="editor-rte" class="gd-rte gd-page" {% if can_edit %}contenteditable="true"{% endif %}
-         role="textbox" aria-multiline="true">{{ doc.content | safe }}</div>
+      <div class="gd-editor-canvas">
+        <div id="editor-rte" class="gd-rte gd-page" {% if can_edit %}contenteditable="true"{% endif %}
+             role="textbox" aria-multiline="true">{{ doc.content | safe }}</div>
+      </div>
+      {% if not can_edit %}
+      <p class="kern-body--small kern-body--muted">Nur-Lese-Ansicht — zum Bearbeiten wird die Rolle „Bearbeiter" benötigt.</p>
+      {% endif %}
+    </div>
+
+    {% if can_edit %}
+    <aside class="gd-ki-panel" id="ki-panel" aria-label="KI-Assistent">
+      <div class="gd-ki-kopf">
+        <i aria-hidden="true">robot_2</i>
+        <strong class="gd-grow">KI-Assistent</strong>
+        <button type="button" class="gd-icon-btn" id="ki-schliessen" title="Panel schließen"><i>close</i></button>
+      </div>
+      <div class="gd-ki-verlauf" id="ki-verlauf">
+        <p class="gd-ki-hinweis">Stellen Sie Fragen zum Dokument oder lassen Sie Textstellen
+           überarbeiten. Der Assistent kennt die Wissensbasis des Projekts und die anderen
+           Dokumente. Im Modus <strong>Bearbeiten</strong> ersetzt die Antwort die markierte
+           Stelle; ohne Markierung wird neuer Inhalt an der Einfügemarke ergänzt —
+           rückgängig mit Strg+Z.</p>
+      </div>
+      <div class="gd-ki-fuss">
+        <div class="gd-ki-modus" role="group" aria-label="Modus">
+          <button type="button" data-ki-modus="frage" aria-pressed="true">Fragen</button>
+          <button type="button" data-ki-modus="bearbeiten" aria-pressed="false">Bearbeiten</button>
+        </div>
+        <div class="gd-ki-auswahl-hinweis" id="ki-auswahl" hidden>
+          <i aria-hidden="true">text_select_start</i><span id="ki-auswahl-text"></span>
+        </div>
+        <div class="gd-ki-eingabe">
+          <textarea id="ki-frage" rows="2" placeholder="Frage oder Anweisung …"
+                    aria-label="Frage an den KI-Assistenten"></textarea>
+          <button type="button" class="kern-btn kern-btn--primary" id="ki-senden" title="Senden (Strg+Enter)">
+            <i aria-hidden="true">send</i>
+          </button>
+        </div>
+      </div>
+    </aside>
+    {% endif %}
   </div>
-  {% if not can_edit %}
-  <p class="small-text">Nur-Lese-Ansicht — zum Bearbeiten wird die Rolle „Bearbeiter" benötigt.</p>
-  {% endif %}
 </div>
 
-<script>
-  (function () {
-    var root = document.getElementById("gd-editor");
-    var rte = document.getElementById("editor-rte");
-    var statusEl = document.getElementById("editor-status");
-    var presenceEl = document.getElementById("editor-presence");
-    var conflictEl = document.getElementById("editor-conflict");
-    var pid = root.dataset.pid, did = root.dataset.did;
-    var canEdit = root.dataset.canEdit === "1";
-    var version = parseInt(root.dataset.version, 10);
-    var lastSeen = version;
-    var dirty = false, saving = false, serverContent = null, timer = null;
-
-    function csrf() {
-      var e = document.getElementById("gd-csrf");
-      return e ? e.getAttribute("data-token") : "";
-    }
-    function setStatus(t) { statusEl.textContent = t; }
-    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-    function markDirty() { dirty = true; setStatus("Ungespeichert"); clearTimeout(timer); timer = setTimeout(function () { save(false); }, 1200); }
-
-    // Formatierungsleiste (contenteditable + execCommand — plain JS, kein Framework)
-    if (canEdit) {
-      document.querySelectorAll(".gd-rte-toolbar button").forEach(function (btn) {
-        // mousedown statt click: Auswahl im Editor bleibt erhalten
-        btn.addEventListener("mousedown", function (e) {
-          e.preventDefault();
-          rte.focus();
-          if (btn.dataset.cmd) {
-            document.execCommand(btn.dataset.cmd, false, null);
-          } else if (btn.dataset.block) {
-            document.execCommand("formatBlock", false, btn.dataset.block);
-          } else if (btn.dataset.link) {
-            var url = window.prompt("Link-Adresse (URL):", "https://");
-            if (url) document.execCommand("createLink", false, url);
-          }
-          markDirty();
-        });
-      });
-      rte.addEventListener("input", markDirty);
-      window.addEventListener("beforeunload", function () { if (dirty) save(true); });
-      document.getElementById("conflict-theirs").addEventListener("click", function () {
-        rte.innerHTML = serverContent; version = parseInt(conflictEl.dataset.sv, 10);
-        lastSeen = version; dirty = false; conflictEl.hidden = true; setStatus("Serverstand geladen");
-      });
-      document.getElementById("conflict-mine").addEventListener("click", function () {
-        version = parseInt(conflictEl.dataset.sv, 10); conflictEl.hidden = true;
-        dirty = true; save(true);
-      });
-    }
-
-    async function save(force) {
-      if (!canEdit || saving || (!dirty && !force)) return;
-      saving = true; setStatus("Speichert …");
-      var body = new URLSearchParams({ content: rte.innerHTML, base_version: String(version) });
-      try {
-        var r = await fetch("/projects/" + pid + "/editor/" + did + "/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": csrf() },
-          body: body,
-        });
-        if (r.status === 409) {
-          var c = await r.json();
-          serverContent = c.content; conflictEl.hidden = false; conflictEl.dataset.sv = c.version;
-          setStatus("Konflikt"); saving = false; return;
-        }
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        var data = await r.json();
-        version = data.version; lastSeen = version; dirty = false; setStatus("Gespeichert");
-      } catch (e) { setStatus("Fehler beim Speichern"); }
-      saving = false;
-    }
-
-    async function poll() {
-      for (;;) {
-        try {
-          var r = await fetch("/projects/" + pid + "/editor/" + did + "/poll?since=" + lastSeen);
-          if (r.status === 204) continue;
-          if (r.status === 200) {
-            var data = await r.json();
-            lastSeen = data.version;
-            if (!dirty) {
-              rte.innerHTML = data.content; version = data.version;
-              presenceEl.textContent = data.updated_by ? ("zuletzt geändert von " + data.updated_by) : "";
-              setStatus("Aktualisiert");
-            } else {
-              presenceEl.textContent = "Neue Änderungen von " + (data.updated_by || "jemandem")
-                + " — beim Speichern zusammenführen";
-            }
-          } else { await sleep(3000); }
-        } catch (e) { await sleep(3000); }
-      }
-    }
-    // Umbenennen: Titel-Feld speichert bei Verlassen/Enter (ohne Neuladen).
-    var titel = document.getElementById("editor-titel");
-    if (canEdit && titel) {
-      var lastTitle = titel.value;
-      async function renameNow() {
-        var name = titel.value.trim();
-        if (!name || name === lastTitle) { titel.value = lastTitle; return; }
-        try {
-          var r = await fetch("/projects/" + pid + "/editor/" + did + "/umbenennen", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": csrf() },
-            body: new URLSearchParams({ title: name }),
-          });
-          if (r.ok) { lastTitle = name; document.title = name; }
-        } catch (e) { /* Titel bleibt, erneuter Versuch bei nächster Änderung */ }
-      }
-      titel.addEventListener("blur", renameNow);
-      titel.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") { e.preventDefault(); titel.blur(); }
-      });
-    }
-
-    setStatus(canEdit ? "Gespeichert" : "Nur lesen");
-    poll();
-  })();
-</script>
+<script src="{{ url_for('static', path='js/editor.js') }}?v={{ asset_v }}"></script>
 {% endblock %}

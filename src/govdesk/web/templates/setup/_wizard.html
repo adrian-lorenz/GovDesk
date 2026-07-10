@@ -4,21 +4,23 @@
 {% block title %}Einrichtung — {{ platform_name }}{% endblock %}
 
 {% block content %}
-<div class="center-align">
-  <article class="round large-padding left-align" style="max-width: 46rem; margin: 2rem auto">
-    <h5 class="center-align"><i>account_balance</i> GovDesk einrichten</h5>
-
-    <nav class="center-align small-margin">
-      {% set schritte = [(1, "Systemcheck"), (2, "Ollama"), (3, "Modelle"), (4, "Administrator")] %}
-      {% for nr, name in schritte %}
-        <button class="chip small {% if nr == schritt %}fill{% elif nr < schritt %}primary{% endif %}" disabled>
-          {% if nr < schritt %}<i>check</i>{% endif %} {{ nr }}. {{ name }}
-        </button>
-      {% endfor %}
-    </nav>
-    <div class="divider"></div>
-
-    {% block wizard_content %}{% endblock %}
-  </article>
+<div class="kern-card kern-card--hug" style="max-width: 46rem; margin: 2rem auto">
+  <div class="kern-card__container">
+    <div class="kern-card__header gd-center">
+      <h1 class="kern-heading-medium"><i aria-hidden="true">account_balance</i> GovDesk einrichten</h1>
+      <div class="gd-mt" aria-label="Einrichtungsschritte">
+        {% set schritte = [(1, "Systemcheck"), (2, "Ollama"), (3, "Modelle"), (4, "Administrator")] %}
+        {% for nr, name in schritte %}
+        <span class="kern-badge kern-badge--small {% if nr == schritt %}kern-badge--info{% elif nr < schritt %}kern-badge--success{% endif %}">
+          <span class="kern-label">{% if nr < schritt %}<i aria-hidden="true">check</i> {% endif %}{{ nr }}. {{ name }}</span>
+        </span>
+        {% endfor %}
+      </div>
+    </div>
+    <hr class="kern-divider">
+    <div class="kern-card__body gd-stack">
+      {% block wizard_content %}{% endblock %}
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -44,7 +44,9 @@ class ProjectAccess:
 
     async def __call__(self, project_id: uuid.UUID, user: CurrentUser, db: Db) -> Project:
         project = await db.get(Project, project_id)
-        if project is None:
+        # Archivierte Projekte sind für die normale Nutzung unsichtbar —
+        # Verwaltung läuft über den Archiv-Bereich (Plattform-Admin).
+        if project is None or project.is_archived:
             raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
         if user.is_platform_admin:
             return project

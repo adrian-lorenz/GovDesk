@@ -4,88 +4,122 @@
 {% set active = "api-keys" %}
 
 {% block settings_body %}
-<article class="round">
-  <h6><i>key</i> API-Keys</h6>
-  <p class="small-text">Plattformweite Schlüssel für Fachverfahren und Skripte (REST-API).
-     Das Zielprojekt wird pro Aufruf über den Pfad gewählt:
-     <code>/api/v1/projects/&lt;id&gt;/…</code>. Doku unter
-     <a href="/api/docs" target="_blank" rel="noopener">/api/docs</a>.
-     Authentifizierung: <code>Authorization: Bearer &lt;Key&gt;</code></p>
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">key</i> API-Keys</h2>
+      <p class="kern-body--small kern-body--muted">Plattformweite Schlüssel für Fachverfahren und Skripte (REST-API).
+         Das Zielprojekt wird pro Aufruf über den Pfad gewählt:
+         <code>/api/v1/projects/&lt;id&gt;/…</code>. Doku unter
+         <a href="/api/docs" target="_blank" rel="noopener">/api/docs</a>.
+         Authentifizierung: <code>Authorization: Bearer &lt;Key&gt;</code></p>
+    </div>
+  </div>
+</div>
 
 {% if neuer_key %}
-<article class="round border primary-container">
-  <h6><i>warning</i> Neuer Key „{{ neuer_key_name }}“ — jetzt kopieren!</h6>
-  <p>Dieser Schlüssel wird aus Sicherheitsgründen <strong>nur einmal</strong> angezeigt:</p>
-  <nav class="row">
-    <code class="max" style="word-break: break-all" id="neuer-key">{{ neuer_key }}</code>
-    <button class="border small" type="button"
-            onclick="navigator.clipboard.writeText(document.getElementById('neuer-key').textContent); this.innerHTML='<i>check</i> Kopiert'">
-      <i>content_copy</i> Kopieren
-    </button>
-  </nav>
-</article>
+<div class="kern-card kern-card--hug gd-hero">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">warning</i> Neuer Key „{{ neuer_key_name }}“ — jetzt kopieren!</h2>
+    </div>
+    <div class="kern-card__body">
+      <p class="kern-body">Dieser Schlüssel wird aus Sicherheitsgründen <strong>nur einmal</strong> angezeigt:</p>
+      <div class="gd-row kern-w-full">
+        <code class="gd-grow" style="word-break: break-all" id="neuer-key">{{ neuer_key }}</code>
+        <button class="kern-btn kern-btn--secondary kern-btn--x-small" type="button"
+                onclick="navigator.clipboard.writeText(document.getElementById('neuer-key').textContent); this.innerHTML='<i>check</i> Kopiert'">
+          <i aria-hidden="true">content_copy</i><span class="kern-label">Kopieren</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endif %}
 
-<article class="round">
-  <h6>Neuen Key erstellen</h6>
-  <form method="post" action="/admin/settings/api-keys">
-    <nav class="row wrap">
-      <div class="field label border round max">
-        <input type="text" name="name" required maxlength="150">
-        <label>Bezeichnung (z. B. „DMS-Anbindung“)</label>
-      </div>
-      <div class="field label border round">
-        <input type="number" name="gueltig_tage" min="0" value="0">
-        <label>Gültig (Tage, 0 = unbegrenzt)</label>
-      </div>
-    </nav>
-    <nav class="wrap">
-      {% for scope, beschreibung in scopes.items() %}
-      <label class="checkbox">
-        <input type="checkbox" name="scopes" value="{{ scope }}"
-               {% if scope in ("documents:read", "documents:write") %}checked{% endif %}>
-        <span><code>{{ scope }}</code> — {{ beschreibung }}</span>
-      </label>
-      {% endfor %}
-    </nav>
-    <nav class="right-align">
-      <button type="submit"><i>add</i> Key erstellen</button>
-    </nav>
-  </form>
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small">Neuen Key erstellen</h2>
+    </div>
+    <div class="kern-card__body">
+      <form method="post" action="/admin/settings/api-keys" class="gd-stack kern-w-full">
+        <div class="kern-row">
+          <div class="kern-col-12 kern-col-8-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="api-key-name">Bezeichnung (z. B. „DMS-Anbindung“)</label>
+              <input class="kern-form-input__input" type="text" id="api-key-name" name="name" required maxlength="150">
+            </div>
+          </div>
+          <div class="kern-col-12 kern-col-4-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="api-key-gueltig">Gültig (Tage, 0 = unbegrenzt)</label>
+              <input class="kern-form-input__input" type="number" id="api-key-gueltig" name="gueltig_tage" min="0" value="0">
+            </div>
+          </div>
+        </div>
+        {% for scope, beschreibung in scopes.items() %}
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="api-scope-{{ loop.index }}"
+                 name="scopes" value="{{ scope }}"
+                 {% if scope in ("documents:read", "documents:write") %}checked{% endif %}>
+          <label class="kern-label" for="api-scope-{{ loop.index }}"><code>{{ scope }}</code> — {{ beschreibung }}</label>
+        </div>
+        {% endfor %}
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">add</i><span class="kern-label">Key erstellen</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-<article class="round">
-  <table class="stripes">
-    <thead>
-      <tr><th>Name</th><th>Prefix</th><th>Scopes</th><th>Zuletzt genutzt</th><th>Status</th><th></th></tr>
-    </thead>
-    <tbody>
-      {% for key in keys %}
-      <tr>
-        <td><strong>{{ key.name }}</strong></td>
-        <td><code>{{ key.key_prefix }}…</code></td>
-        <td class="small-text">{{ key.scopes | join(", ") }}</td>
-        <td class="small-text">{{ key.last_used_at.strftime("%d.%m.%Y %H:%M") if key.last_used_at else "nie" }}</td>
-        <td>
-          {% if key.revoked_at %}<span class="error-text">widerrufen</span>
-          {% else %}<span class="green-text">aktiv</span>
-            {% if key.expires_at %}<span class="small-text"> (bis {{ key.expires_at.strftime("%d.%m.%Y") }})</span>{% endif %}
-          {% endif %}
-        </td>
-        <td class="right-align">
-          {% if not key.revoked_at %}
-          <form method="post" action="/admin/settings/api-keys/{{ key.id }}/widerrufen"
-                class="no-margin" hx-confirm="Key „{{ key.name }}“ widerrufen?">
-            <button class="border small"><i>block</i> Widerrufen</button>
-          </form>
-          {% endif %}
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="6" class="center-align small-text">Noch keine API-Keys.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-table-responsive kern-w-full">
+      <table class="kern-table kern-table--striped">
+        <thead>
+          <tr class="kern-table__row">
+            <th class="kern-table__header">Name</th>
+            <th class="kern-table__header">Prefix</th>
+            <th class="kern-table__header">Scopes</th>
+            <th class="kern-table__header">Zuletzt genutzt</th>
+            <th class="kern-table__header">Status</th>
+            <th class="kern-table__header kern-table__header--action"></th>
+          </tr>
+        </thead>
+        <tbody class="kern-table__body">
+          {% for key in keys %}
+          <tr class="kern-table__row">
+            <td class="kern-table__cell"><strong>{{ key.name }}</strong></td>
+            <td class="kern-table__cell"><code>{{ key.key_prefix }}…</code></td>
+            <td class="kern-table__cell kern-body--small">{{ key.scopes | join(", ") }}</td>
+            <td class="kern-table__cell kern-body--small">{{ key.last_used_at.strftime("%d.%m.%Y %H:%M") if key.last_used_at else "nie" }}</td>
+            <td class="kern-table__cell">
+              {% if key.revoked_at %}<span class="kern-badge kern-badge--danger kern-badge--small"><span class="kern-label">widerrufen</span></span>
+              {% else %}<span class="kern-badge kern-badge--success kern-badge--small"><span class="kern-label">aktiv</span></span>
+                {% if key.expires_at %}<span class="kern-body--small kern-body--muted"> (bis {{ key.expires_at.strftime("%d.%m.%Y") }})</span>{% endif %}
+              {% endif %}
+            </td>
+            <td class="kern-table__cell kern-table__cell--action">
+              {% if not key.revoked_at %}
+              <form method="post" action="/admin/settings/api-keys/{{ key.id }}/widerrufen"
+                    class="gd-header-form" hx-confirm="Key „{{ key.name }}“ widerrufen?">
+                <button class="kern-btn kern-btn--secondary kern-btn--x-small">
+                  <i aria-hidden="true">block</i><span class="kern-label">Widerrufen</span>
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr class="kern-table__row"><td colspan="6" class="kern-table__cell gd-center">Noch keine API-Keys.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -4,21 +4,33 @@
 {% block title %}Neues Projekt — {{ platform_name }}{% endblock %}
 
 {% block content %}
-<article class="round large-padding" style="max-width: 36rem; margin: 2rem auto">
-  <h5><i>create_new_folder</i> Neues Projekt</h5>
-  <form method="post" action="/projects">
-    <div class="field label border round">
-      <input type="text" name="name" required maxlength="200" autofocus>
-      <label>Name (z. B. „Vergaberecht“)</label>
+<div class="kern-card kern-card--hug" style="max-width: 36rem; margin: 2rem auto">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h1 class="kern-heading-medium"><i aria-hidden="true">create_new_folder</i> Neues Projekt</h1>
     </div>
-    <div class="field textarea label border round">
-      <textarea name="description" maxlength="2000"></textarea>
-      <label>Beschreibung (optional)</label>
+    <div class="kern-card__body">
+      <form method="post" action="/projects" class="gd-stack">
+        <div class="kern-form-input">
+          <label class="kern-label" for="np-name">Name (z. B. „Vergaberecht“)</label>
+          <input class="kern-form-input__input" type="text" id="np-name" name="name"
+                 required maxlength="200" autofocus>
+        </div>
+        <div class="kern-form-input">
+          <label class="kern-label" for="np-beschreibung">Beschreibung (optional)</label>
+          <textarea class="kern-form-input__input" id="np-beschreibung" name="description"
+                    maxlength="2000"></textarea>
+        </div>
+        <div class="gd-dialog-actions">
+          <a class="kern-btn kern-btn--secondary" href="/projects">
+            <span class="kern-label">Abbrechen</span>
+          </a>
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">check</i><span class="kern-label">Anlegen</span>
+          </button>
+        </div>
+      </form>
     </div>
-    <nav class="right-align">
-      <a class="button border" href="/projects">Abbrechen</a>
-      <button type="submit"><i>check</i> Anlegen</button>
-    </nav>
-  </form>
-</article>
+  </div>
+</div>
 {% endblock %}

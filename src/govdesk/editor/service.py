@@ -2,14 +2,14 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
-"""Editor-Dokumente: Sichtbarkeit, Speichern mit Revision, Historie."""
+"""Editor-Dokumente: Sichtbarkeit, Speichern mit Revision, Historie, Ordner."""
 
 import uuid
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from govdesk.db.models import EditorDocument, EditorRevision, User
+from govdesk.db.models import EditorDocument, EditorFolder, EditorRevision, User
 
 
 class VersionConflictError(Exception):
@@ -25,13 +25,20 @@ def _visible_filter(user: User):
 
 
 async def list_documents(
-    db: AsyncSession, project_id: uuid.UUID, user: User
+    db: AsyncSession,
+    project_id: uuid.UUID,
+    user: User,
+    folder_id: uuid.UUID | None = None,
+    all_folders: bool = False,
 ) -> list[EditorDocument]:
-    result = await db.execute(
-        select(EditorDocument)
-        .where(EditorDocument.project_id == project_id, _visible_filter(user))
-        .order_by(EditorDocument.updated_at.desc())
+    """Dokumente eines Projekts — standardmäßig nur die des angegebenen Ordners
+    (None = oberste Ebene); all_folders=True liefert ordnerübergreifend alle."""
+    query = select(EditorDocument).where(
+        EditorDocument.project_id == project_id, _visible_filter(user)
     )
+    if not all_folders:
+        query = query.where(EditorDocument.folder_id == folder_id)
+    result = await db.execute(query.order_by(EditorDocument.updated_at.desc()))
     return list(result.scalars())
 
 
@@ -91,6 +98,96 @@ async def list_revisions(db: AsyncSession, document_id: uuid.UUID) -> list[Edito
         .order_by(EditorRevision.version.desc())
     )
     return list(result.scalars())
+
+
+# ---------------------------------------------------------------------------
+# Ordner der Dokumentenbibliothek
+# ---------------------------------------------------------------------------
+
+
+async def get_folder(
+    db: AsyncSession, folder_id: uuid.UUID, project_id: uuid.UUID
+) -> EditorFolder | None:
+    folder = await db.get(EditorFolder, folder_id)
+    if folder is None or folder.project_id != project_id:
+        return None
+    return folder
+
+
+async def list_folders(
+    db: AsyncSession, project_id: uuid.UUID, parent_id: uuid.UUID | None
+) -> list[EditorFolder]:
+    result = await db.execute(
+        select(EditorFolder)
+        .where(EditorFolder.project_id == project_id, EditorFolder.parent_id == parent_id)
+        .order_by(EditorFolder.name)
+    )
+    return list(result.scalars())
+
+
+async def create_folder(
+    db: AsyncSession,
+    project_id: uuid.UUID,
+    user: User,
+    name: str,
+    parent_id: uuid.UUID | None,
+) -> EditorFolder:
+    folder = EditorFolder(
+        project_id=project_id,
+        name=name.strip()[:200] or "Neuer Ordner",
+        parent_id=parent_id,
+        created_by=user.id,
+    )
+    db.add(folder)
+    await db.flush()
+    return folder
+
+
+async def folder_breadcrumbs(
+    db: AsyncSession, folder: EditorFolder | None
+) -> list[EditorFolder]:
+    """Pfad von der Wurzel bis zum Ordner (für die Breadcrumb-Leiste)."""
+    crumbs: list[EditorFolder] = []
+    current = folder
+    # Schutz vor (theoretisch unmöglichen) Zyklen: Tiefe begrenzen.
+    for _ in range(50):
+        if current is None:
+            break
+        crumbs.append(current)
+        if current.parent_id is None:
+            break
+        current = await db.get(EditorFolder, current.parent_id)
+    return list(reversed(crumbs))
+
+
+async def is_descendant_folder(
+    db: AsyncSession, folder: EditorFolder, candidate_ancestor_id: uuid.UUID
+) -> bool:
+    """True, wenn candidate_ancestor_id über folder liegt oder folder selbst ist —
+    verhindert, dass ein Ordner in sich selbst verschoben wird."""
+    current: EditorFolder | None = folder
+    for _ in range(50):
+        if current is None:
+            return False
+        if current.id == candidate_ancestor_id:
+            return True
+        if current.parent_id is None:
+            return False
+        current = await db.get(EditorFolder, current.parent_id)
+    return False
+
+
+async def delete_folder(db: AsyncSession, folder: EditorFolder) -> None:
+    """Löscht einen Ordner; Inhalte (Dokumente + Unterordner) wandern in den
+    Elternordner, damit nichts unbeabsichtigt verloren geht."""
+    docs = await db.execute(select(EditorDocument).where(EditorDocument.folder_id == folder.id))
+    for doc in docs.scalars():
+        doc.folder_id = folder.parent_id
+    subs = await db.execute(select(EditorFolder).where(EditorFolder.parent_id == folder.id))
+    for sub in subs.scalars():
+        sub.parent_id = folder.parent_id
+    await db.flush()
+    await db.delete(folder)
 
 
 async def usernames_for(

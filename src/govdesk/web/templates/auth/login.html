@@ -4,32 +4,42 @@
 {% block title %}Anmelden — {{ platform_name }}{% endblock %}
 
 {% block content %}
-<div class="middle-align center-align" style="min-height: 70vh">
-  <article class="round large-padding" style="width: 24rem">
-    <h5 class="center-align"><i>account_balance</i> {{ platform_name }}</h5>
-    <p class="center-align">{{ platform_subtitle or "Bitte melden Sie sich an." }}</p>
-    {% if error %}
-    <p class="error-text"><i>error</i> {{ error }}</p>
-    {% endif %}
-    {% if local_login_enabled is not defined or local_login_enabled %}
-    <form method="post" action="/login">
-      <div class="field label border round">
-        <input type="text" name="username" required autofocus autocomplete="username">
-        <label>Benutzername</label>
+<div class="gd-center-page">
+  <div class="kern-card kern-card--hug" style="inline-size: 26rem">
+    <div class="kern-card__container">
+      <div class="kern-card__header gd-center">
+        <h1 class="kern-heading-medium"><i aria-hidden="true">account_balance</i> {{ platform_name }}</h1>
+        <p class="kern-body--muted">{{ platform_subtitle or "Bitte melden Sie sich an." }}</p>
       </div>
-      <div class="field label border round">
-        <input type="password" name="password" required autocomplete="current-password">
-        <label>Passwort</label>
+      <div class="kern-card__body">
+        {% if error %}
+        <p class="kern-body gd-error-text"><i aria-hidden="true">error</i> {{ error }}</p>
+        {% endif %}
+        {% if local_login_enabled is not defined or local_login_enabled %}
+        <form method="post" action="/login" class="gd-stack">
+          <div class="kern-form-input">
+            <label class="kern-label" for="login-username">Benutzername</label>
+            <input class="kern-form-input__input" type="text" id="login-username" name="username"
+                   required autofocus autocomplete="username">
+          </div>
+          <div class="kern-form-input">
+            <label class="kern-label" for="login-password">Passwort</label>
+            <input class="kern-form-input__input" type="password" id="login-password" name="password"
+                   required autocomplete="current-password">
+          </div>
+          <button class="kern-btn kern-btn--primary kern-btn--block" type="submit">
+            <i aria-hidden="true">login</i><span class="kern-label">Anmelden</span>
+          </button>
+        </form>
+        {% endif %}
+        {% if oidc_enabled %}
+        <hr class="kern-divider gd-mt">
+        <a class="kern-btn kern-btn--secondary kern-btn--block gd-mt" href="/auth/oidc/login" hx-boost="false">
+          <i aria-hidden="true">badge</i><span class="kern-label">Anmelden mit Behörden-Konto (SSO)</span>
+        </a>
+        {% endif %}
       </div>
-      <button class="responsive" type="submit"><i>login</i> Anmelden</button>
-    </form>
-    {% endif %}
-    {% if oidc_enabled %}
-    <div class="divider small-margin"></div>
-    <a class="button responsive border" href="/auth/oidc/login" hx-boost="false">
-      <i>badge</i> Anmelden mit Behörden-Konto (SSO)
-    </a>
-    {% endif %}
-  </article>
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -3,34 +3,40 @@
 {% extends "setup/_wizard.html" %}
 
 {% block wizard_content %}
-<h6>Verbindung zu Ollama</h6>
-<p>Ollama stellt die Sprach- und Embedding-Modelle bereit — lokal auf Ihrem
+<h2 class="kern-heading-small">Verbindung zu Ollama</h2>
+<p class="kern-body">Ollama stellt die Sprach- und Embedding-Modelle bereit — lokal auf Ihrem
    Server oder über <a href="https://ollama.com" target="_blank" rel="noopener">Ollama&nbsp;Cloud</a>
    (dann API-Schlüssel eintragen).</p>
 
-<form method="post" action="/setup/ollama" id="ollama-form">
-  <div class="field label border round">
-    <input type="url" name="base_url" value="{{ cfg.ollama_base_url }}" required>
-    <label>Ollama-Adresse (z. B. http://ollama:11434)</label>
+<form method="post" action="/setup/ollama" id="ollama-form" class="gd-stack">
+  <div class="kern-form-input">
+    <label class="kern-label" for="ollama-base-url">Ollama-Adresse (z. B. http://ollama:11434)</label>
+    <input class="kern-form-input__input" type="url" id="ollama-base-url" name="base_url"
+           value="{{ cfg.ollama_base_url }}" required>
   </div>
-  <div class="field label border round">
-    <input type="password" name="api_key" value="{{ cfg.ollama_api_key or '' }}">
-    <label>API-Schlüssel (nur für Ollama Cloud)</label>
+  <div class="kern-form-input">
+    <label class="kern-label" for="ollama-api-key">API-Schlüssel (nur für Ollama Cloud)</label>
+    <input class="kern-form-input__input" type="password" id="ollama-api-key" name="api_key"
+           value="{{ cfg.ollama_api_key or '' }}">
   </div>
 
-  <nav>
-    <button type="button" class="border"
+  <div class="gd-row">
+    <button type="button" class="kern-btn kern-btn--secondary"
             hx-post="/setup/ollama/test"
             hx-include="#ollama-form"
             hx-target="#testergebnis"
             hx-swap="innerHTML">
-      <i>network_check</i> Verbindung testen
-      <progress class="circle small htmx-indicator"></progress>
+      <i aria-hidden="true">network_check</i><span class="kern-label">Verbindung testen</span>
+      <progress class="kern-progress htmx-indicator"></progress>
     </button>
-    <div class="max"></div>
-    <a class="button border" href="/setup"><i>arrow_back</i> Zurück</a>
-    <button type="submit">Speichern &amp; weiter <i>arrow_forward</i></button>
-  </nav>
+    <span class="gd-grow"></span>
+    <a class="kern-btn kern-btn--secondary" href="/setup">
+      <i aria-hidden="true">arrow_back</i><span class="kern-label">Zurück</span>
+    </a>
+    <button type="submit" class="kern-btn kern-btn--primary">
+      <span class="kern-label">Speichern &amp; weiter</span><i aria-hidden="true">arrow_forward</i>
+    </button>
+  </div>
 </form>
-<div id="testergebnis" class="small-margin"></div>
+<div id="testergebnis" class="gd-mt"></div>
 {% endblock %}

@@ -4,72 +4,110 @@
 {% block title %}Nutzerverwaltung — {{ platform_name }}{% endblock %}
 
 {% block nav %}
-<a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
-<a class="button border small" href="/admin/settings"><i>settings</i> Einstellungen</a>
+<a class="kern-btn kern-btn--secondary kern-btn--x-small" href="/projects">
+  <i aria-hidden="true">arrow_back</i><span class="kern-label">Projekte</span>
+</a>
+<a class="kern-btn kern-btn--secondary kern-btn--x-small" href="/admin/settings">
+  <i aria-hidden="true">settings</i><span class="kern-label">Einstellungen</span>
+</a>
 {% endblock %}
 
 {% block content %}
-<h5><i>group</i> Nutzerverwaltung</h5>
+<div class="gd-page-head">
+  <h1 class="kern-heading-large gd-grow"><i aria-hidden="true">group</i> Nutzerverwaltung</h1>
+</div>
 
-{% if error %}<p class="error-text"><i>error</i> {{ error }}</p>{% endif %}
+{% if error %}<p class="kern-body gd-error-text"><i aria-hidden="true">error</i> {{ error }}</p>{% endif %}
 
-<article class="round">
-  <h6>Neuen Nutzer anlegen</h6>
-  <form method="post" action="/admin/users" class="grid">
-    <div class="field label border round s12 m3">
-      <input type="text" name="username" required minlength="3">
-      <label>Benutzername</label>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small">Neuen Nutzer anlegen</h2>
     </div>
-    <div class="field label border round s12 m3">
-      <input type="text" name="display_name">
-      <label>Anzeigename</label>
+    <div class="kern-card__body">
+      <form method="post" action="/admin/users" class="gd-stack kern-w-full">
+        <div class="kern-row">
+          <div class="kern-col-12 kern-col-3-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="nutzer-username">Benutzername</label>
+              <input class="kern-form-input__input" type="text" id="nutzer-username" name="username" required minlength="3">
+            </div>
+          </div>
+          <div class="kern-col-12 kern-col-3-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="nutzer-anzeigename">Anzeigename</label>
+              <input class="kern-form-input__input" type="text" id="nutzer-anzeigename" name="display_name">
+            </div>
+          </div>
+          <div class="kern-col-12 kern-col-3-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="nutzer-email">E-Mail</label>
+              <input class="kern-form-input__input" type="email" id="nutzer-email" name="email">
+            </div>
+          </div>
+          <div class="kern-col-12 kern-col-3-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="nutzer-passwort">Passwort (min. 12)</label>
+              <input class="kern-form-input__input" type="password" id="nutzer-passwort" name="password" required minlength="12" autocomplete="new-password">
+            </div>
+          </div>
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="nutzer-admin" name="is_platform_admin" value="true">
+          <label class="kern-label" for="nutzer-admin">Plattform-Administrator</label>
+        </div>
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">person_add</i><span class="kern-label">Anlegen</span>
+          </button>
+        </div>
+      </form>
     </div>
-    <div class="field label border round s12 m3">
-      <input type="email" name="email">
-      <label>E-Mail</label>
-    </div>
-    <div class="field label border round s12 m3">
-      <input type="password" name="password" required minlength="12" autocomplete="new-password">
-      <label>Passwort (min. 12)</label>
-    </div>
-    <label class="checkbox s12 m6">
-      <input type="checkbox" name="is_platform_admin" value="true">
-      <span>Plattform-Administrator</span>
-    </label>
-    <div class="s12 m6 right-align">
-      <button type="submit"><i>person_add</i> Anlegen</button>
-    </div>
-  </form>
-</article>
+  </div>
+</div>
 
-<article class="round">
-  <table class="stripes">
-    <thead>
-      <tr><th>Benutzer</th><th>E-Mail</th><th>Rolle</th><th>Status</th><th>Letzte Anmeldung</th><th></th></tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td><strong>{{ user.username }}</strong>{% if user.display_name %} <span class="small-text">({{ user.display_name }})</span>{% endif %}</td>
-        <td>{{ user.email or "—" }}</td>
-        <td>{% if user.is_platform_admin %}<span class="chip small primary">Admin</span>{% else %}Nutzer{% endif %}</td>
-        <td>{% if user.is_active %}<span class="green-text">aktiv</span>{% else %}<span class="error-text">deaktiviert</span>{% endif %}</td>
-        <td class="small-text">{{ user.last_login_at.strftime("%d.%m.%Y %H:%M") if user.last_login_at else "—" }}</td>
-        <td class="right-align">
-          {% if user.id != current_user.id %}
-          <form method="post" action="/admin/users/{{ user.id }}/adminrolle" class="inline no-margin">
-            <button class="border small" title="Admin-Rolle umschalten"><i>admin_panel_settings</i></button>
-          </form>
-          <form method="post" action="/admin/users/{{ user.id }}/aktiv" class="inline no-margin">
-            <button class="border small" title="Aktiv/Deaktiviert umschalten">
-              <i>{{ "person_off" if user.is_active else "person" }}</i>
-            </button>
-          </form>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</article>
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container">
+    <div class="kern-table-responsive kern-w-full">
+      <table class="kern-table kern-table--striped">
+        <thead>
+          <tr class="kern-table__row">
+            <th class="kern-table__header">Benutzer</th>
+            <th class="kern-table__header">E-Mail</th>
+            <th class="kern-table__header">Rolle</th>
+            <th class="kern-table__header">Status</th>
+            <th class="kern-table__header">Letzte Anmeldung</th>
+            <th class="kern-table__header kern-table__header--action"></th>
+          </tr>
+        </thead>
+        <tbody class="kern-table__body">
+          {% for user in users %}
+          <tr class="kern-table__row">
+            <td class="kern-table__cell"><strong>{{ user.username }}</strong>{% if user.display_name %} <span class="kern-body--small kern-body--muted">({{ user.display_name }})</span>{% endif %}</td>
+            <td class="kern-table__cell">{{ user.email or "—" }}</td>
+            <td class="kern-table__cell">{% if user.is_platform_admin %}<span class="kern-badge kern-badge--info kern-badge--small"><span class="kern-label">Admin</span></span>{% else %}Nutzer{% endif %}</td>
+            <td class="kern-table__cell">
+              {% if user.is_active %}<span class="kern-badge kern-badge--success kern-badge--small"><span class="kern-label">aktiv</span></span>
+              {% else %}<span class="kern-badge kern-badge--danger kern-badge--small"><span class="kern-label">deaktiviert</span></span>{% endif %}
+            </td>
+            <td class="kern-table__cell kern-body--small">{{ user.last_login_at.strftime("%d.%m.%Y %H:%M") if user.last_login_at else "—" }}</td>
+            <td class="kern-table__cell kern-table__cell--action">
+              {% if user.id != current_user.id %}
+              <form method="post" action="/admin/users/{{ user.id }}/adminrolle" class="gd-header-form">
+                <button class="gd-icon-btn" title="Admin-Rolle umschalten"><i>admin_panel_settings</i></button>
+              </form>
+              <form method="post" action="/admin/users/{{ user.id }}/aktiv" class="gd-header-form">
+                <button class="gd-icon-btn" title="Aktiv/Deaktiviert umschalten">
+                  <i>{{ "person_off" if user.is_active else "person" }}</i>
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

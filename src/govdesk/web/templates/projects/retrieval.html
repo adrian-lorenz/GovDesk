@@ -5,32 +5,41 @@
 {% set page_title = "Retrieval-Test" %}
 
 {% block project_body %}
-<h6 class="no-margin"><i>manage_search</i> Retrieval-Test</h6>
-<p class="small-text">Zeigt die gerankten Textabschnitte für eine Suchanfrage —
+<h2 class="kern-heading-small"><i aria-hidden="true">manage_search</i> Retrieval-Test</h2>
+<p class="kern-body--small">Zeigt die gerankten Textabschnitte für eine Suchanfrage —
    ohne Sprachmodell. Nützlich zum Prüfen der Trefferqualität.</p>
 
-<form method="get" action="/projects/{{ project.id }}/retrieval" class="row">
-  <div class="field label border round max">
-    <input type="text" name="q" value="{{ q }}" required>
-    <label>Suchanfrage</label>
+<form method="get" action="/projects/{{ project.id }}/retrieval" class="gd-row gd-mt">
+  <div class="kern-form-input gd-grow">
+    <label class="kern-label" for="rt-suchanfrage">Suchanfrage</label>
+    <input class="kern-form-input__input" type="text" id="rt-suchanfrage" name="q"
+           value="{{ q }}" required>
   </div>
-  <button type="submit"><i>search</i> Suchen</button>
+  <button type="submit" class="kern-btn kern-btn--primary">
+    <i aria-hidden="true">search</i><span class="kern-label">Suchen</span>
+  </button>
 </form>
 
 {% if q and not citations %}
-<article class="round center-align"><p>Keine Treffer.</p></article>
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container gd-center">
+    <p class="kern-body">Keine Treffer.</p>
+  </div>
+</div>
 {% endif %}
 
 {% for citation in citations %}
-<article class="round">
-  <nav>
-    <span class="chip small">#{{ citation.number }}</span>
-    <strong class="max">{{ citation.filename }}
-      {% if citation.heading_path %}<span class="small-text"> — {{ citation.heading_path }}</span>{% endif %}
-    </strong>
-    <span class="chip small">Score: {{ "%.3f" | format(citation.score) }}</span>
-  </nav>
-  <p class="small-text">{{ citation.snippet }}</p>
-</article>
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container">
+    <div class="gd-row">
+      <span class="kern-badge kern-badge--small"><span class="kern-label">#{{ citation.number }}</span></span>
+      <strong class="gd-grow">{{ citation.filename }}
+        {% if citation.heading_path %}<span class="kern-body--small kern-body--muted"> — {{ citation.heading_path }}</span>{% endif %}
+      </strong>
+      <span class="kern-badge kern-badge--info kern-badge--small"><span class="kern-label">Score: {{ "%.3f" | format(citation.score) }}</span></span>
+    </div>
+    <p class="kern-body--small">{{ citation.snippet }}</p>
+  </div>
+</div>
 {% endfor %}
 {% endblock %}

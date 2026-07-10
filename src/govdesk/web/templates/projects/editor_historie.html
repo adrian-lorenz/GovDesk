@@ -5,30 +5,32 @@
 {% set page_title = "Historie – " ~ doc.title %}
 
 {% block project_body %}
-<article class="round">
-  <nav>
-    <a class="button border small" href="/projects/{{ project.id }}/editor/{{ doc.id }}">
-      <i>arrow_back</i> Zum Dokument
-    </a>
-    <h6 class="max min-width-0 no-margin"><i>history</i> Historie – {{ doc.title }}</h6>
-  </nav>
-  <p class="small-text">Jede Speicherung erzeugt eine Version. Wer wann was geändert hat:</p>
-  <ul class="list border">
-    {% for r in revisions %}
-    <li>
-      <div class="max min-width-0">
-        <strong>v{{ r.version }}</strong>
-        <span class="small-text"> · {{ r.created_at.strftime("%d.%m.%Y %H:%M:%S") }}</span>
-        <span class="small-text"> · {{ names.get(r.author_id, "unbekannt") }}</span>
-        {% set text = r.content | striptags %}
-        <div class="small-text italic gd-rev-preview">
-          {{ (text[:200] ~ "…") if text|length > 200 else (text or "(leer)") }}
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="gd-row">
+      <a class="kern-btn kern-btn--secondary kern-btn--x-small" href="/projects/{{ project.id }}/editor/{{ doc.id }}">
+        <i aria-hidden="true">arrow_back</i><span class="kern-label">Zum Dokument</span>
+      </a>
+      <h2 class="kern-heading-small gd-grow"><i aria-hidden="true">history</i> Historie – {{ doc.title }}</h2>
+    </div>
+    <p class="kern-body--small">Jede Speicherung erzeugt eine Version. Wer wann was geändert hat:</p>
+    <ul class="gd-doc-liste">
+      {% for r in revisions %}
+      <li class="gd-doc-row">
+        <div class="gd-grow">
+          <strong>v{{ r.version }}</strong>
+          <span class="kern-body--small kern-body--muted"> · {{ r.created_at.strftime("%d.%m.%Y %H:%M:%S") }}</span>
+          <span class="kern-body--small kern-body--muted"> · {{ names.get(r.author_id, "unbekannt") }}</span>
+          {% set text = r.content | striptags %}
+          <div class="kern-body--small kern-body--muted gd-rev-preview">
+            {{ (text[:200] ~ "…") if text|length > 200 else (text or "(leer)") }}
+          </div>
         </div>
-      </div>
-    </li>
-    {% else %}
-    <li><span class="small-text">Noch keine Versionen.</span></li>
-    {% endfor %}
-  </ul>
-</article>
+      </li>
+      {% else %}
+      <li class="gd-doc-row"><span class="kern-body--small">Noch keine Versionen.</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
 {% endblock %}

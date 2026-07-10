@@ -3,33 +3,38 @@
 {% extends "setup/_wizard.html" %}
 
 {% block wizard_content %}
-<h6>Willkommen! Zuerst prüfen wir die Systemdienste.</h6>
-<ul class="list border">
+<h2 class="kern-heading-small">Willkommen! Zuerst prüfen wir die Systemdienste.</h2>
+<ul class="gd-doc-liste">
   {% for check in checks %}
-  <li>
+  <li class="gd-doc-row">
     {% if check.ok %}
-      <i class="green-text">check_circle</i>
+      <i class="gd-success-text" aria-hidden="true">check_circle</i>
     {% else %}
-      <i class="error-text">cancel</i>
+      <i class="gd-error-text" aria-hidden="true">cancel</i>
     {% endif %}
-    <div class="max">
+    <div class="gd-grow">
       <strong>{{ check.name }}</strong>
-      <div class="small-text">{{ check.detail }}</div>
+      <div class="kern-body--small kern-body--muted">{{ check.detail }}</div>
     </div>
   </li>
   {% endfor %}
 </ul>
 
 {% if checks | rejectattr("ok") | list %}
-<p class="error-text">
-  <i>warning</i> Bitte beheben Sie die markierten Probleme (Dienste starten,
+<p class="kern-body gd-error-text">
+  <i aria-hidden="true">warning</i> Bitte beheben Sie die markierten Probleme (Dienste starten,
   <code>.env</code> prüfen) und laden Sie die Seite neu.
 </p>
-<a class="button border" href="/setup"><i>refresh</i> Erneut prüfen</a>
+<a class="kern-btn kern-btn--secondary" href="/setup">
+  <i aria-hidden="true">refresh</i><span class="kern-label">Erneut prüfen</span>
+</a>
 {% else %}
-<p class="green-text"><i>verified</i> Alle Dienste erreichbar.</p>
+<p class="kern-body gd-success-text"><i aria-hidden="true">verified</i> Alle Dienste erreichbar.</p>
 {% endif %}
-<nav class="right-align">
-  <a class="button" href="/setup?schritt=2">Weiter <i>arrow_forward</i></a>
-</nav>
+<div class="gd-row gd-mt">
+  <span class="gd-grow"></span>
+  <a class="kern-btn kern-btn--primary" href="/setup?schritt=2">
+    <span class="kern-label">Weiter</span><i aria-hidden="true">arrow_forward</i>
+  </a>
+</div>
 {% endblock %}

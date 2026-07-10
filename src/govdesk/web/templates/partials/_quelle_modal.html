@@ -4,27 +4,27 @@
 <div class="gd-overlay" data-gd-dismissable role="dialog" aria-modal="true"
      aria-labelledby="gd-quelle-titel">
   <div class="gd-dialog gd-dialog-wide">
-    <nav class="gd-quelle-kopf">
-      <div class="max min-width-0">
-        <h6 id="gd-quelle-titel" class="no-margin"><i>description</i> {{ document.filename }}</h6>
-        <div class="small-text gd-quelle-meta">
+    <div class="gd-quelle-kopf">
+      <div class="gd-grow min-width-0">
+        <h2 id="gd-quelle-titel" class="kern-heading-small"><i aria-hidden="true">description</i> {{ document.filename }}</h2>
+        <div class="kern-body--small gd-quelle-meta">
           {% if target.heading_path %}<span>{{ target.heading_path }}</span>{% endif %}
-          {% if target.page_no %}<span><i>article</i> Seite {{ target.page_no }}</span>{% endif %}
+          {% if target.page_no %}<span><i aria-hidden="true">article</i> Seite {{ target.page_no }}</span>{% endif %}
         </div>
       </div>
       {% if document.source_url %}
-      <a class="button border small" href="{{ document.source_url }}" target="_blank" rel="noopener">
-        <i>open_in_new</i> Original
+      <a class="kern-btn kern-btn--secondary kern-btn--x-small" href="{{ document.source_url }}" target="_blank" rel="noopener">
+        <i aria-hidden="true">open_in_new</i><span class="kern-label">Original</span>
       </a>
       {% endif %}
-      <button type="button" class="circle transparent" data-gd-dismiss title="Schließen">
+      <button type="button" class="gd-icon-btn" data-gd-dismiss title="Schließen">
         <i>close</i>
       </button>
-    </nav>
+    </div>
 
     <div class="gd-quelle-body">
     {% if page_highlight %}
-      <figure class="gd-pdf-figur no-margin" style="aspect-ratio: {{ page_highlight.aspect_ratio }};">
+      <figure class="gd-pdf-figur" style="margin: 0; aspect-ratio: {{ page_highlight.aspect_ratio }};">
         <img class="gd-pdf-bild" src="{{ page_highlight.image_data_uri }}"
              alt="Seite {{ target.page_no }} von {{ document.filename }}">
         {% for r in page_highlight.rects %}
@@ -33,8 +33,8 @@
         {% endfor %}
       </figure>
       {% if not page_highlight.rects %}
-      <p class="small-text italic gd-quelle-hinweis">
-        <i>info</i> Die genaue Fundstelle konnte auf der Seite nicht automatisch markiert werden —
+      <p class="kern-body--small kern-body--muted gd-quelle-hinweis">
+        <i aria-hidden="true">info</i> Die genaue Fundstelle konnte auf der Seite nicht automatisch markiert werden —
         der zitierte Abschnitt ist unten hervorgehoben.
       </p>
       <div class="gd-quelle-text">

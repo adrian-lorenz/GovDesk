@@ -4,22 +4,31 @@
 {% set active = "branding" %}
 
 {% block settings_body %}
-<article class="round">
-  <h6><i>badge</i> Branding</h6>
-  <p class="small-text">Name und Untertitel der Plattform (Login- und Startseite).</p>
-  <form method="post" action="/admin/settings/branding">
-    <div class="field label border round">
-      <input type="text" name="platform_name" value="{{ platform_name }}" maxlength="80" placeholder=" ">
-      <label>Plattform-Name</label>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">badge</i> Branding</h2>
+      <p class="kern-body--small kern-body--muted">Name und Untertitel der Plattform (Login- und Startseite).</p>
     </div>
-    <div class="field label border round">
-      <input type="text" name="platform_subtitle" value="{{ platform_subtitle or '' }}"
-             maxlength="160" placeholder=" ">
-      <label>Untertitel (Login/Start, optional)</label>
+    <div class="kern-card__body">
+      <form method="post" action="/admin/settings/branding" class="gd-stack kern-w-full">
+        <div class="kern-form-input">
+          <label class="kern-label" for="branding-name">Plattform-Name</label>
+          <input class="kern-form-input__input" type="text" id="branding-name" name="platform_name"
+                 value="{{ platform_name }}" maxlength="80">
+        </div>
+        <div class="kern-form-input">
+          <label class="kern-label" for="branding-untertitel">Untertitel (Login/Start, optional)</label>
+          <input class="kern-form-input__input" type="text" id="branding-untertitel" name="platform_subtitle"
+                 value="{{ platform_subtitle or '' }}" maxlength="160">
+        </div>
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">save</i><span class="kern-label">Speichern</span>
+          </button>
+        </div>
+      </form>
     </div>
-    <nav class="right-align">
-      <button type="submit"><i>save</i> Speichern</button>
-    </nav>
-  </form>
-</article>
+  </div>
+</div>
 {% endblock %}

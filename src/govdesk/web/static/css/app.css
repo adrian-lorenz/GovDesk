@@ -4,7 +4,48 @@ SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende
 SPDX-License-Identifier: EUPL-1.2
 */
 
-/* Lokal gevendorte Material Symbols — kein CDN, kein Phone-Home. */
+/* ==========================================================================
+   Schriften — lokal gevendort, kein CDN, kein Phone-Home.
+   Fira Sans ist die Hausschrift des KERN UX-Standards.
+   ========================================================================== */
+@font-face {
+  font-family: "Fira Sans";
+  src: url("../fonts/fira-sans/FiraSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fira Sans";
+  src: url("../fonts/fira-sans/FiraSans-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fira Sans";
+  src: url("../fonts/fira-sans/FiraSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fira Sans";
+  src: url("../fonts/fira-sans/FiraSans-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fira Sans";
+  src: url("../fonts/fira-sans/FiraSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Material Symbols für Icons — KERNs eigener Icon-Satz ist zu klein für
+   unsere Anwendungsfälle; die Ligatur-Schreibweise <i>icon_name</i> bleibt. */
 @font-face {
   font-family: "Material Symbols Outlined";
   font-style: normal;
@@ -13,204 +54,194 @@ SPDX-License-Identifier: EUPL-1.2
   src: url("../fonts/material-symbols-outlined.woff2") format("woff2");
 }
 
-@font-face {
-  font-family: "Material Symbols Rounded";
+i {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
   font-style: normal;
-  font-weight: 100 700;
-  font-display: block;
-  src: url("../fonts/material-symbols-rounded.woff2") format("woff2");
+  font-size: 1.4rem;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: -0.28rem;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Icon vor Button-/Link-Beschriftung braucht etwas Abstand. */
+.kern-btn > i { margin-inline-start: 0.25rem; }
+.kern-btn > i + .kern-label { padding-inline-start: 0.35rem; }
+
+/* Material-Icons in KERN-Buttons: KERN färbt nur .kern-label/.kern-icon —
+   unsere <i>-Icons bekommen dieselben Farb-Tokens, sonst stehen z. B. dunkle
+   Icons auf dem dunklen Primary-Hintergrund. */
+.kern-btn--primary > i {
+  color: var(--kern-color-action-on-default-contextual, #fff);
+}
+.kern-btn--secondary > i,
+.kern-btn--tertiary > i {
+  color: var(--kern-color-action-default-contextual);
 }
 
 /* ==========================================================================
-   Farbwelt — seriöses Behörden-Blau statt Material-You-Lila.
-   Vollständige Material-3-Tonalpalette (Seed #0061A4) für Hell & Dunkel.
-   Kommt nach beer.min.css → überschreibt die Standardwerte.
+   App-Gerüst — Kopfleiste und Hauptbereich über die volle Breite.
    ========================================================================== */
-:root,
-body.light {
-  --primary: #0b57d0;
-  --on-primary: #ffffff;
-  --primary-container: #d6e3ff;
-  --on-primary-container: #001a41;
-  --secondary: #4a6173;
-  --on-secondary: #ffffff;
-  --secondary-container: #cde5f9;
-  --on-secondary-container: #051d2c;
-  --tertiary: #38693e;
-  --on-tertiary: #ffffff;
-  --tertiary-container: #b9f0ba;
-  --on-tertiary-container: #002106;
-  --error: #ba1a1a;
-  --on-error: #ffffff;
-  --error-container: #ffdad6;
-  --on-error-container: #410002;
-  --background: #f8f9ff;
-  --on-background: #191c20;
-  --surface: #f8f9ff;
-  --on-surface: #191c20;
-  --surface-variant: #dfe2eb;
-  --on-surface-variant: #42474e;
-  --outline: #72777f;
-  --outline-variant: #c2c7cf;
-  --shadow: #000000;
-  --scrim: #000000;
-  --inverse-surface: #2e3035;
-  --inverse-on-surface: #eff0f7;
-  --inverse-primary: #aac7ff;
-  --surface-dim: #d8dae2;
-  --surface-bright: #f8f9ff;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #f2f3fb;
-  --surface-container: #eceef5;
-  --surface-container-high: #e6e8f0;
-  --surface-container-highest: #e1e2ea;
+body {
+  min-height: 100vh;
+  color: var(--kern-color-layout-text-default);
 }
 
-body.dark {
-  --primary: #aac7ff;
-  --on-primary: #002d6d;
-  --primary-container: #024299;
-  --on-primary-container: #d6e3ff;
-  --secondary: #b2cadf;
-  --on-secondary: #1c3243;
-  --secondary-container: #33485a;
-  --on-secondary-container: #cde5f9;
-  --tertiary: #9ed49f;
-  --on-tertiary: #033913;
-  --tertiary-container: #205127;
-  --on-tertiary-container: #b9f0ba;
-  --error: #ffb4ab;
-  --on-error: #690005;
-  --error-container: #93000a;
-  --on-error-container: #ffdad6;
-  --background: #111318;
-  --on-background: #e1e2ea;
-  --surface: #111318;
-  --on-surface: #e1e2ea;
-  --surface-variant: #42474e;
-  --on-surface-variant: #c2c7cf;
-  --outline: #8c9199;
-  --outline-variant: #42474e;
-  --shadow: #000000;
-  --scrim: #000000;
-  --inverse-surface: #e1e2ea;
-  --inverse-on-surface: #2e3035;
-  --inverse-primary: #0b57d0;
-  --surface-dim: #111318;
-  --surface-bright: #37393e;
-  --surface-container-lowest: #0c0e13;
-  --surface-container-low: #191c20;
-  --surface-container: #1d2024;
-  --surface-container-high: #272a2f;
-  --surface-container-highest: #32353a;
+.gd-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--kern-color-layout-background-default);
+  border-block-end: 1px solid var(--kern-color-layout-border);
 }
 
-:root {
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-
-/* ==========================================================================
-   Struktur & Raster — Header-Inhalt und Seiteninhalt fluchten (gleiche Breite),
-   ruhige Abstände, klare Kartenkanten.
-   ========================================================================== */
-
-/* Kopfzeile: dezent statt schwerer Farbbalken, sticky, mit Unterkante. */
-body > header.fixed {
-  background-color: var(--surface) !important;
-  border-bottom: 1px solid var(--outline-variant);
-  min-block-size: 3.75rem;
-}
-
-/* Header-Inhalt auf dieselbe Container-Breite wie main zentrieren → keine
-   „verschobenen" Kanten mehr zwischen Logo und Seiteninhalt. */
-body > header.fixed > nav {
-  max-inline-size: 75rem;
-  inline-size: 100%;
-  margin-inline: auto;
+.gd-header-nav {
+  display: flex;
+  align-items: center;
   gap: 0.25rem;
+  min-block-size: 3.5rem;
+  padding-inline: 1.5rem;
 }
 
-body > header.fixed .brand-name {
-  color: var(--primary);
+.gd-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--kern-color-action-default);
+  text-decoration: none;
+}
+.gd-brand-name {
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
-body > header.fixed a.row > i {
-  color: var(--primary);
+.gd-header-spacer { flex: 1; }
+.gd-header-form { display: inline-flex; align-items: center; margin: 0; }
+
+/* Icon-Buttons in der Kopfleiste — quadratisch, dezenter Hover. */
+.gd-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border: 0;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: transparent;
+  color: var(--kern-color-layout-text-default);
+  cursor: pointer;
+  text-decoration: none;
+}
+.gd-icon-btn:hover { background: var(--kern-color-layout-background-hued); }
+.gd-icon-btn:focus-visible {
+  outline: 3px solid var(--kern-color-action-focus-default);
+  outline-offset: 1px;
+}
+.gd-icon-btn > i { vertical-align: 0; }
+
+/* Hauptbereich: volle verfügbare Breite mit ruhigem Seitenabstand. */
+.gd-main {
+  inline-size: 100%;
+  padding: 1.5rem 1.5rem 4rem;
+  box-sizing: border-box;
 }
 
-/* Hauptbereich: etwas mehr Luft, damit Inhalte atmen. */
-main.responsive {
-  padding: 1.5rem 1.25rem 4rem;
-}
-
-/* Weniger rund — sachlicher, behördlicher Auftritt statt Pillen/starker Rundungen.
-   --_round steuert alle .round-Elemente; Kreise/Quadrate bleiben unverändert. */
-body .round,
-body [class*="-round"] { --_round: 0.6rem; }
-body :is(.circle, .square).round { border-radius: 1rem !important; }
-
-/* Buttons & Chips: dezent kantig; Kreis-/Icon-Buttons bleiben rund. */
-body :is(button, .button):not(.circle):not(.square) { border-radius: 0.5rem; }
-body .chip { border-radius: 0.5rem; }
-
-/* Eingabefelder: ruhige, einheitliche Rundung. */
-body .field.round,
-body .field.round > :is(input, textarea, select) { border-radius: 0.5rem !important; }
-
-/* Karten: einheitlicher Radius, weiche Kante, gleichmäßiger Innenabstand. */
-main article.round {
-  border-radius: 0.6rem;
-  padding: 1.25rem 1.5rem;
-}
-
-main article.round.large-padding {
-  border-radius: 0.75rem;
-  padding: 2rem;
-}
-
-/* Buttons in vertikalen Formularen/Karten brauchen Abstand nach oben —
-   Beer gibt aufeinanderfolgenden Buttons/Feldern standardmäßig keinen.
-   Nur im Hauptbereich und nicht für Icon-Buttons (Kreis/transparent), sonst
-   verschiebt es u. a. den Logout-Button im Header. */
-main form:not(.row):not(.grid) > :is(button, .button, [type="submit"]):not(.circle):not(.square) {
-  margin-block-start: 1rem;
-}
-main :is(button, .button).responsive { margin-block-start: 1rem; }
-main :is(nav, .row) :is(button, .button).responsive { margin-block-start: 0; }
-
-/* Karten in Kachel-Rastern: gleiche Höhe, dezenter Hover. */
-.grid > a > article,
-.grid > article {
-  block-size: 100%;
-  transition: box-shadow var(--speed2) ease, border-color var(--speed2) ease;
-}
-
-/* Projektliste: festes 2-Spalten-Raster mit gleich breiten Kacheln
-   (Beers s/m/l-Grid auf <a> streckte sich nicht zuverlässig → Breite nach
-   Namenslänge). Anker als Block, damit sie die Spalte füllen. */
-.projekt-liste {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 0.75rem;
-}
-.projekt-liste > a {
-  display: block;
-  min-inline-size: 0;
-}
-
-/* Projektkacheln: einheitliche, kompakte Größe, Beschreibung auf 2 Zeilen,
-   Infozeile unten bündig. */
-.projekt-kachel {
+/* Seiten-Kopfzeile (Titel + Aktionen) */
+.gd-page-head {
   display: flex;
-  flex-direction: column;
-  min-block-size: 7.5rem;
-  padding: 0.9rem 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block-end: 1.5rem;
 }
-.projekt-kachel h6 { font-size: 1rem; }
+.gd-page-head > .gd-grow { flex: 1; min-inline-size: 0; overflow-wrap: break-word; }
+.gd-grow { flex: 1; min-inline-size: 0; }
+
+/* Vertikaler Rhythmus für gestapelte Inhalte */
+.gd-stack > * + * { margin-block-start: 1rem; }
+
+/* Kleine Utilities für die Template-Migration */
+.gd-center { text-align: center; }
+.gd-mt { margin-block-start: 1rem; }
+.gd-mb { margin-block-end: 1rem; }
+.gd-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.gd-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.gd-error-text { color: var(--kern-color-feedback-danger); }
+.gd-success-text { color: var(--kern-color-feedback-success); }
+.gd-warning-text { color: var(--kern-color-feedback-warning); }
+.gd-actions--end { justify-content: flex-end; }
+/* Feld + Button in einer Zeile: an der Unterkante ausrichten (Label sitzt über
+   dem Feld, sonst hängt der Button vertikal in der Mitte). */
+.gd-row--end { align-items: flex-end; }
+
+/* Natives <dialog> in gd-dialog-Optik: Backdrop wie gd-overlay. */
+dialog.gd-dialog::backdrop { background: rgb(0 0 0 / 0.5); }
+
+/* Inline-Formular (z. B. Icon-Button-Form in Tabellenzellen/Listen) */
+.gd-inline-form { display: inline-flex; align-items: center; margin: 0; }
+
+/* Meta-Zeile im Audit-Log */
+.gd-audit-meta { color: var(--kern-color-layout-text-muted); font-size: 0.8rem; overflow-wrap: anywhere; }
+
+/* Gefahrenzone (Projekt löschen) — dezenter roter Rahmen */
+.gd-gefahrenzone { border-color: var(--kern-color-feedback-danger); }
+.gd-gefahrenzone .kern-btn.gd-error-text { border-color: var(--kern-color-feedback-danger); }
+.gd-gefahrenzone .kern-btn.gd-error-text .kern-label,
+.gd-gefahrenzone .kern-btn.gd-error-text > i { color: var(--kern-color-feedback-danger); }
+
+/* Kompakter Inline-Spinner (z. B. in Test-Buttons neben dem Text) */
+.gd-spinner {
+  display: inline-block;
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  border: 2px solid currentColor;
+  border-block-start-color: transparent;
+  border-radius: 50%;
+  animation: gd-spin 0.8s linear infinite;
+  vertical-align: -0.2em;
+}
+@keyframes gd-spin { to { transform: rotate(360deg); } }
+
+/* Zentrierte Einzelkarte (Login, Fehlerseiten) */
+.gd-center-page {
+  min-block-size: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hervorgehobene Einstiegskarte (Hero) */
+.kern-card.gd-hero {
+  background: var(--kern-color-layout-background-hued);
+  border-color: transparent;
+}
+
+/* Kartenraster (z. B. Startseite, Projektliste) — füllt die volle Breite. */
+.gd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+.gd-cards > a { display: block; min-inline-size: 0; text-decoration: none; color: inherit; }
+.gd-cards .kern-card { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.gd-cards > a:hover .kern-card {
+  border-color: var(--kern-color-action-default);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.12);
+}
+
+/* Projektkacheln: kompakt, Beschreibung auf 2 Zeilen, Infozeile unten. */
+.projekt-kachel .kern-card__container { padding: 1rem 1.15rem; gap: 0.5rem; }
 .projekt-beschreibung {
-  flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -221,72 +252,29 @@ main :is(nav, .row) :is(button, .button).responsive { margin-block-start: 0; }
   display: flex;
   align-items: center;
   gap: 1rem;
-  color: var(--on-surface-variant);
+  color: var(--kern-color-layout-text-muted);
 }
 .projekt-infos i { font-size: 1.1rem; vertical-align: -0.2rem; }
 
-.grid > a:hover > article {
-  border-color: var(--primary);
-  box-shadow: var(--elevate1);
-}
-
-/* Überschriften-Rhythmus vereinheitlichen. */
-main h5 { margin-block: 0 1rem; }
-main h6 { margin-block: 0 0.5rem; }
-
-/* Seiten-Kopfzeilen (nav mit Titel) enger und ausgerichtet. */
-main > nav:first-child {
-  margin-block: 0 1.5rem;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
 /* Lange, umbruchlose Zeichenketten (Dateinamen, Chat-Titel, Fehlermeldungen)
-   dürfen nicht über die Karte hinauslaufen. Flex-Zellen brauchen min-width:0,
-   damit sie schrumpfen und umbrechen können. */
-main article,
-main .list > li,
-main .field { overflow-wrap: break-word; }
+   dürfen nicht überlaufen. */
+.gd-main .kern-card,
+.gd-main li { overflow-wrap: break-word; min-inline-size: 0; }
 
-main .list > li { min-inline-size: 0; }
-main .list > li > .max,
-main .list > li > a.max,
-main .grid article .max { min-inline-size: 0; overflow-wrap: anywhere; }
-
-/* Kopfzeilen-Titel: nur echte Langwörter umbrechen. `anywhere` würde die
-   min-content-Breite der Flex-Zelle auf ~1 Zeichen drücken, sodass der Titel
-   zusammenschrumpft und mitten im Wort umbricht, obwohl rechts Platz ist. */
-main nav > .max { min-inline-size: 0; overflow-wrap: break-word; }
-
-/* Beer gibt JEDER .list>li cursor:pointer — auch nicht klickbaren Info-/
-   Verwaltungszeilen (irreführender Hand-Cursor). Zeilen wieder auf default;
-   echte Link-Zeilen (a:only-child) behalten Beers Pointer über den Anchor. */
-main .list > li { cursor: default; }
-
-/* Beer setzt auf Listen-Anchors white-space:nowrap → lange Titel/Dateinamen
-   laufen sonst aus der Karte. In Listen normal umbrechen lassen (break-word
-   bricht nur überlange Wörter, nicht jedes Zeichen). */
-main .list .max,
-main .list .max > a,
-main .list > li > a { white-space: normal; overflow-wrap: break-word; }
-
-main .chip { max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
-
-/* Icon-Buttons in der Kopfzeile nicht überdimensioniert. */
-body > header i { font-size: 1.5rem; }
-
-/* Logout steckt in einem <form>; als flex-zentrierter Container richtet sich
-   der Button exakt wie die übrigen Icon-Buttons aus (display:contents war in
-   der Flex-Leiste nicht zuverlässig vertikal zentriert). */
-body > header.fixed > nav { align-items: center; }
-body > header form { display: inline-flex; align-items: center; margin: 0; }
+/* KERN-Karten setzen align-items: flex-start — Listen, Formulare und Zeilen
+   als direkte Kinder sollen aber die volle Kartenbreite füllen (sonst schrumpft
+   z. B. die Chat-Liste auf Inhaltsbreite). Bewusst ohne Buttons/Links, damit
+   zentrierte Leerzustände nicht auseinandergezogen werden. */
+.kern-card__container > :is(ul, ol, form, div, nav, table, p),
+.kern-card__body > :is(ul, ol, form, div, nav, table) {
+  align-self: stretch;
+  min-inline-size: 0;
+}
 
 /* ==========================================================================
    HTMX-Feinschliff
    ========================================================================== */
-.htmx-added {
-  animation: gd-fade-in 0.2s ease-out;
-}
+.htmx-added { animation: gd-fade-in 0.2s ease-out; }
 
 @keyframes gd-fade-in {
   from { opacity: 0; transform: translateY(2px); }
@@ -295,10 +283,6 @@ body > header form { display: inline-flex; align-items: center; margin: 0; }
 
 .htmx-indicator { display: none; }
 .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-block; }
-
-/* ==========================================================================
-   Globales Feedback für laufende Vorgänge
-   ========================================================================== */
 
 /* Fortschrittsbalken am oberen Rand, solange ein HTMX-Request läuft. */
 #gd-progress {
@@ -313,7 +297,7 @@ body > header form { display: inline-flex; align-items: center; margin: 0; }
 
 body.gd-loading #gd-progress {
   opacity: 1;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  background: linear-gradient(90deg, transparent, var(--kern-color-action-default), transparent);
   background-size: 40% 100%;
   background-repeat: no-repeat;
   animation: gd-bar 1s linear infinite;
@@ -324,34 +308,23 @@ body.gd-loading #gd-progress {
   to { background-position: 140% 0; }
 }
 
-/* Warte-Cursor global, während etwas lädt. */
 body.gd-loading { cursor: progress; }
 
-/* Nativer Datei-Input (außerhalb Beers .field). */
-.gd-file-label { display: block; margin-block-end: 0.4rem; color: var(--on-surface-variant); }
-.gd-file-input {
-  display: block;
-  inline-size: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--outline);
-  border-radius: 0.5rem;
-  background: var(--surface-container-low);
-  color: var(--on-surface);
-  cursor: pointer;
-  margin-block-end: 1rem;
-}
-.gd-file-input::file-selector-button {
-  margin-inline-end: 0.75rem;
-  padding: 0.35rem 0.75rem;
-  border: 0;
-  border-radius: 0.4rem;
-  background: var(--primary);
-  color: var(--on-primary);
-  cursor: pointer;
-  font-family: inherit;
+/* Auslösendes Element (Button/Form) sichtbar als „beschäftigt" markieren. */
+.kern-btn.htmx-request,
+form.htmx-request button[type="submit"] {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
-/* Eigenes Modal (Bestätigung/Alert) statt window.confirm/alert. */
+@media (prefers-reduced-motion: reduce) {
+  body.gd-loading #gd-progress { animation: none; background: var(--kern-color-action-default); }
+}
+
+/* ==========================================================================
+   Overlays & Dialoge (Bestätigung, Quellen-Modal) — eigene Leichtgewichte,
+   gestylt mit KERN-Tokens.
+   ========================================================================== */
 .gd-overlay {
   position: fixed;
   inset: 0;
@@ -365,24 +338,45 @@ body.gd-loading { cursor: progress; }
 }
 .gd-overlay[hidden] { display: none; }
 .gd-dialog {
-  background: var(--surface-container-high);
-  color: var(--on-surface);
-  border-radius: 0.75rem;
+  background: var(--kern-color-layout-background-default);
+  color: var(--kern-color-layout-text-default);
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-large, 8px);
   padding: 1.5rem;
   inline-size: 26rem;
   max-inline-size: 92vw;
-  box-shadow: var(--elevate3);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
+}
+.gd-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-block-start: 1.25rem;
 }
 
-/* Auslösendes Element (Button/Form) sichtbar als „beschäftigt" markieren. */
-:is(button, .button).htmx-request,
-form.htmx-request button[type="submit"] {
-  opacity: 0.6;
-  pointer-events: none;
+/* Nativer Datei-Input */
+.gd-file-label { display: block; margin-block-end: 0.4rem; color: var(--kern-color-layout-text-muted); }
+.gd-file-input {
+  display: block;
+  inline-size: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  color: var(--kern-color-layout-text-default);
+  cursor: pointer;
+  margin-block-end: 1rem;
+  box-sizing: border-box;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  body.gd-loading #gd-progress { animation: none; background: var(--primary); }
+.gd-file-input::file-selector-button {
+  margin-inline-end: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  border: 0;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-action-default);
+  color: var(--kern-color-action-on-default);
+  cursor: pointer;
+  font-family: inherit;
 }
 
 /* ==========================================================================
@@ -391,7 +385,7 @@ form.htmx-request button[type="submit"] {
 .min-width-0 { min-inline-size: 0; }
 
 .gd-dialog-wide {
-  inline-size: 60rem;
+  inline-size: 64rem;
   max-inline-size: 94vw;
   max-block-size: 92vh;
   display: flex;
@@ -404,29 +398,27 @@ form.htmx-request button[type="submit"] {
   align-items: flex-start;
   gap: 0.5rem;
   padding-block-end: 0.75rem;
-  border-block-end: 1px solid var(--outline-variant);
+  border-block-end: 1px solid var(--kern-color-layout-border);
   margin-block-end: 0.75rem;
 }
-.gd-quelle-kopf h6 { overflow-wrap: anywhere; }
+.gd-quelle-kopf .kern-heading-small { overflow-wrap: anywhere; }
 .gd-quelle-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
-  color: var(--on-surface-variant);
+  color: var(--kern-color-layout-text-muted);
   margin-block-start: 0.25rem;
 }
 .gd-quelle-meta i { font-size: 1rem; vertical-align: -0.15rem; }
 
-/* Scroll-Bereich für lange Seiten/Texte */
 .gd-quelle-body { overflow: auto; min-block-size: 0; }
 
-/* PDF-Seite: Bild + absolut positionierte Markierungen darüber */
 .gd-pdf-figur {
   position: relative;
   inline-size: 100%;
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--outline-variant);
-  border-radius: 0.4rem;
+  background: var(--kern-color-layout-background-default);
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
   overflow: hidden;
 }
 .gd-pdf-bild { display: block; inline-size: 100%; height: auto; }
@@ -438,38 +430,36 @@ form.htmx-request button[type="submit"] {
   pointer-events: none;
   mix-blend-mode: multiply;
 }
-body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3); }
+body.kern-dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3); }
 
 .gd-quelle-hinweis { margin-block: 0.75rem 0.25rem; }
 .gd-quelle-hinweis i { font-size: 1rem; vertical-align: -0.15rem; }
 
-/* Text-Ansicht (Nicht-PDF oder Fallback) */
 .gd-quelle-text { line-height: 1.6; white-space: pre-wrap; }
 .gd-quelle-text mark {
-  background: var(--primary-container);
-  color: var(--on-primary-container);
+  background: var(--kern-color-feedback-info-background, #dce7ff);
+  color: inherit;
   padding: 0.1rem 0.15rem;
   border-radius: 0.2rem;
 }
-.gd-quelle-umfeld { color: var(--on-surface-variant); white-space: pre-wrap; }
+.gd-quelle-umfeld { color: var(--kern-color-layout-text-muted); white-space: pre-wrap; }
 
 /* ==========================================================================
    Seitenmenü-Layout (Einstellungen + Projekt) — vertikales Untermenü + Inhalt
    ========================================================================== */
 .gd-sidenav {
   display: grid;
-  grid-template-columns: 15rem minmax(0, 1fr);
+  grid-template-columns: 16rem minmax(0, 1fr);
   gap: 1.5rem;
   align-items: start;
 }
 
-/* Untermenü: gerahmte Links auf die Subpages */
 .gd-sidenav-menu {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   position: sticky;
-  top: 5rem;
+  top: 4.5rem;
 }
 .gd-sidenav-menu a {
   display: flex;
@@ -479,31 +469,25 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
   gap: 0.6rem;
   min-inline-size: 0;
   padding: 0.6rem 0.85rem;
-  border: 1px solid var(--outline-variant);
-  border-radius: 0.5rem;
-  background: var(--surface-container-low);
-  color: var(--on-surface-variant);
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  color: var(--kern-color-layout-text-default);
+  text-decoration: none;
   white-space: normal;
   overflow-wrap: anywhere;
 }
 .gd-sidenav-menu a > i { font-size: 1.25rem; flex: 0 0 auto; }
-.gd-sidenav-menu a:hover { background: var(--surface-container-high); border-color: var(--outline); }
+.gd-sidenav-menu a:hover { background: var(--kern-color-layout-background-hued); }
 .gd-sidenav-menu a.aktiv {
-  background: var(--primary-container);
-  color: var(--on-primary-container);
-  border-color: var(--primary);
+  background: var(--kern-color-action-default);
+  color: var(--kern-color-action-on-default);
+  border-color: var(--kern-color-action-default);
   font-weight: 600;
 }
 
-/* Gleichmäßige vertikale Rhythmik in den Karten — überschreibt Beers
-   uneinheitliche Feld-/Element-Abstände durch einen einheitlichen 1rem-Gap. */
 .gd-sidenav-body > form > * + *,
-.gd-sidenav-body > article + article { margin-block-start: 1rem; }
-.gd-sidenav-body article > *,
-.gd-sidenav-body article > form > * { margin-block: 0; }
-.gd-sidenav-body article > * + *,
-.gd-sidenav-body article > form > * + * { margin-block-start: 1rem; }
-/* Leere HTMX-Zielcontainer (Testergebnis) sollen keinen Phantom-Abstand erzeugen. */
+.gd-sidenav-body > .kern-card + .kern-card { margin-block-start: 1rem; }
 .gd-sidenav-body div:empty { margin: 0; }
 
 @media (max-width: 60rem) {
@@ -515,16 +499,314 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
   }
 }
 
+/* Einklappbare Minibar: nur Icons, Labels ausgeblendet. Zustand steuert JS
+   über die Klasse am .gd-sidenav (persistiert in localStorage). */
+.gd-sidenav--mini { grid-template-columns: 3.4rem minmax(0, 1fr); }
+.gd-sidenav--mini .gd-sidenav-label { display: none; }
+.gd-sidenav--mini .gd-sidenav-menu a { justify-content: center; padding: 0.6rem 0.4rem; }
+.gd-sidenav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-block-start: 0.35rem;
+  padding: 0.45rem;
+  border: 1px dashed var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: transparent;
+  color: var(--kern-color-layout-text-muted);
+  cursor: pointer;
+}
+.gd-sidenav-toggle:hover { background: var(--kern-color-layout-background-hued); }
+
+/* ==========================================================================
+   Editor-Arbeitsfläche: Ribbon + Seite links, KI-Panel rechts
+   ========================================================================== */
+.gd-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24rem;
+  gap: 1rem;
+  align-items: start;
+}
+.gd-editor-layout.gd-ki-zu { grid-template-columns: minmax(0, 1fr); }
+.gd-editor-layout.gd-ki-zu .gd-ki-panel { display: none; }
+
+/* Word-ähnliches Ribbon: Gruppen mit Beschriftung darunter, klebt oben. */
+.gd-ribbon {
+  position: sticky;
+  top: 3.5rem;
+  z-index: 4;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0.35rem 0.5rem 0.25rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+  overflow-x: auto;
+}
+.gd-ribbon-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding-inline: 0.5rem;
+}
+.gd-ribbon-group + .gd-ribbon-group { border-inline-start: 1px solid var(--kern-color-layout-border); }
+.gd-ribbon-row { display: flex; align-items: center; gap: 0.15rem; }
+.gd-ribbon-caption {
+  font-size: 0.68rem;
+  color: var(--kern-color-layout-text-muted);
+  user-select: none;
+  white-space: nowrap;
+}
+.gd-ribbon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 2rem;
+  block-size: 2rem;
+  padding-inline: 0.3rem;
+  border: 0;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: transparent;
+  color: var(--kern-color-layout-text-default);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.gd-ribbon-btn:hover { background: var(--kern-color-layout-background-hued); }
+.gd-ribbon-btn[aria-pressed="true"] {
+  background: var(--kern-color-layout-background-hued);
+  color: var(--kern-color-action-default);
+  box-shadow: inset 0 -2px 0 var(--kern-color-action-default);
+}
+.gd-ribbon-btn > i { font-size: 1.25rem; vertical-align: 0; }
+.gd-ribbon-select {
+  block-size: 2rem;
+  padding-inline: 0.4rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  color: var(--kern-color-layout-text-default);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+/* Rechtes KI-Panel */
+.gd-ki-panel {
+  position: sticky;
+  top: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  max-block-size: calc(100vh - 4.5rem);
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+}
+.gd-ki-kopf {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-block-end: 1px solid var(--kern-color-layout-border);
+}
+.gd-ki-kopf i { color: var(--kern-color-action-default); }
+.gd-ki-verlauf {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.gd-ki-msg { max-inline-size: 100%; overflow-wrap: break-word; }
+.gd-ki-msg--nutzer {
+  align-self: flex-end;
+  background: var(--kern-color-layout-background-hued);
+  border-radius: 0.6rem 0.6rem 0.15rem 0.6rem;
+  padding: 0.5rem 0.75rem;
+  max-inline-size: 90%;
+}
+.gd-ki-msg--ki { line-height: 1.55; }
+.gd-ki-msg--ki p { margin-block: 0.35rem; }
+.gd-ki-hinweis {
+  color: var(--kern-color-layout-text-muted);
+  font-size: 0.85rem;
+}
+.gd-ki-fuss {
+  padding: 0.6rem 0.75rem;
+  border-block-start: 1px solid var(--kern-color-layout-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.gd-ki-modus { display: flex; gap: 0.25rem; }
+.gd-ki-modus button {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: transparent;
+  color: var(--kern-color-layout-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+.gd-ki-modus button[aria-pressed="true"] {
+  background: var(--kern-color-action-default);
+  border-color: var(--kern-color-action-default);
+  color: var(--kern-color-action-on-default);
+}
+.gd-ki-eingabe {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+.gd-ki-eingabe textarea {
+  flex: 1;
+  min-block-size: 2.4rem;
+  max-block-size: 8rem;
+  resize: vertical;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  color: var(--kern-color-layout-text-default);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.gd-ki-auswahl-hinweis {
+  font-size: 0.78rem;
+  color: var(--kern-color-layout-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.gd-ki-auswahl-hinweis i { font-size: 1rem; }
+
+@media (max-width: 75rem) {
+  .gd-editor-layout { grid-template-columns: minmax(0, 1fr); }
+  .gd-ki-panel { position: static; max-block-size: 24rem; }
+}
+
+/* ==========================================================================
+   Explorer-Ansicht der Dokumentenbibliothek
+   ========================================================================== */
+.gd-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  margin-block-end: 1rem;
+}
+.gd-crumbs a, .gd-crumbs span[aria-current] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  color: var(--kern-color-layout-text-default);
+  text-decoration: none;
+  max-inline-size: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gd-crumbs a:hover { background: var(--kern-color-layout-background-hued); }
+.gd-crumbs a.gd-crumb-dragover { background: var(--kern-color-layout-background-hued); outline: 2px dashed var(--kern-color-action-default); }
+.gd-crumbs .gd-crumb-sep { color: var(--kern-color-layout-text-muted); user-select: none; }
+
+.gd-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.6rem;
+}
+.gd-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1rem 0.75rem 0.8rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  color: inherit;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+.gd-tile:hover { background: var(--kern-color-layout-background-hued); border-color: var(--kern-color-action-default); }
+.gd-tile:focus-visible { outline: 3px solid var(--kern-color-action-focus-default); outline-offset: 1px; }
+.gd-tile > i { font-size: 2.6rem; }
+.gd-tile--ordner > i { color: var(--kern-color-feedback-warning); }
+.gd-tile--doc > i { color: var(--kern-color-action-default); }
+.gd-tile-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gd-tile-meta { font-size: 0.75rem; color: var(--kern-color-layout-text-muted); }
+.gd-tile.gd-tile--dragging { opacity: 0.45; }
+.gd-tile.gd-tile--dragover {
+  outline: 2px dashed var(--kern-color-action-default);
+  outline-offset: -2px;
+  background: var(--kern-color-layout-background-hued);
+}
+
+/* Kontextmenü (Rechtsklick auf Kachel) */
+.gd-ctx-menu {
+  position: fixed;
+  z-index: 60;
+  min-inline-size: 12rem;
+  padding: 0.25rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-default);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.2);
+  display: flex;
+  flex-direction: column;
+}
+.gd-ctx-menu[hidden] { display: none; }
+.gd-ctx-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: transparent;
+  color: var(--kern-color-layout-text-default);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-align: start;
+}
+.gd-ctx-menu button:hover { background: var(--kern-color-layout-background-hued); }
+.gd-ctx-menu button.gd-ctx-gefahr { color: var(--kern-color-feedback-danger); }
+.gd-ctx-menu button.gd-ctx-gefahr:hover { background: var(--kern-color-feedback-danger-background); }
+
 /* ==========================================================================
    Dokumentenverwaltung
    ========================================================================== */
-.gd-doc-liste { border: 0; }
+.gd-doc-liste { border: 0; padding: 0; margin: 0; list-style: none; }
 .gd-doc-row {
   display: flex;
   align-items: center;
   gap: 0.85rem;
   padding: 0.7rem 0.4rem;
-  border-block-end: 1px solid var(--outline-variant);
+  border-block-end: 1px solid var(--kern-color-layout-border);
 }
 .gd-doc-row:last-child { border-block-end: 0; }
 .gd-doc-icon {
@@ -534,38 +816,31 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
   inline-size: 2.5rem;
   block-size: 2.5rem;
   flex: 0 0 auto;
-  border-radius: 0.6rem;
-  background: var(--primary-container);
-  color: var(--on-primary-container);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-hued);
+  color: var(--kern-color-action-default);
 }
-.gd-doc-icon > i { font-size: 1.4rem; }
+.gd-doc-icon > i { font-size: 1.4rem; vertical-align: 0; }
 .gd-doc-name { display: block; overflow-wrap: anywhere; }
 .gd-doc-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem 0.75rem;
-  color: var(--on-surface-variant);
+  color: var(--kern-color-layout-text-muted);
   margin-block-start: 0.15rem;
 }
 .gd-doc-ext {
   font-weight: 600;
   letter-spacing: 0.03em;
-  color: var(--primary);
-}
-.chip.tiny {
-  font-size: 0.7rem;
-  padding: 0.05rem 0.45rem;
-  block-size: auto;
-  min-block-size: 0;
-  border-radius: 0.4rem;
+  color: var(--kern-color-action-default);
 }
 
-/* Dokumentenbibliothek (kollaborative Dokumente) — kompakte Zeilen, 1 pro Reihe */
+/* Dokumentenbibliothek (kollaborative Dokumente) */
 .gd-dok-kopf { margin-block-end: 1rem; }
 .gd-dok-neu { margin-block-end: 1.25rem; }
-.gd-doc-open { display: block; color: inherit; }
-.gd-doc-row:hover { background: var(--surface-container-low); }
+.gd-doc-open { display: block; color: inherit; text-decoration: none; }
+.gd-doc-row:hover { background: var(--kern-color-layout-background-hued); }
 
 /* Inline editierbarer Dokumenttitel im Editor */
 .gd-editor-titel-input {
@@ -573,44 +848,57 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
   border: 1px solid transparent;
   background: transparent;
   color: inherit;
+  font-family: inherit;
   font-size: 1.15rem;
   font-weight: 600;
   padding: 0.2rem 0.4rem;
-  border-radius: 0.4rem;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
 }
-.gd-editor-titel-input:hover { border-color: var(--outline-variant); }
-.gd-editor-titel-input:focus-visible { outline: none; border-color: var(--primary); background: var(--surface-container-lowest); }
+.gd-editor-titel-input:hover { border-color: var(--kern-color-layout-border); }
+.gd-editor-titel-input:focus-visible {
+  outline: none;
+  border-color: var(--kern-color-action-default);
+  background: var(--kern-color-layout-background-default);
+}
 
 /* ==========================================================================
    Kollaborativer Editor
    ========================================================================== */
 .gd-editor-kopf { display: flex; align-items: center; gap: 0.5rem; margin-block-end: 0.25rem; }
-.gd-editor-kopf h6 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gd-editor-presence { color: var(--on-surface-variant); min-block-size: 1.2rem; }
+.gd-editor-presence { color: var(--kern-color-layout-text-muted); min-block-size: 1.2rem; }
 
 /* Word-artige Bearbeitung: Ribbon oben (klebt), graue Arbeitsfläche, weiße Seite */
 .gd-rte-toolbar {
   position: sticky;
-  top: 3.75rem;
+  top: 3.5rem;
   z-index: 4;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
   padding: 0.5rem 0.6rem;
-  border: 1px solid var(--outline-variant);
-  border-radius: 0.5rem;
-  background: var(--surface-container-high);
-  box-shadow: var(--elevate1);
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: var(--kern-color-layout-background-hued);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
 }
-.gd-rte-toolbar button { min-inline-size: 2.2rem; }
-.gd-rte-sep { inline-size: 1px; align-self: stretch; background: var(--outline-variant); margin-inline: 0.25rem; }
+.gd-rte-toolbar button {
+  min-inline-size: 2.2rem;
+  min-block-size: 2.2rem;
+  border: 0;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.gd-rte-toolbar button:hover { background: var(--kern-color-layout-background-default); }
+.gd-rte-sep { inline-size: 1px; align-self: stretch; background: var(--kern-color-layout-border); margin-inline: 0.25rem; }
 
 .gd-editor-canvas {
   margin-block-start: 1rem;
   padding: 1.75rem;
-  background: var(--surface-dim);
-  border-radius: 0.5rem;
+  background: var(--kern-color-layout-background-hued);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
   overflow-x: auto;
 }
 /* Die „Seite" — echtes A4 (21×29,7 cm) in natürlicher Größe, zentriert. */
@@ -620,11 +908,11 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
   margin-inline: auto;
   min-block-size: 29.7cm;
   padding: 2cm 2.5cm;
-  background: var(--surface-container-lowest);
-  color: var(--on-surface);
-  border: 1px solid var(--outline-variant);
+  background: var(--kern-color-layout-background-default);
+  color: var(--kern-color-layout-text-default);
+  border: 1px solid var(--kern-color-layout-border);
   border-radius: 2px;
-  box-shadow: var(--elevate3);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 11pt;
   line-height: 1.5;
@@ -637,7 +925,7 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
 .gd-page p { margin-block: 0.35rem; }
 .gd-page ul, .gd-page ol { margin-block: 0.35rem; padding-inline-start: 1.6rem; }
 .gd-page blockquote { margin-block: 0.35rem; }
-.gd-page a { color: var(--primary); }
+.gd-page a { color: var(--kern-color-action-default); }
 
 @media (max-width: 50rem) {
   .gd-editor-canvas { padding: 0.5rem; }
@@ -648,9 +936,9 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  background: var(--error-container);
-  color: var(--on-error-container);
-  border-radius: 0.5rem;
+  background: var(--kern-color-feedback-danger-background, #ffe5e5);
+  color: var(--kern-color-feedback-danger, #c00);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
   padding: 0.6rem 0.9rem;
   margin-block: 0.5rem;
 }
@@ -659,24 +947,24 @@ body.dark .gd-pdf-mark { mix-blend-mode: screen; background: rgb(255 214 0 / 0.3
 
 /* Checkbox-Liste in Connector-Konfigurationsformularen */
 .gd-checkbox-liste {
-  border: 1px solid var(--outline-variant);
-  border-radius: 0.5rem;
+  border: 1px solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default, 4px);
   padding: 0.75rem 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-.gd-checkbox-liste legend { padding-inline: 0.35rem; color: var(--on-surface-variant); }
+.gd-checkbox-liste legend { padding-inline: 0.35rem; color: var(--kern-color-layout-text-muted); }
 
 /* Klickbare Quelle in der Sidebar */
 .quelle-trigger {
   display: block;
   padding: 0.3rem;
   margin: -0.3rem -0.3rem 0;
-  border-radius: 0.4rem;
+  border-radius: var(--kern-metric-border-radius-default, 4px);
   cursor: pointer;
-  transition: background var(--speed1) ease;
+  transition: background 0.1s ease;
 }
-.quelle-trigger:hover { background: var(--surface-container-high); }
-.quelle-trigger:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
-.quelle-trigger .row > i { color: var(--primary); }
+.quelle-trigger:hover { background: var(--kern-color-layout-background-hued); }
+.quelle-trigger:focus-visible { outline: 2px solid var(--kern-color-action-focus-default); outline-offset: 1px; }
+.quelle-trigger i { color: var(--kern-color-action-default); }

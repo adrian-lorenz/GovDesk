@@ -5,8 +5,8 @@
   "parsing":   ("description",  "Liest",      ""),
   "chunking":  ("content_cut",  "Zerteilt",   ""),
   "embedding": ("memory",       "Bettet ein", ""),
-  "ready":     ("check_circle", "Bereit",     "green-text"),
-  "failed":    ("error",        "Fehler",     "error-text"),
+  "ready":     ("check_circle", "Bereit",     "kern-badge--success"),
+  "failed":    ("error",        "Fehler",     "kern-badge--danger"),
 } %}
 {% set icon_map = {
   "pdf": "picture_as_pdf", "docx": "description", "doc": "description", "odt": "description",
@@ -22,31 +22,30 @@
     hx-trigger="every 2s" hx-swap="outerHTML"
     {% endif %}>
   <span class="gd-doc-icon"><i>{{ icon_map.get(ext, "draft") }}</i></span>
-  <div class="max min-width-0">
+  <div class="gd-grow min-width-0">
     <strong class="gd-doc-name">{{ document.filename }}</strong>
-    <div class="small-text gd-doc-meta">
+    <div class="kern-body--small gd-doc-meta">
       {% if ext %}<span class="gd-doc-ext">{{ ext | upper }}</span>{% endif %}
       <span>{{ (document.size_bytes or 0) // 1024 }} KB</span>
       {% if document.status.value == "ready" %}<span>{{ document.chunk_count }} Abschnitte</span>{% endif %}
       {% if quelle_map.get(document.source_type.value) %}
-        <span class="chip tiny">{{ quelle_map[document.source_type.value] }}</span>
+        <span class="kern-badge kern-badge--small"><span class="kern-label">{{ quelle_map[document.source_type.value] }}</span></span>
       {% endif %}
-      {% if document.status.value == "failed" %}<span class="error-text">{{ document.error }}</span>{% endif %}
+      {% if document.status.value == "failed" %}<span class="gd-error-text">{{ document.error }}</span>{% endif %}
     </div>
   </div>
-  <span class="chip small {{ farbe }}">
-    <i>{{ icon }}</i> {{ label }}
-    {% if document.status.value not in ("ready", "failed") %}<progress class="circle small"></progress>{% endif %}
+  <span class="kern-badge kern-badge--small {{ farbe }}">
+    <i aria-hidden="true">{{ icon }}</i><span class="kern-label">{{ label }}</span>
   </span>
-  <a class="button circle transparent small" hx-boost="false" title="Herunterladen"
+  <a class="gd-icon-btn" hx-boost="false" title="Herunterladen"
      href="/projects/{{ project.id }}/documents/{{ document.id }}/download"><i>download</i></a>
   {% if can_edit %}
-  <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/reindex" class="no-margin">
-    <button class="circle transparent small" title="Neu einlesen"><i>refresh</i></button>
+  <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/reindex">
+    <button class="gd-icon-btn" title="Neu einlesen"><i>refresh</i></button>
   </form>
-  <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/loeschen" class="no-margin"
+  <form method="post" action="/projects/{{ project.id }}/documents/{{ document.id }}/loeschen"
         hx-confirm="Dokument „{{ document.filename }}“ endgültig löschen?">
-    <button class="circle transparent small" title="Löschen"><i>delete</i></button>
+    <button class="gd-icon-btn" title="Löschen"><i>delete</i></button>
   </form>
   {% endif %}
 </li>

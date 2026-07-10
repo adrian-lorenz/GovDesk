@@ -3,33 +3,42 @@
 {% extends "setup/_wizard.html" %}
 
 {% block wizard_content %}
-<h6>Administrator-Konto anlegen</h6>
-<p>Dieses Konto verwaltet die Plattform (Nutzer, Projekte, Einstellungen).</p>
+<h2 class="kern-heading-small">Administrator-Konto anlegen</h2>
+<p class="kern-body">Dieses Konto verwaltet die Plattform (Nutzer, Projekte, Einstellungen).</p>
 
 {% if error %}
-<p class="error-text"><i>error</i> {{ error }}</p>
+<p class="kern-body gd-error-text"><i aria-hidden="true">error</i> {{ error }}</p>
 {% endif %}
 
-<form method="post" action="/setup/admin">
-  <div class="field label border round">
-    <input type="text" name="username" required minlength="3" autocomplete="username">
-    <label>Benutzername</label>
+<form method="post" action="/setup/admin" class="gd-stack">
+  <div class="kern-form-input">
+    <label class="kern-label" for="setup-username">Benutzername</label>
+    <input class="kern-form-input__input" type="text" id="setup-username" name="username"
+           required minlength="3" autocomplete="username">
   </div>
-  <div class="field label border round">
-    <input type="email" name="email" autocomplete="email">
-    <label>E-Mail (optional)</label>
+  <div class="kern-form-input">
+    <label class="kern-label" for="setup-email">E-Mail (optional)</label>
+    <input class="kern-form-input__input" type="email" id="setup-email" name="email"
+           autocomplete="email">
   </div>
-  <div class="field label border round">
-    <input type="password" name="password" required minlength="12" autocomplete="new-password">
-    <label>Passwort (mind. 12 Zeichen)</label>
+  <div class="kern-form-input">
+    <label class="kern-label" for="setup-password">Passwort (mind. 12 Zeichen)</label>
+    <input class="kern-form-input__input" type="password" id="setup-password" name="password"
+           required minlength="12" autocomplete="new-password">
   </div>
-  <div class="field label border round">
-    <input type="password" name="password2" required minlength="12" autocomplete="new-password">
-    <label>Passwort wiederholen</label>
+  <div class="kern-form-input">
+    <label class="kern-label" for="setup-password2">Passwort wiederholen</label>
+    <input class="kern-form-input__input" type="password" id="setup-password2" name="password2"
+           required minlength="12" autocomplete="new-password">
   </div>
-  <nav class="right-align">
-    <a class="button border" href="/setup?schritt=3"><i>arrow_back</i> Zurück</a>
-    <button type="submit"><i>rocket_launch</i> Einrichtung abschließen</button>
-  </nav>
+  <div class="gd-row">
+    <span class="gd-grow"></span>
+    <a class="kern-btn kern-btn--secondary" href="/setup?schritt=3">
+      <i aria-hidden="true">arrow_back</i><span class="kern-label">Zurück</span>
+    </a>
+    <button type="submit" class="kern-btn kern-btn--primary">
+      <i aria-hidden="true">rocket_launch</i><span class="kern-label">Einrichtung abschließen</span>
+    </button>
+  </div>
 </form>
 {% endblock %}

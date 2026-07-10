@@ -63,6 +63,52 @@ async def create_project(
     return project
 
 
+async def archive_project(db: AsyncSession, project: Project) -> None:
+    """„Löschen mit Wissensbasis behalten": Projekt verschwindet aus allen
+    Listen und ist nicht mehr nutzbar; Daten und Qdrant-Collection bleiben.
+    Über den Archiv-Bereich wiederherstellbar."""
+    project.is_archived = True
+    await db.flush()
+
+
+async def restore_project(db: AsyncSession, project: Project) -> None:
+    project.is_archived = False
+    await db.flush()
+
+
+async def archived_projects(db: AsyncSession) -> list[Project]:
+    result = await db.execute(
+        select(Project).where(Project.is_archived).order_by(Project.updated_at.desc())
+    )
+    return list(result.scalars())
+
+
+async def delete_project_permanently(db: AsyncSession, project: Project) -> None:
+    """Endgültig löschen: Qdrant-Collection, gespeicherte Dateien und alle
+    Datenbankzeilen (Kaskaden über die Fremdschlüssel)."""
+    from govdesk.db.models import Document
+    from govdesk.documents.storage import delete_file
+
+    pfade = (
+        await db.execute(
+            select(Document.file_path).where(
+                Document.project_id == project.id, Document.file_path.isnot(None)
+            )
+        )
+    ).scalars()
+    for pfad in pfade:
+        delete_file(pfad)
+
+    store = VectorStore()
+    try:
+        await store.drop_collection(project.qdrant_collection)
+    finally:
+        await store.close()
+
+    await db.delete(project)
+    await db.flush()
+
+
 async def projects_for_user(db: AsyncSession, user: User) -> list[Project]:
     query = select(Project).where(~Project.is_archived).order_by(Project.created_at.desc())
     if not user.is_platform_admin:

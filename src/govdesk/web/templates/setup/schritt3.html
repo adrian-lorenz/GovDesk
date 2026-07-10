@@ -3,78 +3,81 @@
 {% extends "setup/_wizard.html" %}
 
 {% block wizard_content %}
-<h6>Modelle auswählen</h6>
-<p>Wählen Sie das Standard-Sprachmodell. Nicht installierte Modelle können Sie
+<h2 class="kern-heading-small">Modelle auswählen</h2>
+<p class="kern-body">Wählen Sie das Standard-Sprachmodell. Nicht installierte Modelle können Sie
    direkt hier herunterladen.</p>
 
-<form method="post" action="/setup/modelle">
-  <ul class="list border">
+<form method="post" action="/setup/modelle" class="gd-stack">
+  <ul class="gd-doc-liste">
     {% for model, beschreibung in curated %}
-    <li>
-      <label class="radio">
-        <input type="radio" name="default_llm_model" value="{{ model }}"
+    <li class="gd-doc-row">
+      <div class="kern-form-check">
+        <input class="kern-form-check__radio" type="radio" name="default_llm_model" value="{{ model }}"
+               id="modell-{{ loop.index }}"
                {% if model == cfg.default_llm_model %}checked{% endif %}
                {% if model not in installed %}data-not-installed{% endif %}>
-        <span></span>
-      </label>
-      <div class="max">
-        <strong>{{ model }}</strong>
+        <label class="kern-label" for="modell-{{ loop.index }}"><strong>{{ model }}</strong></label>
+      </div>
+      <div class="gd-grow">
         {% if model in installed %}
-          <span class="chip small green-text"><i>check</i> installiert</span>
+          <span class="kern-badge kern-badge--success kern-badge--small"><span class="kern-label"><i aria-hidden="true">check</i> installiert</span></span>
         {% endif %}
-        <div class="small-text">{{ beschreibung }}</div>
-        <div id="pull-{{ loop.index }}" class="small-text"></div>
+        <div class="kern-body--small">{{ beschreibung }}</div>
+        <div id="pull-{{ loop.index }}" class="kern-body--small"></div>
       </div>
       {% if model not in installed %}
-      <button type="button" class="border small"
+      <button type="button" class="kern-btn kern-btn--secondary kern-btn--x-small"
               hx-ext="sse"
               onclick="this.setAttribute('hx-disable',''); gdPull('{{ model }}', 'pull-{{ loop.index }}'); this.disabled = true">
-        <i>download</i> Laden
+        <i aria-hidden="true">download</i><span class="kern-label">Laden</span>
       </button>
       {% endif %}
     </li>
     {% endfor %}
   </ul>
 
-  <div class="field label border round">
-    <input type="text" name="custom_model" placeholder=" "
+  <div class="kern-form-input">
+    <label class="kern-label" for="custom-model">Oder eigenes Modell (Ollama-Name, z. B. qwen3:14b)</label>
+    <input class="kern-form-input__input" type="text" id="custom-model" name="custom_model"
            oninput="if(this.value){document.querySelectorAll('input[name=default_llm_model]').forEach(r=>r.checked=false);}">
-    <label>Oder eigenes Modell (Ollama-Name, z. B. qwen3:14b)</label>
   </div>
 
-  <div class="divider"></div>
-  <p>
+  <hr class="kern-divider">
+  <p class="kern-body">
     <strong>Embedding-Modell:</strong> {{ cfg.embedding_model }}
     {% if embedding_installed %}
-      <span class="chip small green-text"><i>check</i> installiert</span>
+      <span class="kern-badge kern-badge--success kern-badge--small"><span class="kern-label"><i aria-hidden="true">check</i> installiert</span></span>
     {% else %}
-      <span class="chip small amber-text"><i>download</i> wird benötigt</span>
-      <button type="button" class="border small"
+      <span class="kern-badge kern-badge--warning kern-badge--small"><span class="kern-label"><i aria-hidden="true">download</i> wird benötigt</span></span>
+      <button type="button" class="kern-btn kern-btn--secondary kern-btn--x-small"
               onclick="gdPull('{{ cfg.embedding_model }}', 'pull-embedding'); this.disabled = true">
-        <i>download</i> Laden
+        <i aria-hidden="true">download</i><span class="kern-label">Laden</span>
       </button>
-      <span id="pull-embedding" class="small-text"></span>
+      <span id="pull-embedding" class="kern-body--small"></span>
     {% endif %}
-    <br><span class="small-text">bge-m3 — mehrsprachig, sehr gut für deutsche Verwaltungstexte. Pro Projekt fest.</span>
+    <br><span class="kern-body--small">bge-m3 — mehrsprachig, sehr gut für deutsche Verwaltungstexte. Pro Projekt fest.</span>
   </p>
-  <p>
+  <p class="kern-body">
     <strong>Reranker:</strong>
     {% if reranker_ok %}
-      <span class="chip small green-text"><i>check</i> erreichbar</span>
-      <span class="small-text">bge-reranker-v2-m3 verbessert die Trefferqualität deutlich.</span>
+      <span class="kern-badge kern-badge--success kern-badge--small"><span class="kern-label"><i aria-hidden="true">check</i> erreichbar</span></span>
+      <span class="kern-body--small">bge-reranker-v2-m3 verbessert die Trefferqualität deutlich.</span>
     {% else %}
-      <span class="chip small amber-text"><i>info</i> nicht erreichbar — wird übersprungen</span>
-      <span class="small-text">Der Reranker-Container lädt sein Modell beim ersten Start (~2 GB), das kann dauern.</span>
+      <span class="kern-badge kern-badge--warning kern-badge--small"><span class="kern-label"><i aria-hidden="true">info</i> nicht erreichbar — wird übersprungen</span></span>
+      <span class="kern-body--small">Der Reranker-Container lädt sein Modell beim ersten Start (~2 GB), das kann dauern.</span>
     {% endif %}
   </p>
 
-  <nav class="right-align">
-    <a class="button border" href="/setup?schritt=2"><i>arrow_back</i> Zurück</a>
-    <button type="submit"
+  <div class="gd-row">
+    <span class="gd-grow"></span>
+    <a class="kern-btn kern-btn--secondary" href="/setup?schritt=2">
+      <i aria-hidden="true">arrow_back</i><span class="kern-label">Zurück</span>
+    </a>
+    <button type="submit" class="kern-btn kern-btn--primary"
             onclick="var c=this.form.custom_model.value.trim(); if(c){var r=document.createElement('input');r.type='hidden';r.name='default_llm_model';r.value=c;this.form.appendChild(r);}">
-      Weiter <i>arrow_forward</i>
+      <span class="kern-label">Weiter</span><i aria-hidden="true">arrow_forward</i>
     </button>
-  </nav>
+  </div>
 </form>
 
 <script>

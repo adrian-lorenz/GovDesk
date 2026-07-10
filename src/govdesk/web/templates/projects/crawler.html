@@ -5,82 +5,122 @@
 {% set page_title = "Internet-Agent" %}
 
 {% block project_body %}
-<h6 class="no-margin"><i>travel_explore</i> Internet-Agent</h6>
-<p class="small-text">Geben Sie eine Webseite und optional einen Suchauftrag an. Mit
+<h2 class="kern-heading-small"><i aria-hidden="true">travel_explore</i> Internet-Agent</h2>
+<p class="kern-body--small">Geben Sie eine Webseite und optional einen Suchauftrag an. Mit
    „Unterseiten einbeziehen“ folgt der Agent Links und sucht — vom Suchauftrag geleitet —
    selbstständig passende Informationen zusammen und bettet sie ein. robots.txt wird respektiert.</p>
 
-<article class="round">
-  <h6>Neue Quelle</h6>
-  <form method="post" action="/projects/{{ project.id }}/crawler">
-    <div class="grid">
-      <div class="field label border round s12 m4">
-        <input type="text" name="name" required maxlength="200">
-        <label>Name (z. B. „VgV“)</label>
-      </div>
-      <div class="field label border round s12 m8">
-        <input type="url" name="start_url" required placeholder="https://www.gesetze-im-internet.de/vgv_2016/">
-        <label>Start-URL</label>
-      </div>
-      <div class="field textarea label border round s12">
-        <textarea name="topic" rows="2"
-                  placeholder="z. B. Fristen, Zuständigkeiten und Schwellenwerte im Vergaberecht"></textarea>
-        <label>Suchauftrag / Thema (optional)</label>
-      </div>
-      <div class="s12">
-        <label class="checkbox">
-          <input type="checkbox" name="follow_subpages" value="true">
-          <span>Unterseiten einbeziehen (Links folgen)</span>
-        </label>
-        <p class="small-text no-margin">Ohne Suchauftrag werden alle Unterseiten derselben
-           Domain gecrawlt; mit Suchauftrag wählt der KI-Agent gezielt relevante Seiten.</p>
-      </div>
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h3 class="kern-heading-small">Neue Quelle</h3>
     </div>
-    <details class="top-margin">
-      <summary class="small-text"><i>tune</i> Erweiterte Optionen</summary>
-      <div class="grid top-margin">
-        <div class="field label border round s6 m3">
-          <input type="number" name="max_depth" min="0" max="5" value="2">
-          <label>Max. Tiefe</label>
+    <div class="kern-card__body">
+      <form method="post" action="/projects/{{ project.id }}/crawler" class="gd-stack">
+        <div class="kern-row">
+          <div class="kern-col-12 kern-col-4-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="cr-name">Name (z. B. „VgV“)</label>
+              <input class="kern-form-input__input" type="text" id="cr-name" name="name"
+                     required maxlength="200">
+            </div>
+          </div>
+          <div class="kern-col-12 kern-col-8-md">
+            <div class="kern-form-input">
+              <label class="kern-label" for="cr-url">Start-URL</label>
+              <input class="kern-form-input__input" type="url" id="cr-url" name="start_url"
+                     required placeholder="https://www.gesetze-im-internet.de/vgv_2016/">
+            </div>
+          </div>
+          <div class="kern-col-12">
+            <div class="kern-form-input">
+              <label class="kern-label" for="cr-thema">Suchauftrag / Thema (optional)</label>
+              <textarea class="kern-form-input__input" id="cr-thema" name="topic" rows="2"
+                        placeholder="z. B. Fristen, Zuständigkeiten und Schwellenwerte im Vergaberecht"></textarea>
+            </div>
+          </div>
+          <div class="kern-col-12">
+            <div class="kern-form-check">
+              <input class="kern-form-check__checkbox" type="checkbox" id="cr-unterseiten"
+                     name="follow_subpages" value="true">
+              <label class="kern-label" for="cr-unterseiten">Unterseiten einbeziehen (Links folgen)</label>
+            </div>
+            <p class="kern-hint">Ohne Suchauftrag werden alle Unterseiten derselben
+               Domain gecrawlt; mit Suchauftrag wählt der KI-Agent gezielt relevante Seiten.</p>
+          </div>
         </div>
-        <div class="field label border round s6 m3">
-          <input type="number" name="max_pages" min="1" max="500" value="50">
-          <label>Max. Seiten</label>
+        <details class="gd-mt">
+          <summary class="kern-body--small"><i aria-hidden="true">tune</i> Erweiterte Optionen</summary>
+          <div class="kern-row gd-mt">
+            <div class="kern-col-6 kern-col-3-md">
+              <div class="kern-form-input">
+                <label class="kern-label" for="cr-tiefe">Max. Tiefe</label>
+                <input class="kern-form-input__input" type="number" id="cr-tiefe" name="max_depth"
+                       min="0" max="5" value="2">
+              </div>
+            </div>
+            <div class="kern-col-6 kern-col-3-md">
+              <div class="kern-form-input">
+                <label class="kern-label" for="cr-seiten">Max. Seiten</label>
+                <input class="kern-form-input__input" type="number" id="cr-seiten" name="max_pages"
+                       min="1" max="500" value="50">
+              </div>
+            </div>
+            <div class="kern-col-6 kern-col-3-md">
+              <div class="kern-form-input">
+                <label class="kern-label" for="cr-recrawl">Re-Crawl (h, 0=aus)</label>
+                <input class="kern-form-input__input" type="number" id="cr-recrawl"
+                       name="recrawl_interval_hours" min="0" value="0">
+              </div>
+            </div>
+            {% if collections %}
+            <div class="kern-col-6 kern-col-3-md">
+              <div class="kern-form-input">
+                <label class="kern-label" for="cr-sammlung">Sammlung</label>
+                <div class="kern-form-input__select-wrapper">
+                  <select class="kern-form-input__select" id="cr-sammlung" name="collection_id">
+                    <option value="">Ohne Sammlung</option>
+                    {% for collection in collections %}
+                    <option value="{{ collection.id }}">{{ collection.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            <div class="kern-col-12 kern-col-6-md">
+              <div class="kern-form-input">
+                <label class="kern-label" for="cr-include">URL muss enthalten (Regex, optional)</label>
+                <input class="kern-form-input__input" type="text" id="cr-include"
+                       name="url_include_pattern" placeholder="z. B. /vgv_2016/">
+              </div>
+            </div>
+            <div class="kern-col-12 kern-col-6-md">
+              <div class="kern-form-input">
+                <label class="kern-label" for="cr-exclude">URL ausschließen (Regex, optional)</label>
+                <input class="kern-form-input__input" type="text" id="cr-exclude"
+                       name="url_exclude_pattern" placeholder="z. B. \.pdf$">
+              </div>
+            </div>
+          </div>
+        </details>
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">rocket_launch</i><span class="kern-label">Anlegen &amp; Crawl starten</span>
+          </button>
         </div>
-        <div class="field label border round s6 m3">
-          <input type="number" name="recrawl_interval_hours" min="0" value="0">
-          <label>Re-Crawl (h, 0=aus)</label>
-        </div>
-        {% if collections %}
-        <div class="field label border round s6 m3">
-          <select name="collection_id">
-            <option value="">Ohne Sammlung</option>
-            {% for collection in collections %}
-            <option value="{{ collection.id }}">{{ collection.name }}</option>
-            {% endfor %}
-          </select>
-          <label>Sammlung</label>
-        </div>
-        {% endif %}
-        <div class="field label border round s12 m6">
-          <input type="text" name="url_include_pattern" placeholder="z. B. /vgv_2016/">
-          <label>URL muss enthalten (Regex, optional)</label>
-        </div>
-        <div class="field label border round s12 m6">
-          <input type="text" name="url_exclude_pattern" placeholder="z. B. \.pdf$">
-          <label>URL ausschließen (Regex, optional)</label>
-        </div>
-      </div>
-    </details>
-    <nav class="right-align">
-      <button type="submit"><i>rocket_launch</i> Anlegen &amp; Crawl starten</button>
-    </nav>
-  </form>
-</article>
+      </form>
+    </div>
+  </div>
+</div>
 
 {% for row in rows %}
   {% include "partials/_crawl_quelle.html" %}
 {% else %}
-<article class="round center-align"><p class="small-text">Noch keine Web-Quellen.</p></article>
+<div class="kern-card kern-card--hug gd-mt">
+  <div class="kern-card__container gd-center">
+    <p class="kern-body--small">Noch keine Web-Quellen.</p>
+  </div>
+</div>
 {% endfor %}
 {% endblock %}

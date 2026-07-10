@@ -4,36 +4,46 @@
 {% set active = "system" %}
 
 {% block settings_body %}
-<article class="round">
-  <nav class="no-margin">
-    <h6 class="max no-margin"><i>monitor_heart</i> Dienste-Status</h6>
-    <a class="button circle transparent small" href="/admin/settings/system" title="Aktualisieren"><i>refresh</i></a>
-  </nav>
-  <ul class="list border">
-    {% for s in services %}
-    <li>
-      {% if s.ok %}<i class="green-text">check_circle</i>
-      {% else %}<i class="error-text">cancel</i>{% endif %}
-      <div class="max">
-        <strong>{{ s.name }}</strong>
-        <div class="small-text">{{ s.detail }}</div>
-      </div>
-    </li>
-    {% endfor %}
-  </ul>
-  <p class="small-text no-margin">Aktives Chat-Modell: <strong>{{ cfg.chat_model }}</strong></p>
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header gd-row">
+      <h2 class="kern-heading-small gd-grow"><i aria-hidden="true">monitor_heart</i> Dienste-Status</h2>
+      <a class="gd-icon-btn" href="/admin/settings/system" title="Aktualisieren"><i>refresh</i></a>
+    </div>
+    <div class="kern-card__body">
+      <ul class="gd-doc-liste kern-w-full">
+        {% for s in services %}
+        <li class="gd-doc-row">
+          {% if s.ok %}<i class="gd-success-text">check_circle</i>
+          {% else %}<i class="gd-error-text">cancel</i>{% endif %}
+          <div class="gd-grow">
+            <strong>{{ s.name }}</strong>
+            <div class="kern-body--small kern-body--muted">{{ s.detail }}</div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="kern-body--small kern-body--muted">Aktives Chat-Modell: <strong>{{ cfg.chat_model }}</strong></p>
+    </div>
+  </div>
+</div>
 
-<article class="round">
-  <h6><i>info</i> System-Info</h6>
-  <ul class="list border">
-    {% for e in env_info %}
-    <li>
-      <div class="max"><strong class="small-text">{{ e.label }}</strong></div>
-      <span class="small-text">{{ e.value }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-  <p class="small-text no-margin">Werte aus der Server-Umgebung (.env) — nur lesbar.</p>
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">info</i> System-Info</h2>
+    </div>
+    <div class="kern-card__body">
+      <ul class="gd-doc-liste kern-w-full">
+        {% for e in env_info %}
+        <li class="gd-doc-row">
+          <div class="gd-grow kern-body--small"><strong>{{ e.label }}</strong></div>
+          <span class="kern-body--small">{{ e.value }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="kern-body--small kern-body--muted">Werte aus der Server-Umgebung (.env) — nur lesbar.</p>
+    </div>
+  </div>
+</div>
 {% endblock %}

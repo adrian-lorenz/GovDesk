@@ -2,13 +2,21 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import func, select
 
-from govdesk.auth.deps import CurrentUser, Db, ProjectAdmin, ProjectEditor, ProjectViewer
+from govdesk.auth.deps import (
+    CurrentUser,
+    Db,
+    PlatformAdmin,
+    ProjectAdmin,
+    ProjectEditor,
+    ProjectViewer,
+)
 from govdesk.chat.service import chat_sessions_for_project, create_chat_session
 from govdesk.core.app_settings import get_runtime_config
 from govdesk.core.audit import audit
@@ -24,7 +32,14 @@ from govdesk.db.models import (
 )
 from govdesk.documents.service import enqueue_ingest
 from govdesk.porting import export_project_archive, import_project_archive
-from govdesk.projects.service import create_project, projects_for_user
+from govdesk.projects.service import (
+    archive_project,
+    archived_projects,
+    create_project,
+    delete_project_permanently,
+    projects_for_user,
+    restore_project,
+)
 from govdesk.web.deps import render
 from govdesk.web.project_layout import ensure_section_visible, project_menu_context
 
@@ -76,7 +91,9 @@ async def project_list(request: Request, user: CurrentUser, db: Db) -> HTMLRespo
     ]
     # Nach letzter Nutzung absteigend sortieren (jüngste zuerst).
     items.sort(key=lambda item: item["last_used"], reverse=True)
-    return render(request, "projects/liste.html", {"projects": items})
+    # Plattform-Admins sehen zusätzlich das Archiv (behaltene Wissensbasen).
+    archiv = await archived_projects(db) if user.is_platform_admin else []
+    return render(request, "projects/liste.html", {"projects": items, "archiv": archiv})
 
 
 @router.get("/projects/neu", response_class=HTMLResponse)
@@ -141,6 +158,90 @@ async def project_import(user: CurrentUser, db: Db, datei: UploadFile) -> Redire
         if document is not None:
             await enqueue_ingest(document)
     return RedirectResponse(f"/projects/{project.id}", status_code=303)
+
+
+@router.post("/projects/{project_id}/loeschen")
+async def project_delete(
+    project: ProjectAdmin,
+    user: CurrentUser,
+    db: Db,
+    modus: Annotated[str, Form()] = "archiv",
+) -> RedirectResponse:
+    """Projekt löschen — „archiv" behält die Wissensbasis (Collection) und
+    parkt das Projekt im Archiv; „endgueltig" entfernt alles inkl. Qdrant."""
+    if modus == "endgueltig":
+        await audit(
+            db,
+            "project.delete",
+            actor_user_id=user.id,
+            project_id=project.id,
+            target_type="project",
+            target_id=str(project.id),
+            meta={"name": project.name, "collection": project.qdrant_collection},
+        )
+        await delete_project_permanently(db, project)
+    else:
+        await audit(
+            db,
+            "project.archive",
+            actor_user_id=user.id,
+            project_id=project.id,
+            target_type="project",
+            target_id=str(project.id),
+            meta={"name": project.name, "collection": project.qdrant_collection},
+        )
+        await archive_project(db, project)
+    await db.commit()
+    return RedirectResponse("/projects", status_code=303)
+
+
+async def _archiviertes_projekt(db: Db, project_id: uuid.UUID):
+    from govdesk.db.models import Project
+
+    project = await db.get(Project, project_id)
+    if project is None or not project.is_archived:
+        raise HTTPException(status_code=404, detail="Archiviertes Projekt nicht gefunden")
+    return project
+
+
+@router.post("/projects/archiv/{project_id}/wiederherstellen")
+async def project_restore(
+    admin: PlatformAdmin, db: Db, project_id: uuid.UUID
+) -> RedirectResponse:
+    """Verknüpft eine behaltene Wissensbasis wieder: das Projekt kehrt mitsamt
+    seiner Collection, Dokumenten und Mitgliedern aus dem Archiv zurück."""
+    project = await _archiviertes_projekt(db, project_id)
+    await audit(
+        db,
+        "project.restore",
+        actor_user_id=admin.id,
+        project_id=project.id,
+        target_type="project",
+        target_id=str(project.id),
+        meta={"name": project.name, "collection": project.qdrant_collection},
+    )
+    await restore_project(db, project)
+    await db.commit()
+    return RedirectResponse(f"/projects/{project.id}", status_code=303)
+
+
+@router.post("/projects/archiv/{project_id}/loeschen")
+async def project_archive_delete(
+    admin: PlatformAdmin, db: Db, project_id: uuid.UUID
+) -> RedirectResponse:
+    project = await _archiviertes_projekt(db, project_id)
+    await audit(
+        db,
+        "project.delete",
+        actor_user_id=admin.id,
+        project_id=project.id,
+        target_type="project",
+        target_id=str(project.id),
+        meta={"name": project.name, "collection": project.qdrant_collection},
+    )
+    await delete_project_permanently(db, project)
+    await db.commit()
+    return RedirectResponse("/projects", status_code=303)
 
 
 @router.get("/projects/{project_id}/export")

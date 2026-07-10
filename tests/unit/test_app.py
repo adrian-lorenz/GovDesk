@@ -26,7 +26,8 @@ def test_statische_assets_vorhanden():
     with TestClient(create_app()) as client:
         for pfad in (
             "/static/js/htmx.min.js",
-            "/static/css/beer.min.css",
+            "/static/css/kern.min.css",
             "/static/fonts/material-symbols-outlined.woff2",
+            "/static/fonts/fira-sans/FiraSans-Regular.woff2",
         ):
             assert client.get(pfad).status_code == 200, pfad

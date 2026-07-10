@@ -4,24 +4,34 @@
 {% set active = "reranking" %}
 
 {% block settings_body %}
-<article class="round">
-  <h6><i>sort</i> Reranking</h6>
-  <p class="small-text">Der Reranker (TEI mit bge-reranker) sortiert die Treffer vor der Antwort neu.</p>
-  <form method="post" action="/admin/settings/reranking">
-    <div class="field label border round">
-      <input type="url" name="reranker_url" value="{{ cfg.reranker_url }}" required>
-      <label>Reranker-Adresse (TEI)</label>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">sort</i> Reranking</h2>
+      <p class="kern-body--small kern-body--muted">Der Reranker (TEI mit bge-reranker) sortiert die Treffer vor der Antwort neu.</p>
     </div>
-    <label class="switch">
-      <input type="checkbox" name="reranker_enabled" value="true" {% if cfg.reranker_enabled %}checked{% endif %}>
-      <span>Reranker verwenden
-        {% if reranker_ok %}<span class="chip small green-text"><i>check</i> erreichbar</span>
-        {% else %}<span class="chip small amber-text"><i>warning</i> derzeit nicht erreichbar</span>{% endif %}
-      </span>
-    </label>
-    <nav class="right-align">
-      <button type="submit"><i>save</i> Speichern</button>
-    </nav>
-  </form>
-</article>
+    <div class="kern-card__body">
+      <form method="post" action="/admin/settings/reranking" class="gd-stack kern-w-full">
+        <div class="kern-form-input">
+          <label class="kern-label" for="reranker-url">Reranker-Adresse (TEI)</label>
+          <input class="kern-form-input__input" type="url" id="reranker-url" name="reranker_url"
+                 value="{{ cfg.reranker_url }}" required>
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="reranker-enabled"
+                 name="reranker_enabled" value="true" {% if cfg.reranker_enabled %}checked{% endif %}>
+          <label class="kern-label" for="reranker-enabled">Reranker verwenden
+            {% if reranker_ok %}<span class="kern-badge kern-badge--success kern-badge--small"><i aria-hidden="true">check</i><span class="kern-label">erreichbar</span></span>
+            {% else %}<span class="kern-badge kern-badge--warning kern-badge--small"><i aria-hidden="true">warning</i><span class="kern-label">derzeit nicht erreichbar</span></span>{% endif %}
+          </label>
+        </div>
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">save</i><span class="kern-label">Speichern</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}

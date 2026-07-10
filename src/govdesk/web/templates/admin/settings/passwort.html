@@ -4,38 +4,52 @@
 {% set active = "passwort" %}
 
 {% block settings_body %}
-<article class="round">
-  <h6><i>password</i> Passwort-Richtlinie</h6>
-  <p class="small-text">Gilt für lokale Konten (Ersteinrichtung und Nutzeranlage). Bei OIDC/SSO
-     liegt die Richtlinie beim Identity-Provider.</p>
-  <form method="post" action="/admin/settings/passwort">
-    <div class="field label border round">
-      <input type="number" name="pw_min_length" min="8" max="128" value="{{ policy.min_length }}">
-      <label>Mindestlänge (≥ 8)</label>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">password</i> Passwort-Richtlinie</h2>
+      <p class="kern-body--small kern-body--muted">Gilt für lokale Konten (Ersteinrichtung und Nutzeranlage). Bei OIDC/SSO
+         liegt die Richtlinie beim Identity-Provider.</p>
     </div>
-    <label class="switch">
-      <input type="checkbox" name="pw_require_upper" value="true" {% if policy.require_upper %}checked{% endif %}>
-      <span>Großbuchstabe erforderlich</span>
-    </label>
-    <label class="switch">
-      <input type="checkbox" name="pw_require_lower" value="true" {% if policy.require_lower %}checked{% endif %}>
-      <span>Kleinbuchstabe erforderlich</span>
-    </label>
-    <label class="switch">
-      <input type="checkbox" name="pw_require_digit" value="true" {% if policy.require_digit %}checked{% endif %}>
-      <span>Ziffer erforderlich</span>
-    </label>
-    <label class="switch">
-      <input type="checkbox" name="pw_require_special" value="true" {% if policy.require_special %}checked{% endif %}>
-      <span>Sonderzeichen erforderlich</span>
-    </label>
-    <label class="switch">
-      <input type="checkbox" name="pw_block_common" value="true" {% if policy.block_common %}checked{% endif %}>
-      <span>Häufige/bekannte Passwörter sperren</span>
-    </label>
-    <nav class="right-align">
-      <button type="submit"><i>save</i> Speichern</button>
-    </nav>
-  </form>
-</article>
+    <div class="kern-card__body">
+      <form method="post" action="/admin/settings/passwort" class="gd-stack kern-w-full">
+        <div class="kern-form-input">
+          <label class="kern-label" for="pw-min-length">Mindestlänge (≥ 8)</label>
+          <input class="kern-form-input__input" type="number" id="pw-min-length" name="pw_min_length"
+                 min="8" max="128" value="{{ policy.min_length }}">
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="pw-require-upper"
+                 name="pw_require_upper" value="true" {% if policy.require_upper %}checked{% endif %}>
+          <label class="kern-label" for="pw-require-upper">Großbuchstabe erforderlich</label>
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="pw-require-lower"
+                 name="pw_require_lower" value="true" {% if policy.require_lower %}checked{% endif %}>
+          <label class="kern-label" for="pw-require-lower">Kleinbuchstabe erforderlich</label>
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="pw-require-digit"
+                 name="pw_require_digit" value="true" {% if policy.require_digit %}checked{% endif %}>
+          <label class="kern-label" for="pw-require-digit">Ziffer erforderlich</label>
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="pw-require-special"
+                 name="pw_require_special" value="true" {% if policy.require_special %}checked{% endif %}>
+          <label class="kern-label" for="pw-require-special">Sonderzeichen erforderlich</label>
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="pw-block-common"
+                 name="pw_block_common" value="true" {% if policy.block_common %}checked{% endif %}>
+          <label class="kern-label" for="pw-block-common">Häufige/bekannte Passwörter sperren</label>
+        </div>
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">save</i><span class="kern-label">Speichern</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}

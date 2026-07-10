@@ -5,55 +5,156 @@
 {% set page_title = "Dokumente" %}
 
 {% block project_body %}
-<nav class="gd-dok-kopf">
-  <div class="max">
-    <h5 class="no-margin"><i>description</i> Dokumente</h5>
-    <p class="small-text no-margin">Gemeinsam bearbeitete Dokumente — für alle Projekt-Mitglieder
-       sichtbar, außer als <em>privat</em> markierte.</p>
+<div class="gd-dok-kopf gd-row">
+  <div class="gd-grow">
+    <h2 class="kern-heading-small"><i aria-hidden="true">description</i> Dokumente</h2>
+    <p class="kern-body--small">Gemeinsam bearbeitete Dokumente — für alle Projekt-Mitglieder
+       sichtbar, außer als <em>privat</em> markierte. Ziehen Sie Einträge auf Ordner
+       oder die Pfadleiste, um sie zu verschieben; Rechtsklick für weitere Aktionen.</p>
   </div>
+  {% if can_edit %}
+  <div class="gd-actions">
+    <button type="button" class="kern-btn kern-btn--secondary" id="btn-neuer-ordner">
+      <i aria-hidden="true">create_new_folder</i><span class="kern-label">Neuer Ordner</span>
+    </button>
+    <button type="button" class="kern-btn kern-btn--primary" id="btn-neues-dokument">
+      <i aria-hidden="true">note_add</i><span class="kern-label">Neues Dokument</span>
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+{# Pfadleiste — jede Ebene ist zugleich Drop-Ziel beim Verschieben. #}
+<nav class="gd-crumbs" aria-label="Ordnerpfad">
+  <a href="/projects/{{ project.id }}/editor" data-drop-ordner=""
+     {% if not folder %}aria-current="page"{% endif %}>
+    <i aria-hidden="true">home_storage</i> Bibliothek
+  </a>
+  {% for crumb in crumbs %}
+  <span class="gd-crumb-sep" aria-hidden="true">›</span>
+  {% if loop.last %}
+  <span aria-current="page"><i aria-hidden="true">folder_open</i> {{ crumb.name }}</span>
+  {% else %}
+  <a href="/projects/{{ project.id }}/editor?ordner={{ crumb.id }}" data-drop-ordner="{{ crumb.id }}">
+    <i aria-hidden="true">folder</i> {{ crumb.name }}
+  </a>
+  {% endif %}
+  {% endfor %}
 </nav>
 
-{% if can_edit %}
-<form method="post" action="/projects/{{ project.id }}/editor" class="row wrap gd-dok-neu">
-  <div class="field label border round max no-margin">
-    <input type="text" name="title" required maxlength="300">
-    <label>Neues Dokument</label>
+{% if folders or docs %}
+<div class="gd-tiles" id="gd-explorer"
+     data-pid="{{ project.id }}" data-ordner="{{ folder.id if folder else '' }}"
+     data-can-edit="{{ '1' if can_edit else '0' }}">
+  {% for f in folders %}
+  <a class="gd-tile gd-tile--ordner" href="/projects/{{ project.id }}/editor?ordner={{ f.id }}"
+     data-typ="ordner" data-id="{{ f.id }}" data-name="{{ f.name }}"
+     data-drop-ordner="{{ f.id }}" {% if can_edit %}draggable="true"{% endif %}>
+    <i aria-hidden="true">folder</i>
+    <span class="gd-tile-name">{{ f.name }}</span>
+    <span class="gd-tile-meta">Ordner</span>
+  </a>
+  {% endfor %}
+  {% for d in docs %}
+  <a class="gd-tile gd-tile--doc" href="/projects/{{ project.id }}/editor/{{ d.id }}"
+     data-typ="doc" data-id="{{ d.id }}" data-name="{{ d.title }}"
+     {% if can_edit %}draggable="true"{% endif %}>
+    <i aria-hidden="true">{{ "lock" if d.is_private else "description" }}</i>
+    <span class="gd-tile-name">{{ d.title }}</span>
+    <span class="gd-tile-meta">
+      v{{ d.version }} · {{ d.updated_at.strftime("%d.%m.%Y") }}
+      {% if names.get(d.updated_by) %}· {{ names[d.updated_by] }}{% endif %}
+    </span>
+    {% if d.is_private %}<span class="kern-badge kern-badge--warning kern-badge--small"><span class="kern-label">privat</span></span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="kern-card kern-card--hug" id="gd-explorer-leer">
+  <div class="kern-card__container gd-center" style="align-items: center">
+    <i aria-hidden="true" style="font-size: 3rem">{{ "folder_open" if folder else "description" }}</i>
+    <h2 class="kern-heading-small">{{ "Dieser Ordner ist leer" if folder else "Noch keine Dokumente" }}</h2>
+    <p class="kern-body--small">Legen Sie ein Dokument oder einen Ordner an{{ "" if folder else " oder speichern Sie eine Chat-Zusammenfassung" }}.</p>
   </div>
-  <label class="checkbox">
-    <input type="checkbox" name="is_private" value="true"><span>privat</span>
-  </label>
-  <button type="submit"><i>add</i> Anlegen</button>
-</form>
+</div>
 {% endif %}
 
-{% if docs %}
-<ul class="gd-doc-liste">
-  {% for d in docs %}
-  <li class="gd-doc-row">
-    <span class="gd-doc-icon"><i>{{ "lock" if d.is_private else "description" }}</i></span>
-    <a class="max min-width-0 gd-doc-open" href="/projects/{{ project.id }}/editor/{{ d.id }}">
-      <strong class="gd-doc-name">{{ d.title }}</strong>
-      <div class="small-text gd-doc-meta">
-        <span>v{{ d.version }}</span>
-        <span>{{ d.updated_at.strftime("%d.%m.%Y %H:%M") }}</span>
-        {% if names.get(d.updated_by) %}<span>{{ names[d.updated_by] }}</span>{% endif %}
-        {% if d.is_private %}<span class="chip tiny amber-text">privat</span>{% endif %}
-      </div>
-    </a>
-    {% if can_edit %}
-    <form method="post" action="/projects/{{ project.id }}/editor/{{ d.id }}/loeschen"
-          class="no-margin" hx-confirm="Dokument „{{ d.title }}“ mitsamt Historie löschen?">
-      <button class="circle transparent small" title="Löschen"><i>delete</i></button>
-    </form>
-    {% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% else %}
-<article class="round large-padding center-align">
-  <i class="extra">description</i>
-  <h6>Noch keine Dokumente</h6>
-  <p class="small-text">Legen Sie ein Dokument an oder speichern Sie eine Chat-Zusammenfassung.</p>
-</article>
+{% if can_edit %}
+{# Kontextmenü (Rechtsklick auf Kachel) — von explorer.js gesteuert. #}
+<div class="gd-ctx-menu" id="gd-ctx-menu" hidden>
+  <button type="button" data-ctx="oeffnen"><i aria-hidden="true">open_in_new</i> Öffnen</button>
+  <button type="button" data-ctx="umbenennen"><i aria-hidden="true">edit</i> Umbenennen</button>
+  <button type="button" data-ctx="hoch" id="ctx-hoch"><i aria-hidden="true">drive_file_move</i> Eine Ebene nach oben</button>
+  <button type="button" class="gd-ctx-gefahr" data-ctx="loeschen"><i aria-hidden="true">delete</i> Löschen</button>
+</div>
+
+{# Dialog: Neues Dokument #}
+<dialog class="gd-dialog" id="dlg-neues-dokument">
+  <form method="post" action="/projects/{{ project.id }}/editor" class="gd-stack">
+    <h2 class="kern-heading-small">Neues Dokument</h2>
+    <input type="hidden" name="folder_id" value="{{ folder.id if folder else '' }}">
+    <div class="kern-form-input">
+      <label class="kern-label" for="dlg-dok-titel">Titel</label>
+      <input class="kern-form-input__input" type="text" id="dlg-dok-titel" name="title"
+             required maxlength="300" autocomplete="off">
+    </div>
+    <div class="kern-form-check">
+      <input class="kern-form-check__checkbox" type="checkbox" id="dlg-dok-privat"
+             name="is_private" value="true">
+      <label class="kern-label" for="dlg-dok-privat">privat (nur für mich sichtbar)</label>
+    </div>
+    <div class="gd-dialog-actions">
+      <button type="button" class="kern-btn kern-btn--secondary" data-dlg-schliessen>
+        <span class="kern-label">Abbrechen</span>
+      </button>
+      <button type="submit" class="kern-btn kern-btn--primary">
+        <i aria-hidden="true">note_add</i><span class="kern-label">Anlegen</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+
+{# Dialog: Neuer Ordner #}
+<dialog class="gd-dialog" id="dlg-neuer-ordner">
+  <form method="post" action="/projects/{{ project.id }}/editor/ordner" class="gd-stack">
+    <h2 class="kern-heading-small">Neuer Ordner</h2>
+    <input type="hidden" name="parent_id" value="{{ folder.id if folder else '' }}">
+    <div class="kern-form-input">
+      <label class="kern-label" for="dlg-ordner-name">Name</label>
+      <input class="kern-form-input__input" type="text" id="dlg-ordner-name" name="name"
+             required maxlength="200" autocomplete="off">
+    </div>
+    <div class="gd-dialog-actions">
+      <button type="button" class="kern-btn kern-btn--secondary" data-dlg-schliessen>
+        <span class="kern-label">Abbrechen</span>
+      </button>
+      <button type="submit" class="kern-btn kern-btn--primary">
+        <i aria-hidden="true">create_new_folder</i><span class="kern-label">Anlegen</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+
+{# Dialog: Umbenennen — Ziel-URL setzt explorer.js je nach Kachel. #}
+<dialog class="gd-dialog" id="dlg-umbenennen">
+  <form class="gd-stack" id="form-umbenennen">
+    <h2 class="kern-heading-small">Umbenennen</h2>
+    <div class="kern-form-input">
+      <label class="kern-label" for="dlg-umbenennen-name">Neuer Name</label>
+      <input class="kern-form-input__input" type="text" id="dlg-umbenennen-name"
+             required maxlength="300" autocomplete="off">
+    </div>
+    <div class="gd-dialog-actions">
+      <button type="button" class="kern-btn kern-btn--secondary" data-dlg-schliessen>
+        <span class="kern-label">Abbrechen</span>
+      </button>
+      <button type="submit" class="kern-btn kern-btn--primary">
+        <i aria-hidden="true">check</i><span class="kern-label">Umbenennen</span>
+      </button>
+    </div>
+  </form>
+</dialog>
 {% endif %}
+
+<script src="{{ url_for('static', path='js/explorer.js') }}?v={{ asset_v }}"></script>
 {% endblock %}

@@ -5,59 +5,73 @@
 {% set page_title = "Wissensbasis" %}
 
 {% block project_body %}
-<article class="round">
-  <nav>
-    <h6 class="max"><i>library_books</i> Wissensbasis</h6>
-    <button class="small" data-ui="#doc-upload"><i>upload</i> Hochladen</button>
-  </nav>
-  <p class="small-text">Quelldokumente, die für die KI eingebettet und durchsucht werden.</p>
-  <dialog class="modal" id="doc-upload" style="width: 32rem; max-width: 92vw">
-    <h5><i>upload</i> Dokument hochladen</h5>
-    <form method="post" action="/projects/{{ project.id }}/documents" enctype="multipart/form-data">
-      {% if collections %}
-      <div class="field label border round">
-        <select name="collection_id">
-          <option value="">Ohne Sammlung</option>
-          {% for collection in collections %}
-          <option value="{{ collection.id }}">{{ collection.name }}</option>
-          {% endfor %}
-        </select>
-        <label>Sammlung (optional)</label>
-      </div>
-      {% endif %}
-      {# Nativer Datei-Input, bewusst NICHT in .field (Beers field-Klick-Handler
-         würde den Klick abfangen). Auswahl startet den Upload sofort. #}
-      <label class="small-text gd-file-label">Datei (PDF, DOCX, XLSX, PPTX, ODT, TXT, MD, HTML)</label>
-      <input type="file" name="datei" required class="gd-file-input"
-             accept=".pdf,.txt,.md,.docx,.doc,.odt,.html,.htm,.xlsx,.pptx"
-             onchange="if(this.files.length){this.closest('form').requestSubmit();}">
-      <p class="small-text no-margin">Der Upload startet automatisch nach der Auswahl.</p>
-      <nav class="right-align top-margin">
-        <button type="button" class="border" data-ui="#doc-upload">Abbrechen</button>
-        <button type="submit"><i>upload</i> Hochladen</button>
-      </nav>
-    </form>
-  </dialog>
-  <details>
-    <summary class="small-text"><i>collections_bookmark</i> Sammlungen
-      {% if collections %}({{ collections | map(attribute="name") | join(", ") }}){% endif %}
-    </summary>
-    <form method="post" action="/projects/{{ project.id }}/collections" class="row">
-      <div class="field label border round small max no-margin">
-        <input type="text" name="name" required maxlength="150">
-        <label>Neue Sammlung (z. B. „Gesetze“)</label>
-      </div>
-      <button type="submit" class="small"><i>add</i></button>
-    </form>
-  </details>
-  {% if documents %}
-  <ul class="gd-doc-liste">
-    {% for document in documents %}
-      {% include "partials/_dokument_zeile.html" %}
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="center-align small-text">Noch keine Dokumente — laden Sie die erste Datei hoch.</p>
-  {% endif %}
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="gd-row">
+      <h2 class="kern-heading-small gd-grow"><i aria-hidden="true">library_books</i> Wissensbasis</h2>
+      <button type="button" class="kern-btn kern-btn--primary kern-btn--x-small"
+              onclick="document.getElementById('doc-upload').showModal()">
+        <i aria-hidden="true">upload</i><span class="kern-label">Hochladen</span>
+      </button>
+    </div>
+    <p class="kern-body--small">Quelldokumente, die für die KI eingebettet und durchsucht werden.</p>
+    {# Natives <dialog> (showModal/close) — ersetzt Beers data-ui-Modal. #}
+    <dialog class="gd-dialog" id="doc-upload" style="width: 32rem; max-width: 92vw">
+      <h2 class="kern-heading-small"><i aria-hidden="true">upload</i> Dokument hochladen</h2>
+      <form method="post" action="/projects/{{ project.id }}/documents" enctype="multipart/form-data"
+            class="gd-stack gd-mt">
+        {% if collections %}
+        <div class="kern-form-input">
+          <label class="kern-label" for="upload-sammlung">Sammlung (optional)</label>
+          <div class="kern-form-input__select-wrapper">
+            <select class="kern-form-input__select" id="upload-sammlung" name="collection_id">
+              <option value="">Ohne Sammlung</option>
+              {% for collection in collections %}
+              <option value="{{ collection.id }}">{{ collection.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        {% endif %}
+        {# Nativer Datei-Input — Auswahl startet den Upload sofort. #}
+        <label class="kern-body--small gd-file-label" for="upload-datei">Datei (PDF, DOCX, XLSX, PPTX, ODT, TXT, MD, HTML)</label>
+        <input type="file" name="datei" id="upload-datei" required class="gd-file-input"
+               accept=".pdf,.txt,.md,.docx,.doc,.odt,.html,.htm,.xlsx,.pptx"
+               onchange="if(this.files.length){this.closest('form').requestSubmit();}">
+        <p class="kern-hint">Der Upload startet automatisch nach der Auswahl.</p>
+        <div class="gd-dialog-actions">
+          <button type="button" class="kern-btn kern-btn--secondary"
+                  onclick="this.closest('dialog').close()">
+            <span class="kern-label">Abbrechen</span>
+          </button>
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">upload</i><span class="kern-label">Hochladen</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <details>
+      <summary class="kern-body--small"><i aria-hidden="true">collections_bookmark</i> Sammlungen
+        {% if collections %}({{ collections | map(attribute="name") | join(", ") }}){% endif %}
+      </summary>
+      <form method="post" action="/projects/{{ project.id }}/collections" class="gd-row gd-mt">
+        <div class="kern-form-input gd-grow">
+          <label class="kern-label" for="sammlung-name">Neue Sammlung (z. B. „Gesetze“)</label>
+          <input class="kern-form-input__input" type="text" id="sammlung-name" name="name"
+                 required maxlength="150">
+        </div>
+        <button type="submit" class="gd-icon-btn" title="Sammlung anlegen"><i>add</i></button>
+      </form>
+    </details>
+    {% if documents %}
+    <ul class="gd-doc-liste">
+      {% for document in documents %}
+        {% include "partials/_dokument_zeile.html" %}
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="gd-center kern-body--small">Noch keine Dokumente — laden Sie die erste Datei hoch.</p>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

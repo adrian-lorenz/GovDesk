@@ -4,49 +4,63 @@
 {% set active = "guardrails" %}
 
 {% block settings_body %}
-<article class="round">
-  <h6><i>shield</i> Guardrails</h6>
-  <p class="small-text">Regelbasierte Prüfung der Chat-Eingaben — lokal, ohne externen Dienst.
-     Greift vor dem Sprachmodell; blockierte Anfragen landen im Audit-Log.</p>
-  <form method="post" action="/admin/settings/guardrails">
-    <label class="switch">
-      <input type="checkbox" name="guardrails_enabled" value="true" {% if g.enabled %}checked{% endif %}>
-      <span>Guardrails aktiv</span>
-    </label>
-    <label class="switch">
-      <input type="checkbox" name="guardrail_detect_injection" value="true" {% if g.detect_injection %}checked{% endif %}>
-      <span>Prompt-Injection-/Jailbreak-Erkennung</span>
-    </label>
-    <div class="field label border round">
-      <input type="number" name="guardrail_max_input_chars" min="0" max="20000" value="{{ g.max_input_chars }}">
-      <label>Maximale Eingabelänge (Zeichen, 0 = unbegrenzt)</label>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">shield</i> Guardrails</h2>
+      <p class="kern-body--small kern-body--muted">Regelbasierte Prüfung der Chat-Eingaben — lokal, ohne externen Dienst.
+         Greift vor dem Sprachmodell; blockierte Anfragen landen im Audit-Log.</p>
     </div>
-    <div class="field textarea label border round">
-      <textarea name="guardrail_blocklist" rows="3">{{ g.blocklist | join("\n") }}</textarea>
-      <label>Sperrbegriffe (einer pro Zeile)</label>
-    </div>
+    <div class="kern-card__body">
+      <form method="post" action="/admin/settings/guardrails" class="gd-stack kern-w-full">
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="guardrails-enabled"
+                 name="guardrails_enabled" value="true" {% if g.enabled %}checked{% endif %}>
+          <label class="kern-label" for="guardrails-enabled">Guardrails aktiv</label>
+        </div>
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="guardrail-injection"
+                 name="guardrail_detect_injection" value="true" {% if g.detect_injection %}checked{% endif %}>
+          <label class="kern-label" for="guardrail-injection">Prompt-Injection-/Jailbreak-Erkennung</label>
+        </div>
+        <div class="kern-form-input">
+          <label class="kern-label" for="guardrail-max-input">Maximale Eingabelänge (Zeichen, 0 = unbegrenzt)</label>
+          <input class="kern-form-input__input" type="number" id="guardrail-max-input"
+                 name="guardrail_max_input_chars" min="0" max="20000" value="{{ g.max_input_chars }}">
+        </div>
+        <div class="kern-form-input">
+          <label class="kern-label" for="guardrail-blocklist">Sperrbegriffe (einer pro Zeile)</label>
+          <textarea class="kern-form-input__input" id="guardrail-blocklist"
+                    name="guardrail_blocklist" rows="3">{{ g.blocklist | join("\n") }}</textarea>
+        </div>
 
-    <div class="divider"></div>
-    <h6 class="small-margin">Themen-Grenzen</h6>
-    <p class="small-text">Ausgewählte Themen werden vom Assistenten abgelehnt (als Vorgabe im
-       System-Prompt).</p>
-    <fieldset class="gd-checkbox-liste">
-      <legend class="small-text">Verbotene Themen</legend>
-      {% for key, (label, _regel) in topics.items() %}
-      <label class="checkbox">
-        <input type="checkbox" name="guardrail_refusal_topics" value="{{ key }}"
-               {% if key in g.refusal_topics %}checked{% endif %}>
-        <span>{{ label }}</span>
-      </label>
-      {% endfor %}
-    </fieldset>
-    <div class="field textarea label border round">
-      <textarea name="guardrail_scope_instructions" rows="3">{{ g.scope_instructions }}</textarea>
-      <label>Zusätzliche Vorgaben (Freitext, optional)</label>
+        <hr class="kern-divider">
+        <h3 class="kern-heading-small">Themen-Grenzen</h3>
+        <p class="kern-body--small kern-body--muted">Ausgewählte Themen werden vom Assistenten abgelehnt (als Vorgabe im
+           System-Prompt).</p>
+        <fieldset class="gd-checkbox-liste">
+          <legend class="kern-body--small">Verbotene Themen</legend>
+          {% for key, (label, _regel) in topics.items() %}
+          <div class="kern-form-check">
+            <input class="kern-form-check__checkbox" type="checkbox" id="guardrail-topic-{{ key }}"
+                   name="guardrail_refusal_topics" value="{{ key }}"
+                   {% if key in g.refusal_topics %}checked{% endif %}>
+            <label class="kern-label" for="guardrail-topic-{{ key }}">{{ label }}</label>
+          </div>
+          {% endfor %}
+        </fieldset>
+        <div class="kern-form-input">
+          <label class="kern-label" for="guardrail-scope">Zusätzliche Vorgaben (Freitext, optional)</label>
+          <textarea class="kern-form-input__input" id="guardrail-scope"
+                    name="guardrail_scope_instructions" rows="3">{{ g.scope_instructions }}</textarea>
+        </div>
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">save</i><span class="kern-label">Speichern</span>
+          </button>
+        </div>
+      </form>
     </div>
-    <nav class="right-align">
-      <button type="submit"><i>save</i> Speichern</button>
-    </nav>
-  </form>
-</article>
+  </div>
+</div>
 {% endblock %}

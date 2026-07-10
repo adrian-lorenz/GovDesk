@@ -16,6 +16,11 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
+# Cache-Busting für statische Assets: ändert sich bei jedem Prozessstart.
+# Browser holen CSS/JS nach einem Deploy/Neustart sicher frisch, statt auf
+# veralteten Heuristik-Caches zu sitzen (?v=… in base.html & Co.).
+templates.env.globals["asset_v"] = str(int(datetime.now(UTC).timestamp()))
+
 
 def render(
     request: Request,

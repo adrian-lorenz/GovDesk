@@ -8,13 +8,15 @@
 {% block title %}{{ page_title or project.name }} — {{ platform_name }}{% endblock %}
 
 {% block nav %}
-<a class="button border small" href="/projects/{{ project.id }}"><i>chat</i> Zum Chat</a>
+<a class="kern-btn kern-btn--secondary kern-btn--x-small" href="/projects/{{ project.id }}">
+  <i aria-hidden="true">chat</i><span class="kern-label">Zum Chat</span>
+</a>
 {% endblock %}
 
 {% block content %}
-<nav>
-  <h5 class="max no-margin"><i>folder</i> {{ project.name }}</h5>
-</nav>
+<div class="gd-page-head">
+  <h1 class="kern-heading-large gd-grow"><i aria-hidden="true">folder</i> {{ project.name }}</h1>
+</div>
 
 {% set items = [
   ("chat",         "",             "chat",          "Chat",          true),
@@ -24,16 +26,24 @@
   ("connectors",   "/connectors",  "extension",     "Connectoren",   can_edit and connectors_available and "connectors" in sichtbar),
   ("chat-configs", "/chat-configs","tune",          "Chat-Profile",  can_edit and "chat-configs" in sichtbar),
   ("retrieval",    "/retrieval",   "manage_search", "Retrieval-Test",can_edit and "retrieval" in sichtbar),
-  ("mitglieder",   "/mitglieder",  "group",         "Mitglieder",    can_manage),
+  ("mitglieder",   "/mitglieder",  "group",         "Verwaltung",    can_manage),
 ] %}
 
-<div class="gd-sidenav">
+{# data-gd-mini-default: Seiten (z. B. Editor) können die Minibar vorwählen;
+   die Nutzerwahl in localStorage hat Vorrang (theme.js). #}
+<div class="gd-sidenav" id="gd-projekt-sidenav"
+     {% if sidenav_mini_default %}data-gd-mini-default="1"{% endif %}>
   <aside class="gd-sidenav-menu">
     {% for key, sub, icon, label, show in items if show %}
-    <a href="/projects/{{ project.id }}{{ sub }}" class="{{ 'aktiv' if active == key }}">
-      <i>{{ icon }}</i> {{ label }}
+    <a href="/projects/{{ project.id }}{{ sub }}" class="{{ 'aktiv' if active == key }}" title="{{ label }}">
+      <i>{{ icon }}</i> <span class="gd-sidenav-label">{{ label }}</span>
     </a>
     {% endfor %}
+    <button type="button" class="gd-sidenav-toggle" data-gd-sidenav-toggle
+            title="Seitenleiste ein-/ausklappen">
+      <i data-gd-sidenav-icon>chevron_left</i>
+      <span class="gd-sidenav-label">Einklappen</span>
+    </button>
   </aside>
 
   <div class="gd-sidenav-body">

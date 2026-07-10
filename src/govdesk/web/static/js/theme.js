@@ -7,15 +7,12 @@
   "use strict";
 
   function currentMode() {
-    return document.body.classList.contains("dark") ? "dark" : "light";
+    return document.body.classList.contains("kern-dark") ? "dark" : "light";
   }
 
   function applyMode(mode) {
-    document.body.classList.remove("dark", "light");
-    document.body.classList.add(mode);
-    if (typeof ui === "function") {
-      ui("mode", mode);
-    }
+    document.body.classList.remove("kern-dark", "kern-light");
+    document.body.classList.add(mode === "dark" ? "kern-dark" : "kern-light");
     var icons = document.querySelectorAll("[data-theme-icon]");
     icons.forEach(function (el) {
       el.textContent = mode === "dark" ? "light_mode" : "dark_mode";
@@ -32,36 +29,42 @@
       "govdesk_theme=" + mode + "; Path=/; Max-Age=31536000; SameSite=Lax";
   };
 
-  // Beers Float-Label überlagert sonst den Feldinhalt:
-  //  a) Feld OHNE placeholder + Wert  → Label schwebt nicht → überlagert Wert.
-  //  b) Feld MIT echtem placeholder    → Label schwebt erst, wenn placeholder
-  //     verschwindet → im Leerzustand überlagert das Label den placeholder.
-  // Fix: (a) leeren placeholder setzen; (b) Label dauerhaft „active" schweben
-  // lassen (auf input UND label — input.active schneidet die Rundungs-Kerbe).
-  function fixFloatingLabels(root) {
-    var scope = root && root.querySelectorAll ? root : document;
-    scope.querySelectorAll(".field.label > input, .field.label > textarea").forEach(function (el) {
-      var ph = el.getAttribute("placeholder");
-      var hasRealPlaceholder = ph !== null && ph.trim() !== "";
-      if (ph === null) {
-        el.setAttribute("placeholder", " ");
-      }
-      if (hasRealPlaceholder) {
-        el.classList.add("active");
-        var label = el.parentElement && el.parentElement.querySelector("label");
-        if (label) label.classList.add("active");
-      }
-    });
-  }
-
   document.addEventListener("DOMContentLoaded", function () {
     applyMode(currentMode());
-    fixFloatingLabels(document);
+    initSidenav(document);
   });
 
-  // Nach HTMX-Swaps neue Felder ebenfalls korrigieren.
+  // Projekt-Seitenleiste: einklappbare Minibar. Nutzerwahl in localStorage;
+  // ohne Nutzerwahl gilt der Seiten-Default (data-gd-mini-default, z. B. Editor).
+  function initSidenav(root) {
+    var nav = (root.querySelector ? root : document).querySelector("#gd-projekt-sidenav");
+    if (!nav || nav.dataset.gdMiniInit) return;
+    nav.dataset.gdMiniInit = "1";
+    var gespeichert = null;
+    try { gespeichert = localStorage.getItem("govdesk-sidenav"); } catch (e) { /* egal */ }
+    var mini = gespeichert !== null
+      ? gespeichert === "mini"
+      : nav.dataset.gdMiniDefault === "1";
+    setMini(mini);
+
+    var toggle = nav.querySelector("[data-gd-sidenav-toggle]");
+    if (toggle) {
+      toggle.addEventListener("click", function () {
+        mini = !nav.classList.contains("gd-sidenav--mini");
+        setMini(mini);
+        try { localStorage.setItem("govdesk-sidenav", mini ? "mini" : "voll"); } catch (e) { /* egal */ }
+      });
+    }
+    function setMini(an) {
+      nav.classList.toggle("gd-sidenav--mini", an);
+      var icon = nav.querySelector("[data-gd-sidenav-icon]");
+      if (icon) icon.textContent = an ? "chevron_right" : "chevron_left";
+    }
+  }
+
+  // Nach HTMX-Boost-Swaps neu initialisieren (Body-Inhalt wurde ersetzt).
   document.body.addEventListener("htmx:afterSettle", function (e) {
-    fixFloatingLabels(e.target);
+    initSidenav(e.target === document.body ? document : e.target);
   });
 
   // CSRF-Header für ALLE HTMX-Requests aus #gd-csrf setzen. Das Element liegt
@@ -109,6 +112,9 @@
     ok.focus();
   }
 
+  // Auch für Seiten-Skripte nutzbar (z. B. Explorer-Kontextmenü).
+  window.gdConfirm = gdConfirm;
+
   document.body.addEventListener("htmx:confirm", function (e) {
     if (!e.detail.question) { return; }  // kein hx-confirm → normal weiter
     e.preventDefault();
@@ -139,6 +145,16 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") gdCloseDismissable();
+    // Tastatur-Aktivierung für klickbare Nicht-Buttons (z. B. Quellen in der
+    // Sidebar). Ersetzt HTMX-Event-Filter wie keyup[key=='Enter'], die per
+    // Function() kompiliert würden — das verbietet unsere CSP (kein eval).
+    if (e.key === "Enter" || e.key === " ") {
+      var t = e.target.closest && e.target.closest("[data-gd-enter-click]");
+      if (t) {
+        e.preventDefault();
+        t.click();
+      }
+    }
   });
 
   document.body.addEventListener("htmx:beforeRequest", function () { setBusy(1); });

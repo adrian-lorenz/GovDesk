@@ -8,36 +8,39 @@
   {% set klickbar = pid and citation.document_id and citation.chunk_index is defined and citation.chunk_index is not none %}
   <div class="quelle">
     {% if klickbar %}
-    <div class="quelle-trigger" role="button" tabindex="0"
+    {# Nur hx-trigger="click": Event-Filter wie keyup[key=='Enter'] kompiliert
+       HTMX per Function() — das verbietet unsere CSP (kein eval). Enter/Leertaste
+       löst über data-gd-enter-click (theme.js) einen Klick aus. #}
+    <div class="quelle-trigger" role="button" tabindex="0" data-gd-enter-click
          hx-get="/projects/{{ pid }}/documents/{{ citation.document_id }}/passage?chunk={{ citation.chunk_index }}"
          hx-target="#gd-quelle-modal" hx-swap="innerHTML"
-         hx-trigger="click, keyup[key=='Enter']"
+         hx-trigger="click"
          title="Fundstelle im Dokument anzeigen">
-      <div class="row no-space">
-        <span class="chip small">[{{ citation.number }}]</span>
-        <strong class="max small-text">{{ citation.filename }}</strong>
-        <i class="small-text">open_in_full</i>
+      <div class="gd-row">
+        <span class="kern-badge kern-badge--small"><span class="kern-label">[{{ citation.number }}]</span></span>
+        <strong class="gd-grow kern-body--small">{{ citation.filename }}</strong>
+        <i aria-hidden="true">open_in_full</i>
       </div>
-      {% if citation.heading_path %}<div class="small-text">{{ citation.heading_path }}</div>{% endif %}
-      {% if citation.page_no %}<div class="small-text">Seite {{ citation.page_no }}</div>{% endif %}
-      <div class="small-text italic">{{ citation.snippet[:180] }}…</div>
+      {% if citation.heading_path %}<div class="kern-body--small">{{ citation.heading_path }}</div>{% endif %}
+      {% if citation.page_no %}<div class="kern-body--small">Seite {{ citation.page_no }}</div>{% endif %}
+      <div class="kern-body--small kern-body--muted">{{ citation.snippet[:180] }}…</div>
     </div>
     {% else %}
-    <div class="row no-space">
-      <span class="chip small">[{{ citation.number }}]</span>
-      <strong class="max small-text">{{ citation.filename }}</strong>
+    <div class="gd-row">
+      <span class="kern-badge kern-badge--small"><span class="kern-label">[{{ citation.number }}]</span></span>
+      <strong class="gd-grow kern-body--small">{{ citation.filename }}</strong>
     </div>
-    {% if citation.heading_path %}<div class="small-text">{{ citation.heading_path }}</div>{% endif %}
-    {% if citation.page_no %}<div class="small-text">Seite {{ citation.page_no }}</div>{% endif %}
-    <div class="small-text italic">{{ citation.snippet[:180] }}…</div>
+    {% if citation.heading_path %}<div class="kern-body--small">{{ citation.heading_path }}</div>{% endif %}
+    {% if citation.page_no %}<div class="kern-body--small">Seite {{ citation.page_no }}</div>{% endif %}
+    <div class="kern-body--small kern-body--muted">{{ citation.snippet[:180] }}…</div>
     {% endif %}
     {% if citation.source_url %}
-    <a class="small-text" href="{{ citation.source_url }}" target="_blank" rel="noopener">
-      <i>open_in_new</i> Quelle öffnen
+    <a class="kern-body--small" href="{{ citation.source_url }}" target="_blank" rel="noopener">
+      <i aria-hidden="true">open_in_new</i> Quelle öffnen
     </a>
     {% endif %}
   </div>
   {% endfor %}
 {% else %}
-  <p class="small-text">Die Quellen zur jeweils letzten Antwort erscheinen hier.</p>
+  <p class="kern-body--small kern-body--muted">Die Quellen zur jeweils letzten Antwort erscheinen hier.</p>
 {% endif %}

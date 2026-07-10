@@ -2,72 +2,77 @@
 {# SPDX-License-Identifier: EUPL-1.2 #}
 {% extends "base.html" %}
 {% block title %}{{ chat.title or "Chat" }} — {{ platform_name }}{% endblock %}
-{# Chat nutzt die volle Fensterbreite statt der 75rem-Spalte #}
-{% block main_class %}responsive max{% endblock %}
 
 {% block nav %}
-<a class="button border small" href="/projects"><i>arrow_back</i> Projekte</a>
+<a class="kern-btn kern-btn--secondary kern-btn--x-small" href="/projects">
+  <i aria-hidden="true">arrow_back</i><span class="kern-label">Projekte</span>
+</a>
 {% if editor_visible %}
-<a class="button border small" href="/projects/{{ project.id }}/editor"><i>description</i> Dokumente</a>
+<a class="kern-btn kern-btn--secondary kern-btn--x-small" href="/projects/{{ project.id }}/editor">
+  <i aria-hidden="true">description</i><span class="kern-label">Dokumente</span>
+</a>
 {% endif %}
 {% if can_edit %}
 <form method="post" action="/projects/{{ project.id }}/chats/{{ chat.id }}/als-dokument"
-      class="no-margin">
-  <button class="border small" title="Chat per KI zusammenfassen und als Dokument speichern">
-    <i>summarize</i> Als Dokument
+      class="gd-header-form">
+  <button class="kern-btn kern-btn--secondary kern-btn--x-small"
+          title="Chat per KI zusammenfassen und als Dokument speichern">
+    <i aria-hidden="true">summarize</i><span class="kern-label">Als Dokument</span>
   </button>
 </form>
-<a class="button border small gd-zurueck" href="/projects/{{ project.id }}/dokumente">
-  <i>settings</i> <span>{{ project.name }}</span> verwalten
+<a class="kern-btn kern-btn--secondary kern-btn--x-small gd-zurueck" href="/projects/{{ project.id }}/dokumente">
+  <i aria-hidden="true">settings</i><span class="kern-label"><span class="gd-projektname">{{ project.name }}</span> verwalten</span>
 </a>
 {% endif %}
 {% endblock %}
 
+{# Chat-Seite: unten weniger Abstand, damit die Eingabe bündig sitzt. #}
+{% block main_class %}gd-main gd-main--chat{% endblock %}
+
 {% block content %}
 <style>
+  .gd-main--chat { padding-block-end: 1.5rem; }
   .gd-chat { display: grid; grid-template-columns: 20rem minmax(0, 1fr) 20rem;
              gap: 1.5rem; align-items: start; }
-  /* Beer gibt aufeinanderfolgenden section/aside automatisch margin-top:1rem
-     (höhere Spezifität → !important nötig); das versetzt die Spalten. */
-  .gd-chat > * { margin-block-start: 0 !important; }
   .gd-chat-main { min-width: 0; }
   /* Zurück-Button: Projektname einzeilig, bei Überlänge mit Ellipsis statt Umbruch */
-  .gd-zurueck span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                     max-width: 16rem; }
+  .gd-zurueck .gd-projektname { display: inline-block; white-space: nowrap; overflow: hidden;
+                                text-overflow: ellipsis; max-width: 16rem; vertical-align: bottom; }
   .chat-verlauf { max-width: 52rem; margin: 0 auto; }
-  .msg-user { background: var(--primary-container); color: var(--on-primary-container);
+  .msg-user { background: var(--kern-color-action-default); color: var(--kern-color-action-on-default);
               border-radius: 0.75rem 0.75rem 0.2rem 0.75rem; padding: 0.75rem 1rem;
               margin: 0.75rem 0 0.75rem auto; max-width: 85%; width: fit-content; }
-  .msg-assistant { border-radius: 0.75rem 0.75rem 0.75rem 0.2rem;
+  .msg-assistant { background: var(--kern-color-layout-background-hued);
+                   border-radius: 0.75rem 0.75rem 0.75rem 0.2rem; padding: 0.75rem 1rem;
                    margin: 0.75rem auto 0.75rem 0; max-width: 100%; }
   .stream-text { white-space: pre-wrap; }
   .chat-eingabe { position: sticky; bottom: 0; z-index: 5;
-                  background: var(--surface); padding: 1rem 0 0.5rem; }
+                  background: var(--kern-color-layout-background-default); padding: 1rem 0 0.5rem; }
   .chat-eingabe form { max-width: 52rem; margin: 0 auto; }
 
   /* Alle drei Spalten oben bündig. (sticky versetzte das kurze rechte Aside
      um top:5rem nach unten — daher bewusst statisch.) */
   .gd-chat-nav, .gd-chat-aside { align-self: start; }
-  .gd-chat-nav .list > li { border-radius: 0.5rem; }
-  .gd-chat-nav .list > li.aktiv { background: var(--primary-container); }
-  .gd-chat-nav .list > li.aktiv a { color: var(--on-primary-container); }
-  /* Titel + Zeitstempel vertikal, jeweils einzeilig mit Ellipsis (Beers
-     Listen-Anchor ist sonst Flex-Row und quetscht den Zeitstempel). */
-  .gd-chat-nav .list > li > a.max { display: block; min-inline-size: 0; }
-  .gd-chat-nav .chat-titel { display: block; white-space: nowrap;
-                             overflow: hidden; text-overflow: ellipsis; }
-  .gd-chat-nav .list .small-text { display: block; white-space: nowrap;
-                                   overflow-wrap: normal; }
+  .gd-chat-liste { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+  .gd-chat-liste > li { display: flex; align-items: center; gap: 0.25rem;
+                        border-radius: 0.5rem; padding: 0.25rem 0.5rem; }
+  .gd-chat-liste > li.aktiv { background: var(--kern-color-layout-background-hued); font-weight: 600; }
+  /* Titel + Zeitstempel vertikal, jeweils einzeilig mit Ellipsis. */
+  .gd-chat-liste > li > a { flex: 1; min-inline-size: 0; display: block;
+                            color: inherit; text-decoration: none; }
+  .gd-chat-liste .chat-titel { display: block; white-space: nowrap;
+                               overflow: hidden; text-overflow: ellipsis; }
+  .gd-chat-liste .chat-zeit { display: block; white-space: nowrap; }
 
   /* Rechte Sidebar: Quellen */
-  .gd-chat-aside .quelle { border-block-start: 1px solid var(--outline-variant); padding: 0.6rem 0; }
+  .gd-chat-aside .quelle { border-block-start: 1px solid var(--kern-color-layout-border); padding: 0.6rem 0; }
   .gd-chat-aside .quelle:first-of-type { border-block-start: 0; }
 
-  /* Desktop: Chat füllt den sichtbaren Bereich; nur der Verlauf scrollt, die
-     Eingabeleiste bleibt immer unten sichtbar. (Kopf 3.75rem + Innenabstände.) */
-  @media (min-width: 75rem) {
-    main.responsive:has(.gd-chat) { padding-block-end: 1.5rem; }
-    .gd-chat { block-size: calc(100dvh - 6.75rem); align-items: stretch; }
+  /* Der Chat wird nie höher als der sichtbare Bereich: nur der Verlauf (und
+     die Seitenspalten) scrollen intern, die Eingabeleiste bleibt unten sichtbar.
+     (Kopf 3.5rem + Innenabstände = 6.5rem; padding-bottom via gd-main--chat.) */
+  @media (min-width: 45rem) {
+    .gd-chat { block-size: calc(100dvh - 6.5rem); align-items: stretch; }
     .gd-chat-main { display: flex; flex-direction: column; min-block-size: 0; }
     .chat-verlauf { flex: 1 1 auto; overflow-y: auto; min-block-size: 0; }
     .chat-eingabe { position: static; }
@@ -77,12 +82,13 @@
   }
 
   @media (max-width: 75rem) {
-    .gd-chat { grid-template-columns: 14rem minmax(0, 1fr); }
-    .gd-chat-aside { grid-column: 1 / -1; position: static; }
+    .gd-chat { grid-template-columns: 14rem minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+    .gd-chat-aside { grid-column: 1 / -1; position: static; max-block-size: 12rem; }
   }
   @media (max-width: 45rem) {
-    .gd-chat { grid-template-columns: 1fr; }
+    .gd-chat { grid-template-columns: 1fr; grid-template-rows: none; }
     .gd-chat-nav { position: static; }
+    .gd-chat-aside { max-block-size: none; }
   }
 </style>
 
@@ -91,28 +97,30 @@
 
 <div class="gd-chat">
   <aside class="gd-chat-nav">
-    <article class="round border">
-      <nav class="no-margin">
-        <h6 class="max no-margin"><i>chat</i> Meine Chats</h6>
-        <form method="post" action="/projects/{{ project.id }}/chats" class="no-margin">
-          <button class="circle small" title="Neuer Chat"><i>add</i></button>
-        </form>
-      </nav>
-      <ul class="list">
-        {% for c in chats %}
-        <li class="{{ 'aktiv' if c.id == chat.id }}">
-          <a class="max" href="/projects/{{ project.id }}/chats/{{ c.id }}">
-            <span class="chat-titel">{{ c.title or "Neuer Chat" }}</span>
-            <span class="small-text">{{ c.updated_at.strftime("%d.%m. %H:%M") }}</span>
-          </a>
-          <form method="post" action="/projects/{{ project.id }}/chats/{{ c.id }}/delete"
-                class="no-margin" hx-confirm="Diesen Chat mitsamt Verlauf endgültig löschen?">
-            <button class="circle transparent small" title="Löschen"><i>delete</i></button>
+    <div class="kern-card kern-card--hug">
+      <div class="kern-card__container">
+        <div class="gd-row">
+          <h2 class="kern-heading-small gd-grow"><i aria-hidden="true">chat</i> Meine Chats</h2>
+          <form method="post" action="/projects/{{ project.id }}/chats" class="gd-header-form">
+            <button class="gd-icon-btn" title="Neuer Chat"><i>add</i></button>
           </form>
-        </li>
-        {% endfor %}
-      </ul>
-    </article>
+        </div>
+        <ul class="gd-chat-liste">
+          {% for c in chats %}
+          <li class="{{ 'aktiv' if c.id == chat.id }}">
+            <a href="/projects/{{ project.id }}/chats/{{ c.id }}">
+              <span class="chat-titel">{{ c.title or "Neuer Chat" }}</span>
+              <span class="chat-zeit kern-body--small kern-body--muted">{{ c.updated_at.strftime("%d.%m. %H:%M") }}</span>
+            </a>
+            <form method="post" action="/projects/{{ project.id }}/chats/{{ c.id }}/delete"
+                  class="gd-header-form" hx-confirm="Diesen Chat mitsamt Verlauf endgültig löschen?">
+              <button class="gd-icon-btn" title="Löschen"><i>delete</i></button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
   </aside>
 
   <section class="gd-chat-main">
@@ -121,7 +129,7 @@
         {% if message.role == "user" %}
           <div class="msg-user">{{ message.content }}</div>
         {% elif message.role == "assistant" %}
-          <article class="msg-assistant round">{{ message.html | safe }}</article>
+          <div class="msg-assistant">{{ message.html | safe }}</div>
         {% endif %}
       {% endfor %}
     </div>
@@ -132,23 +140,27 @@
       <form hx-post="/projects/{{ project.id }}/chats/{{ chat.id }}/messages"
             hx-target="#nachrichten" hx-swap="beforeend"
             data-reset-on-success
-            class="row">
-        <div class="field textarea border round max no-margin">
-          <textarea name="frage" required rows="2" placeholder="Frage zu den Projektdokumenten stellen …"
+            class="gd-row">
+        <div class="kern-form-input gd-grow">
+          <textarea class="kern-form-input__input" name="frage" required rows="2"
+                    placeholder="Frage zu den Projektdokumenten stellen …"
+                    aria-label="Frage zu den Projektdokumenten stellen"
                     onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.requestSubmit();}"></textarea>
         </div>
-        <button type="submit" class="circle large"><i>send</i></button>
+        <button type="submit" class="gd-icon-btn" title="Senden"><i>send</i></button>
       </form>
     </div>
   </section>
 
   <aside class="gd-chat-aside">
-    <article class="round border">
-      <h6 class="no-margin"><i>menu_book</i> Quellen</h6>
-      <div id="quellen-sidebar">
-        {% include "partials/_quellen_sidebar.html" %}
+    <div class="kern-card kern-card--hug">
+      <div class="kern-card__container">
+        <h2 class="kern-heading-small"><i aria-hidden="true">menu_book</i> Quellen</h2>
+        <div id="quellen-sidebar">
+          {% include "partials/_quellen_sidebar.html" %}
+        </div>
       </div>
-    </article>
+    </div>
   </aside>
 </div>
 

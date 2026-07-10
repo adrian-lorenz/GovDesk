@@ -4,25 +4,34 @@
 {% set active = "connectoren" %}
 
 {% block settings_body %}
-<article class="round">
-  <h6><i>extension</i> Connectoren</h6>
-  <p class="small-text">Abschaltbare Quellen-Erweiterungen. Freigeschaltete Connectoren stehen in
-     den Projekten unter „Connectoren" zur Verfügung.</p>
-  {% if connectors %}
-  <form method="post" action="/admin/settings/connectoren">
-    {% for c in connectors %}
-    <label class="switch">
-      <input type="checkbox" name="connector_enabled_{{ c.type_id }}" value="true"
-             {% if c.type_id in enabled %}checked{% endif %}>
-      <span><strong>{{ c.label }}</strong> — {{ c.description }}</span>
-    </label>
-    {% endfor %}
-    <nav class="right-align">
-      <button type="submit"><i>save</i> Speichern</button>
-    </nav>
-  </form>
-  {% else %}
-  <p class="center-align small-text">Derzeit sind keine Connectoren installiert.</p>
-  {% endif %}
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="kern-card__header">
+      <h2 class="kern-heading-small"><i aria-hidden="true">extension</i> Connectoren</h2>
+      <p class="kern-body--small kern-body--muted">Abschaltbare Quellen-Erweiterungen. Freigeschaltete Connectoren stehen in
+         den Projekten unter „Connectoren" zur Verfügung.</p>
+    </div>
+    <div class="kern-card__body">
+      {% if connectors %}
+      <form method="post" action="/admin/settings/connectoren" class="gd-stack kern-w-full">
+        {% for c in connectors %}
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox" id="connector-{{ c.type_id }}"
+                 name="connector_enabled_{{ c.type_id }}" value="true"
+                 {% if c.type_id in enabled %}checked{% endif %}>
+          <label class="kern-label" for="connector-{{ c.type_id }}"><strong>{{ c.label }}</strong> — {{ c.description }}</label>
+        </div>
+        {% endfor %}
+        <div class="gd-dialog-actions">
+          <button type="submit" class="kern-btn kern-btn--primary">
+            <i aria-hidden="true">save</i><span class="kern-label">Speichern</span>
+          </button>
+        </div>
+      </form>
+      {% else %}
+      <p class="kern-body--small kern-body--muted gd-center">Derzeit sind keine Connectoren installiert.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
 {% endblock %}

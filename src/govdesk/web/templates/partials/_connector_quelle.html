@@ -2,48 +2,52 @@
 {# SPDX-License-Identifier: EUPL-1.2 #}
 {% set source = row.source %}{% set job = row.job %}
 {% set laeuft = job and job.status.value in ("queued", "running") %}
-<article class="round border" id="connector-{{ source.id }}"
-         {% if laeuft %}
-         hx-get="/projects/{{ project.id }}/connectors/{{ source.id }}/status"
-         hx-trigger="every 3s" hx-swap="outerHTML"
-         {% endif %}>
-  <nav>
-    <i>extension</i>
-    <div class="max">
-      <strong>{{ source.name }}</strong>
-      <div class="small-text">{{ source.connector_type }}
-        {% if source.sync_interval_hours %} · Sync alle {{ source.sync_interval_hours }} h{% endif %}
-      </div>
-      {% if job %}
-      <div class="small-text">
-        {% if job.status.value == "running" %}
-          <progress class="circle small"></progress> Läuft — {{ job.items_found }} gefunden,
-          {{ job.items_ingested }} eingebettet, {{ job.items_skipped }} übersprungen
-        {% elif job.status.value == "queued" %}
-          <i>schedule</i> In Warteschlange
-        {% elif job.status.value == "done" %}
-          <i class="green-text">check_circle</i> Fertig — {{ job.items_ingested }} eingebettet
-          ({{ job.items_skipped }} übersprungen)
-        {% elif job.status.value == "cancelled" %}
-          <i class="amber-text">cancel</i> Abgebrochen
-        {% else %}
-          <i class="error-text">error</i> Fehler: {{ job.error }}
+<div class="kern-card kern-card--hug" id="connector-{{ source.id }}"
+     {% if laeuft %}
+     hx-get="/projects/{{ project.id }}/connectors/{{ source.id }}/status"
+     hx-trigger="every 3s" hx-swap="outerHTML"
+     {% endif %}>
+  <div class="kern-card__container">
+    <div class="gd-row">
+      <i aria-hidden="true">extension</i>
+      <div class="gd-grow">
+        <strong>{{ source.name }}</strong>
+        <div class="kern-body--small kern-body--muted">{{ source.connector_type }}
+          {% if source.sync_interval_hours %} · Sync alle {{ source.sync_interval_hours }} h{% endif %}
+        </div>
+        {% if job %}
+        <div class="kern-body--small">
+          {% if job.status.value == "running" %}
+            <progress class="kern-progress"></progress> Läuft — {{ job.items_found }} gefunden,
+            {{ job.items_ingested }} eingebettet, {{ job.items_skipped }} übersprungen
+          {% elif job.status.value == "queued" %}
+            <i aria-hidden="true">schedule</i> In Warteschlange
+          {% elif job.status.value == "done" %}
+            <i aria-hidden="true" class="gd-success-text">check_circle</i> Fertig — {{ job.items_ingested }} eingebettet
+            ({{ job.items_skipped }} übersprungen)
+          {% elif job.status.value == "cancelled" %}
+            <i aria-hidden="true">cancel</i> Abgebrochen
+          {% else %}
+            <i aria-hidden="true" class="gd-error-text">error</i> Fehler: {{ job.error }}
+          {% endif %}
+        </div>
         {% endif %}
       </div>
+      {% if laeuft %}
+      <form method="post" action="/projects/{{ project.id }}/connectors/{{ source.id }}/stop">
+        <button class="kern-btn kern-btn--secondary kern-btn--x-small">
+          <i aria-hidden="true">stop</i><span class="kern-label">Stoppen</span>
+        </button>
+      </form>
+      {% else %}
+      <form method="post" action="/projects/{{ project.id }}/connectors/{{ source.id }}/start">
+        <button class="gd-icon-btn" title="Lauf starten"><i>play_arrow</i></button>
+      </form>
+      <form method="post" action="/projects/{{ project.id }}/connectors/{{ source.id }}/loeschen"
+            hx-confirm="Quelle „{{ source.name }}“ und alle daraus erzeugten Dokumente löschen? Das kann nicht rückgängig gemacht werden.">
+        <button class="gd-icon-btn" title="Löschen"><i>delete</i></button>
+      </form>
       {% endif %}
     </div>
-    {% if laeuft %}
-    <form method="post" action="/projects/{{ project.id }}/connectors/{{ source.id }}/stop" class="no-margin">
-      <button class="border small"><i>stop</i> Stoppen</button>
-    </form>
-    {% else %}
-    <form method="post" action="/projects/{{ project.id }}/connectors/{{ source.id }}/start" class="no-margin">
-      <button class="border small" title="Lauf starten"><i>play_arrow</i></button>
-    </form>
-    <form method="post" action="/projects/{{ project.id }}/connectors/{{ source.id }}/loeschen" class="no-margin"
-          hx-confirm="Quelle „{{ source.name }}“ und alle daraus erzeugten Dokumente löschen? Das kann nicht rückgängig gemacht werden.">
-      <button class="circle transparent small" title="Löschen"><i>delete</i></button>
-    </form>
-    {% endif %}
-  </nav>
-</article>
+  </div>
+</div>

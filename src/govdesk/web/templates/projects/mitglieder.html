@@ -2,66 +2,107 @@
 {# SPDX-License-Identifier: EUPL-1.2 #}
 {% extends "projects/_layout.html" %}
 {% set active = "mitglieder" %}
-{% set page_title = "Mitglieder" %}
+{% set page_title = "Verwaltung" %}
 
 {% block project_body %}
-<article class="round">
-  <nav class="no-margin">
-    <h6 class="max no-margin"><i>archive</i> Projekt-Archiv</h6>
-    <a class="button border small" hx-boost="false" href="/projects/{{ project.id }}/export">
-      <i>download</i> Exportieren (.zip)
-    </a>
-  </nav>
-  <p class="small-text no-margin">Dokumente, Sammlungen und Chat-Profile als Archiv sichern —
-     vektorunabhängig, auf einer anderen Instanz re-importierbar.</p>
-</article>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <div class="gd-row">
+      <h2 class="kern-heading-small gd-grow"><i aria-hidden="true">archive</i> Projekt-Archiv</h2>
+      <a class="kern-btn kern-btn--secondary kern-btn--x-small" hx-boost="false" href="/projects/{{ project.id }}/export">
+        <i aria-hidden="true">download</i><span class="kern-label">Exportieren (.zip)</span>
+      </a>
+    </div>
+    <p class="kern-body--small">Dokumente, Sammlungen und Chat-Profile als Archiv sichern —
+       vektorunabhängig, auf einer anderen Instanz re-importierbar.</p>
+  </div>
+</div>
 
-<article class="round">
-  <h6><i>group</i> Mitglieder</h6>
-  <ul class="list border">
-    {% for eintrag in members %}
-    <li>
-      <i>{{ "star" if eintrag.member.role.value == "owner" else "person" }}</i>
-      <div class="max">
-        <strong>{{ eintrag.user.username }}</strong>
-        <div class="small-text">{{ {"owner": "Eigentümer", "admin": "Administrator",
-             "editor": "Bearbeiter", "viewer": "Betrachter"}[eintrag.member.role.value] }}</div>
+<div class="kern-card kern-card--hug">
+  <div class="kern-card__container">
+    <h2 class="kern-heading-small"><i aria-hidden="true">group</i> Mitglieder</h2>
+    <ul class="gd-doc-liste">
+      {% for eintrag in members %}
+      <li class="gd-doc-row">
+        <span class="gd-doc-icon"><i aria-hidden="true">{{ "star" if eintrag.member.role.value == "owner" else "person" }}</i></span>
+        <div class="gd-grow">
+          <strong>{{ eintrag.user.username }}</strong>
+          <div class="kern-body--small kern-body--muted">{{ {"owner": "Eigentümer", "admin": "Administrator",
+               "editor": "Bearbeiter", "viewer": "Betrachter"}[eintrag.member.role.value] }}</div>
+        </div>
+        {% if eintrag.member.role.value != "owner" %}
+        <form method="post" action="/projects/{{ project.id }}/members/{{ eintrag.member.id }}/role">
+          <div class="kern-form-input__select-wrapper">
+            <select class="kern-form-input__select" name="role" aria-label="Rolle ändern"
+                    onchange="this.form.requestSubmit()">
+              {% for wert, label in [("admin", "Administrator"), ("editor", "Bearbeiter"), ("viewer", "Betrachter")] %}
+              <option value="{{ wert }}" {% if eintrag.member.role.value == wert %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+        <form method="post" action="/projects/{{ project.id }}/members/{{ eintrag.member.id }}/entfernen">
+          <button class="gd-icon-btn" title="Entfernen"><i>person_remove</i></button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <form method="post" action="/projects/{{ project.id }}/members" class="gd-row gd-mt">
+      <div class="kern-form-input gd-grow">
+        <label class="kern-label" for="mg-benutzer">Benutzer</label>
+        <div class="kern-form-input__select-wrapper">
+          <select class="kern-form-input__select" id="mg-benutzer" name="username" required>
+            <option value="" disabled selected>Benutzer wählen …</option>
+            {% for u in available_users %}
+            <option value="{{ u.username }}">{{ u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
-      {% if eintrag.member.role.value != "owner" %}
-      <form method="post" action="/projects/{{ project.id }}/members/{{ eintrag.member.id }}/role"
-            class="no-margin">
-        <select name="role" onchange="this.form.requestSubmit()" class="border small">
-          {% for wert, label in [("admin", "Administrator"), ("editor", "Bearbeiter"), ("viewer", "Betrachter")] %}
-          <option value="{{ wert }}" {% if eintrag.member.role.value == wert %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
+      <div class="kern-form-input">
+        <label class="kern-label" for="mg-rolle">Rolle</label>
+        <div class="kern-form-input__select-wrapper">
+          <select class="kern-form-input__select" id="mg-rolle" name="role">
+            <option value="viewer">Betrachter</option>
+            <option value="editor">Bearbeiter</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="kern-btn kern-btn--primary">
+        <i aria-hidden="true">person_add</i><span class="kern-label">Hinzufügen</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+{# Gefahrenzone: Projekt löschen — wahlweise mit behaltener Wissensbasis. #}
+<div class="kern-card kern-card--hug gd-gefahrenzone">
+  <div class="kern-card__container">
+    <h2 class="kern-heading-small gd-error-text"><i aria-hidden="true">warning</i> Projekt löschen</h2>
+    <p class="kern-body--small">
+      <strong>Archivieren</strong> entfernt das Projekt aus allen Listen, behält aber die
+      Wissensbasis (Qdrant-Collection), Dokumente und Mitglieder — ein Plattform-Admin kann
+      es jederzeit wieder verknüpfen. <strong>Endgültig löschen</strong> entfernt zusätzlich
+      die Collection und alle gespeicherten Dateien — unwiderruflich.
+    </p>
+    <div class="gd-actions">
+      <form method="post" action="/projects/{{ project.id }}/loeschen"
+            hx-confirm="Projekt „{{ project.name }}“ archivieren? Die Wissensbasis bleibt erhalten und kann wieder verknüpft werden.">
+        <input type="hidden" name="modus" value="archiv">
+        <button class="kern-btn kern-btn--secondary">
+          <i aria-hidden="true">archive</i><span class="kern-label">Archivieren (Wissensbasis behalten)</span>
+        </button>
       </form>
-      <form method="post" action="/projects/{{ project.id }}/members/{{ eintrag.member.id }}/entfernen"
-            class="no-margin">
-        <button class="circle transparent small" title="Entfernen"><i>person_remove</i></button>
+      <form method="post" action="/projects/{{ project.id }}/loeschen"
+            hx-confirm="Projekt „{{ project.name }}“ ENDGÜLTIG löschen? Wissensbasis, Dokumente und Chats werden unwiderruflich entfernt.">
+        <input type="hidden" name="modus" value="endgueltig">
+        <button class="kern-btn kern-btn--secondary gd-error-text">
+          <i aria-hidden="true">delete_forever</i><span class="kern-label">Endgültig löschen</span>
+        </button>
       </form>
-      {% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  <form method="post" action="/projects/{{ project.id }}/members" class="row">
-    <div class="field label border round small max no-margin">
-      <select name="username" required>
-        <option value="" disabled selected>Benutzer wählen …</option>
-        {% for u in available_users %}
-        <option value="{{ u.username }}">{{ u.username }}</option>
-        {% endfor %}
-      </select>
-      <label>Benutzer</label>
     </div>
-    <div class="field border round small no-margin">
-      <select name="role">
-        <option value="viewer">Betrachter</option>
-        <option value="editor">Bearbeiter</option>
-        <option value="admin">Administrator</option>
-      </select>
-    </div>
-    <button type="submit" class="small"><i>person_add</i> Hinzufügen</button>
-  </form>
-</article>
+  </div>
+</div>
 {% endblock %}

@@ -9,14 +9,19 @@ SPDX-FileCopyrightText = "Big Sky Software"
 SPDX-License-Identifier = "0BSD"
 
 [[annotations]]
-path = ["src/govdesk/web/static/css/beer.min.css", "src/govdesk/web/static/js/beer.min.js"]
-SPDX-FileCopyrightText = "beercss"
-SPDX-License-Identifier = "MIT"
+path = ["src/govdesk/web/static/css/kern.min.css"]
+SPDX-FileCopyrightText = "KERN UX-Standard (https://gitlab.opencode.de/kern-designsystem)"
+SPDX-License-Identifier = "EUPL-1.2"
 
 [[annotations]]
 path = ["src/govdesk/web/static/fonts/*.woff2"]
 SPDX-FileCopyrightText = "Google LLC (Material Symbols)"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["src/govdesk/web/static/fonts/fira-sans/*.woff2"]
+SPDX-FileCopyrightText = "The Fira Sans Project Authors"
+SPDX-License-Identifier = "OFL-1.1"
 
 # Generierte/Daten-Dateien ohne Schöpfungshöhe
 [[annotations]]
