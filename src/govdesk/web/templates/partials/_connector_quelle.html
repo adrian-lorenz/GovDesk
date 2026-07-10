@@ -41,7 +41,7 @@
       <button class="border small" title="Lauf starten"><i>play_arrow</i></button>
     </form>
     <form method="post" action="/projects/{{ project.id }}/connectors/{{ source.id }}/loeschen" class="no-margin"
-          onsubmit="return confirm('Quelle „{{ source.name }}“ und alle daraus erzeugten Dokumente löschen? Das kann nicht rückgängig gemacht werden.')">
+          hx-confirm="Quelle „{{ source.name }}“ und alle daraus erzeugten Dokumente löschen? Das kann nicht rückgängig gemacht werden.">
       <button class="circle transparent small" title="Löschen"><i>delete</i></button>
     </form>
     {% endif %}

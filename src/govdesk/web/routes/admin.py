@@ -399,6 +399,72 @@ async def settings_anmeldung(request: Request, admin: PlatformAdmin) -> HTMLResp
     return render(request, "admin/settings/anmeldung.html", {"oidc_info": oidc_info})
 
 
+@router.get("/settings/qdrant", response_class=HTMLResponse)
+async def settings_qdrant(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
+    """Qdrant-Verwaltung: Collections, Statistik und verwaiste Bestände."""
+    projects = list((await db.execute(select(Project))).scalars())
+    by_collection = {p.qdrant_collection: p for p in projects}
+
+    store = VectorStore()
+    available = await store.is_available()
+    collections: list[dict] = []
+    total_points = 0
+    try:
+        if available:
+            for name in await store.list_collections():
+                info = await store.collection_info(name)
+                project = by_collection.get(name)
+                total_points += info["points"]
+                collections.append(
+                    {
+                        "name": name,
+                        "project": project,
+                        "orphan": project is None,
+                        **info,
+                    }
+                )
+    finally:
+        await store.close()
+
+    orphans = sum(1 for c in collections if c["orphan"])
+    return render(
+        request,
+        "admin/settings/qdrant.html",
+        {
+            "available": available,
+            "collections": collections,
+            "total_points": total_points,
+            "orphan_count": orphans,
+            "project_count": len(projects),
+        },
+    )
+
+
+@router.post("/settings/qdrant/{name}/loeschen")
+async def settings_qdrant_delete(
+    request: Request, admin: PlatformAdmin, db: Db, name: str
+) -> RedirectResponse:
+    """Löscht eine Collection — nur zulässig, wenn sie zu keinem Projekt gehört."""
+    belongs = (
+        await db.execute(select(Project.id).where(Project.qdrant_collection == name))
+    ).scalar_one_or_none()
+    if belongs is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Diese Collection gehört zu einem Projekt. Löschen Sie das Projekt selbst.",
+        )
+    store = VectorStore()
+    try:
+        await store.drop_collection(name)
+    finally:
+        await store.close()
+    await audit(
+        db, "qdrant.collection.delete", actor_user_id=admin.id, meta={"collection": name}
+    )
+    await db.commit()
+    return RedirectResponse("/admin/settings/qdrant", status_code=303)
+
+
 @router.get("/settings/system", response_class=HTMLResponse)
 async def settings_system(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
     cfg = await get_runtime_config(db)

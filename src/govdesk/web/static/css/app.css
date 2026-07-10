@@ -192,24 +192,23 @@ main :is(nav, .row) :is(button, .button).responsive { margin-block-start: 0; }
    Namenslänge). Anker als Block, damit sie die Spalte füllen. */
 .projekt-liste {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.75rem;
 }
 .projekt-liste > a {
   display: block;
   min-inline-size: 0;
 }
-@media (max-width: 45rem) {
-  .projekt-liste { grid-template-columns: 1fr; }
-}
 
-/* Projektkacheln: einheitliche Größe, Beschreibung auf 2 Zeilen, Infozeile
-   unten bündig. */
+/* Projektkacheln: einheitliche, kompakte Größe, Beschreibung auf 2 Zeilen,
+   Infozeile unten bündig. */
 .projekt-kachel {
   display: flex;
   flex-direction: column;
-  min-block-size: 11rem;
+  min-block-size: 7.5rem;
+  padding: 0.9rem 1rem;
 }
+.projekt-kachel h6 { font-size: 1rem; }
 .projekt-beschreibung {
   flex: 1;
   display: -webkit-box;
@@ -258,6 +257,11 @@ main .grid article .max { min-inline-size: 0; overflow-wrap: anywhere; }
    min-content-Breite der Flex-Zelle auf ~1 Zeichen drücken, sodass der Titel
    zusammenschrumpft und mitten im Wort umbricht, obwohl rechts Platz ist. */
 main nav > .max { min-inline-size: 0; overflow-wrap: break-word; }
+
+/* Beer gibt JEDER .list>li cursor:pointer — auch nicht klickbaren Info-/
+   Verwaltungszeilen (irreführender Hand-Cursor). Zeilen wieder auf default;
+   echte Link-Zeilen (a:only-child) behalten Beers Pointer über den Anchor. */
+main .list > li { cursor: default; }
 
 /* Beer setzt auf Listen-Anchors white-space:nowrap → lange Titel/Dateinamen
    laufen sonst aus der Karte. In Listen normal umbrechen lassen (break-word

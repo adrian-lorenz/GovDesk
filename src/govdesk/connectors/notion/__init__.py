@@ -2,4 +2,4 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
-"""TED-Connector — deutsche EU-Ausschreibungen aus der TED-Datenbank."""
+"""Notion-Connector — Seiten einer Notion-Integration als Markdown importieren."""

@@ -28,6 +28,14 @@ from govdesk.documents.service import DuplicateDocumentError, create_document, d
 ENABLED_SETTING_KEY = "connectors_enabled"
 
 
+def resolve_config_secrets(config: dict) -> dict:
+    """Verschlüsselte Konfigurationswerte (App-Passwörter, Tokens) entschlüsseln,
+    bevor die Config an einen Connector übergeben wird."""
+    from govdesk.core.secrets import unseal
+
+    return {key: unseal(value) for key, value in (config or {}).items()}
+
+
 async def enabled_type_ids(db: AsyncSession) -> list[str]:
     """Plattformweit freigeschaltete Connector-Typen (Admin-Einstellung)."""
     value = await get_setting(db, ENABLED_SETTING_KEY, [])

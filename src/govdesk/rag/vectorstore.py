@@ -74,6 +74,24 @@ class VectorStore:
         if await self._client.collection_exists(name):
             await self._client.delete_collection(name)
 
+    async def list_collections(self) -> list[str]:
+        resp = await self._client.get_collections()
+        return sorted(c.name for c in resp.collections)
+
+    async def collection_info(self, name: str) -> dict[str, Any]:
+        """Statistik einer Collection: Punkte, Status, Vektor-Dimension, Metrik."""
+        info = await self._client.get_collection(name)
+        params = info.config.params.vectors
+        # Bei unbenanntem Einzelvektor ist params ein VectorParams-Objekt.
+        size = getattr(params, "size", None)
+        distance = getattr(params, "distance", None)
+        return {
+            "points": info.points_count or 0,
+            "status": str(getattr(info.status, "value", info.status)),
+            "dimensions": size,
+            "distance": str(getattr(distance, "value", distance)) if distance else None,
+        }
+
     async def upsert_chunks(self, collection: str, chunks: list[ChunkPayload]) -> None:
         points = [
             models.PointStruct(

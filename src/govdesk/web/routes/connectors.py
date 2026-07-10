@@ -20,6 +20,7 @@ from govdesk.connectors.service import (
     list_sources_with_jobs,
 )
 from govdesk.core.audit import audit
+from govdesk.core.secrets import seal
 from govdesk.db.models import Collection, ConnectorJob, ConnectorJobStatus, ConnectorSource
 from govdesk.web.deps import render
 from govdesk.web.project_layout import ensure_section_visible, project_menu_context
@@ -95,8 +96,14 @@ async def source_create(
     for f in plugin.config_fields():
         if f.kind == "checkboxes":
             config[f.key] = form.getlist(f"config_{f.key}")
-        else:
-            config[f.key] = _coerce(f, form.get(f"config_{f.key}"))
+            continue
+        value = _coerce(f, form.get(f"config_{f.key}"))
+        # Geheimnisse (App-Passwörter, Tokens) verschlüsselt ablegen.
+        if f.kind == "password":
+            if value:
+                config[f.key] = seal(value)
+            continue
+        config[f.key] = value
 
     source = ConnectorSource(
         project_id=project.id,

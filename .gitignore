@@ -16,3 +16,6 @@ data/
 
 # Lokale Claude-Code-Einstellungen (maschinenspezifisch, enthält Home-Pfade)
 .claude/
+
+# JetBrains-IDE-Projektdateien
+.idea/

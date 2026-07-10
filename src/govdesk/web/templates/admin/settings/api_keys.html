@@ -76,7 +76,7 @@
         <td class="right-align">
           {% if not key.revoked_at %}
           <form method="post" action="/admin/settings/api-keys/{{ key.id }}/widerrufen"
-                class="no-margin" onsubmit="return confirm('Key „{{ key.name }}“ widerrufen?')">
+                class="no-margin" hx-confirm="Key „{{ key.name }}“ widerrufen?">
             <button class="border small"><i>block</i> Widerrufen</button>
           </form>
           {% endif %}

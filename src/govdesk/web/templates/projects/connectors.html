@@ -41,6 +41,12 @@
     <label>{{ f.label }}</label>
     <i>arrow_drop_down</i>
   </div>
+  {% elif f.kind == "password" %}
+  <div class="field label border round">
+    <input type="password" name="config_{{ f.key }}" autocomplete="new-password"
+           {% if f.required %}required{% endif %} placeholder=" ">
+    <label>{{ f.label }}</label>
+  </div>
   {% else %}
   <div class="field label border round">
     <input type="{{ 'number' if f.kind == 'number' else 'text' }}" name="config_{{ f.key }}"

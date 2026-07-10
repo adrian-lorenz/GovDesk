@@ -29,7 +29,7 @@
         <span title="Dokumente"><i>description</i> {{ item.documents }}</span>
         <span title="Mitglieder"><i>group</i> {{ item.members }}</span>
         <div class="max"></div>
-        <span>{{ project.updated_at.strftime("%d.%m.%Y") }}</span>
+        <span title="Zuletzt verwendet">{{ item.last_used.strftime("%d.%m.%Y") }}</span>
       </nav>
     </article>
   </a>

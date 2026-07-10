@@ -15,6 +15,8 @@ from govdesk.core.audit import audit
 from govdesk.core.config import get_settings
 from govdesk.db.models import (
     ChatConfig,
+    ChatMessage,
+    ChatSession,
     Collection,
     Document,
     ProjectMember,
@@ -35,6 +37,7 @@ async def project_list(request: Request, user: CurrentUser, db: Db) -> HTMLRespo
     ids = [p.id for p in projects]
     doc_counts: dict = {}
     member_counts: dict = {}
+    last_activity: dict = {}
     if ids:
         for pid, n in (
             await db.execute(
@@ -52,14 +55,27 @@ async def project_list(request: Request, user: CurrentUser, db: Db) -> HTMLRespo
             )
         ).all():
             member_counts[pid] = n
+        # „Zuletzt verwendet" = jüngste Chat-Nachricht im Projekt.
+        for pid, ts in (
+            await db.execute(
+                select(ChatSession.project_id, func.max(ChatMessage.created_at))
+                .join(ChatMessage, ChatMessage.session_id == ChatSession.id)
+                .where(ChatSession.project_id.in_(ids))
+                .group_by(ChatSession.project_id)
+            )
+        ).all():
+            last_activity[pid] = ts
     items = [
         {
             "project": p,
             "documents": doc_counts.get(p.id, 0),
             "members": member_counts.get(p.id, 0),
+            "last_used": last_activity.get(p.id) or p.created_at,
         }
         for p in projects
     ]
+    # Nach letzter Nutzung absteigend sortieren (jüngste zuerst).
+    items.sort(key=lambda item: item["last_used"], reverse=True)
     return render(request, "projects/liste.html", {"projects": items})
 
 

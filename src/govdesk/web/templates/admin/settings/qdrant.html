@@ -1,0 +1,60 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% extends "admin/settings/_layout.html" %}
+{% set active = "qdrant" %}
+
+{% block settings_body %}
+<article class="round">
+  <nav class="no-margin">
+    <h6 class="max no-margin"><i>database</i> Qdrant — Vektordatenbank</h6>
+    <a class="button circle transparent small" href="/admin/settings/qdrant" title="Aktualisieren"><i>refresh</i></a>
+  </nav>
+  {% if available %}
+  <p class="small-text">
+    Jedes Projekt hat genau eine Collection (harte Mandantentrennung).
+    <strong>{{ collections | length }}</strong> Collection(s), davon
+    <strong>{{ orphan_count }}</strong> verwaist · <strong>{{ total_points }}</strong> Vektoren gesamt.
+  </p>
+  {% else %}
+  <p class="error-text"><i>cancel</i> Qdrant ist nicht erreichbar.</p>
+  {% endif %}
+</article>
+
+{% if available %}
+<article class="round">
+  {% if collections %}
+  <ul class="list border">
+    {% for c in collections %}
+    <li>
+      {% if c.orphan %}<i class="amber-text" title="Verwaist">link_off</i>
+      {% else %}<i class="green-text" title="Projekt">folder</i>{% endif %}
+      <div class="max">
+        <strong>{{ c.project.name if c.project else "Verwaiste Collection" }}</strong>
+        <div class="small-text">{{ c.name }}</div>
+        <div class="small-text">
+          {{ c.points }} Vektoren
+          {% if c.dimensions %} · {{ c.dimensions }} Dim.{% endif %}
+          {% if c.distance %} · {{ c.distance }}{% endif %}
+          · Status: {{ c.status }}
+        </div>
+      </div>
+      {% if c.orphan %}
+      <form method="post" action="/admin/settings/qdrant/{{ c.name }}/loeschen" class="no-margin"
+            hx-confirm="Verwaiste Collection „{{ c.name }}“ endgültig löschen? Die enthaltenen {{ c.points }} Vektoren gehen verloren.">
+        <button class="border small error-text"><i>delete</i> Löschen</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="small-text no-margin">
+    Nur <strong>verwaiste</strong> Collections lassen sich hier entfernen — solche ohne
+    zugehöriges Projekt (etwa Reste gelöschter Projekte). Aktive Projekt-Collections
+    löschen Sie über das jeweilige Projekt.
+  </p>
+  {% else %}
+  <p class="center-align small-text">Keine Collections vorhanden.</p>
+  {% endif %}
+</article>
+{% endif %}
+{% endblock %}

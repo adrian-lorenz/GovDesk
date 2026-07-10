@@ -323,7 +323,7 @@ async def run_connector_job(job_id: str) -> None:
     from sqlalchemy import select
 
     from govdesk.connectors.registry import UnknownConnectorError, get_connector
-    from govdesk.connectors.service import upsert_item_document
+    from govdesk.connectors.service import resolve_config_secrets, upsert_item_document
     from govdesk.db.models import (
         ConnectorItem,
         ConnectorJob,
@@ -345,7 +345,7 @@ async def run_connector_job(job_id: str) -> None:
         source_id = source.id
         project_id = source.project_id
         connector_type = source.connector_type
-        config = dict(source.config or {})
+        config = resolve_config_secrets(source.config)
         collection_id = source.collection_id
         await db.commit()
 
