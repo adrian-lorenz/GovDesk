@@ -6,24 +6,99 @@ SPDX-License-Identifier: EUPL-1.2
 
 # GovDesk
 
-**Souveräne, self-hostbare KI/RAG-Plattform für Behörden.**
+<p align="center">
+  <strong>Souveräne KI für die öffentliche Verwaltung.</strong><br>
+  Eigene Dokumente, Gesetze und Webquellen erschließen – mit lokalen Modellen,
+  nachvollziehbaren Fundstellen und voller Kontrolle über die Infrastruktur.
+</p>
 
-GovDesk ermöglicht es Behörden und öffentlichen Einrichtungen, eigene Dokumente und
-Online-Quellen (z. B. Gesetze) mit lokalen KI-Modellen zu durchsuchen und in
-projektbasierten Chats mit Quellenangaben zu nutzen — vollständig on-premises,
-ohne Cloud-Zwang, ohne Telemetrie.
+<p align="center">
+  <a href="LICENSE"><img alt="Lizenz: EUPL-1.2" src="https://img.shields.io/badge/Lizenz-EUPL--1.2-3154b8"></a>
+  <img alt="Python 3.14" src="https://img.shields.io/badge/Python-3.14-3154b8">
+  <img alt="Self-hosted" src="https://img.shields.io/badge/Betrieb-self--hosted-0f7b6c">
+  <img alt="Keine Telemetrie" src="https://img.shields.io/badge/Telemetrie-keine-0f7b6c">
+</p>
+
+![GovDesk: wiederverwendbare RAG- und Modellchat-Profile](docs/screenshots/chat-profiles.jpg)
+
+GovDesk ist eine Open-Source-Plattform für Behörden und öffentliche Einrichtungen,
+die generative KI nicht als Blackbox betreiben wollen. Dokumente und externe Quellen
+werden projektbezogen verarbeitet, lokal eingebettet und in Chats mit anklickbaren
+Belegen nutzbar gemacht. Modelle können vollständig über Ollama laufen; alternativ
+lassen sich kontrolliert OpenAI-kompatible Endpunkte anbinden.
+
+> **Projektstatus:** GovDesk wird aktiv entwickelt. Die Kernstrecke von Ingestion,
+> Retrieval und Quellenprüfung bis zu Rollen, Administration und Betrieb ist
+> funktionsfähig; vor einem Produktionseinsatz sind eigene Sicherheits-, Datenschutz-
+> und Lasttests erforderlich.
+
+## Warum GovDesk?
+
+| | |
+|---|---|
+| 🏛️ **Für Verwaltung gedacht** | Projekte, Rollen, OIDC, Audit-Log, API-Keys und eine Oberfläche nach dem [KERN UX-Standard](https://www.kern-ux.de/) statt eines Demo-Chatfensters. |
+| 🔎 **Nachvollziehbar statt magisch** | Antworten verlinken direkt auf Fundstellen. Projekt-Admins sehen Rang, Score und den tatsächlich verwendeten Retrieval-Chunk. |
+| 🔐 **Souverän betreibbar** | Self-hosted, ohne Telemetrie und ohne CDN. Lokale Modelle und Offline-Betrieb nach einmaliger Bereitstellung der Modellartefakte. |
+| 🔌 **Wissen bleibt aktuell** | Upload, REST-API, Internet-Agent, periodischer Sync und Connectoren münden in dieselbe kontrollierte Wissensbasis. |
+
+## Drei klar getrennte Chatmodi
+
+| Modus | Verhalten | Kennzeichnung |
+|---|---|---|
+| **RAG** | Antwortet aus ausgewählten Projektquellen und zitiert die verwendeten Chunks. | Anklickbare Quellen und optional Admin-Retrieval-Details |
+| **RAG mit Fallback** | Nutzt Modellwissen nur, wenn keine passende Projektquelle gefunden wurde. | Deutlicher Hinweis im Antworttext und in der Quellenleiste |
+| **Modellchat** | Überspringt Retrieval vollständig und arbeitet wie ein normaler LLM-Chat. | Profilbadge und Hinweis „Wissensbasis ausgeschaltet“ |
+
+Der Fallback wird pro Projekt konfiguriert, der Modellchat zusätzlich plattformweit
+freigegeben. Damit entscheidet nicht das Modell, wann es ohne Projektwissen antworten
+darf, sondern die Organisation.
+
+## Von der Quelle bis zur belegten Antwort
+
+1. **Wissen aufnehmen** – PDF, DOCX, ODT, TXT, Markdown, HTML, Webquellen,
+   REST-API oder Connector.
+2. **Verarbeiten** – Parsing, optionales OCR, semantische Chunks und Embeddings
+   laufen nachvollziehbar über die Warteschlange.
+3. **Suchen** – Qdrant liefert Kandidaten; optional bewertet ein Reranker die
+   relevantesten Textstellen neu.
+4. **Antworten** – Das Sprachmodell erhält nur den freigegebenen Projektkontext.
+5. **Prüfen** – Nutzende öffnen Fundstellen direkt; Admins sehen Retrieval-Ränge,
+   Scores und Prompt-Chunks.
+
+```mermaid
+flowchart LR
+    A["Dokumente · Web · Connectoren"] --> B["Parser & semantische Chunks"]
+    B --> C["Embeddings"]
+    C --> D["Qdrant"]
+    Q["Frage"] --> E["Retrieval & Reranking"]
+    D --> E
+    E --> F["LLM mit Projektkontext"]
+    F --> G["Antwort + anklickbare Quellen"]
+```
+
+## Produkt-Einblick
+
+![RAG- und Modellchat-Profile](docs/screenshots/chat-profiles.jpg)
+
+System-Prompt, Modell, Temperatur, Sammlungen, Reranker und RAG-Modus lassen
+sich als wiederverwendbare Profile konfigurieren. Der Gesetze-Connector kann
+Bundesgesetze aus dem täglich aktualisierten
+[QuantLaw-Archiv](https://github.com/QuantLaw/gesetze-im-internet) auswählen,
+Chunks vorab prüfen und inkrementell synchronisieren.
 
 ## Funktionsumfang
 
-- 📁 **Projekte** mit Rollen und Berechtigungen (Eigentümer, Admin, Bearbeiter, Betrachter)
-- 📄 **Dokument-Ingestion**: PDF, DOCX, ODT, TXT, Markdown, HTML — per UI oder REST-API mit API-Keys; optionaler **OCR-Modus** (Vision-Modell via Ollama, z. B. glm-ocr) liest Bilder und gescannte PDF-Seiten aus
-- 🔍 **RAG-Suche** mit Qdrant (Vektordatenbank), bge-m3-Embeddings und Reranker (bge-reranker-v2-m3)
-- 💬 **Konfigurierbare Chats** pro Projekt: System-Prompt, Modell, Temperatur, Quellenauswahl — Antworten mit Zitaten
-- 🌐 **Internet-Agent**: Webseiten crawlen, extrahieren und einbetten — wahlweise **KI-geführt**: Sie geben eine Start-URL und einen Suchauftrag an, der Agent entscheidet selbst, welchen Links er folgt und welche Inhalte relevant sind. Inkl. periodischem Re-Crawl (robots.txt wird respektiert)
-- 🤖 **Ollama** lokal oder Cloud; Provider-Abstraktion für OpenAI-kompatible Endpunkte
-- 🔐 **Eigene Nutzerverwaltung** plus optionale **Keycloak/OIDC**-Anbindung
-- 🧙 **Einrichtungs-Wizard** beim ersten Start: Verbindungstests, Modellauswahl mit Download-Fortschritt, Admin-Konto
-- 🌓 Oberfläche nach dem [KERN UX-Standard](https://www.kern-ux.de/) der deutschen Verwaltung, mit Hell/Dunkel-Umschaltung, alle Assets lokal (kein CDN)
+- **Projekt- und Rechteverwaltung:** Eigentümer, Administratoren, Bearbeiter und Betrachter
+- **Dokument-Ingestion:** PDF, DOCX, ODT, TXT, Markdown und HTML; Upload oder REST-API
+- **OCR für Scans und Bilder:** optional über ein lokales Vision-Modell
+- **RAG-Pipeline:** Qdrant, bge-m3-Embeddings und optional bge-reranker-v2-m3
+- **Quellenprüfung:** anklickbare Passagen sowie Admin-Diagnose mit Rang, Score und Inhalt
+- **Internet-Agent:** klassisches oder KI-geführtes Crawling mit periodischem Re-Crawl
+- **Connectoren:** aktuell Nextcloud und Bundesgesetze aus dem QuantLaw-Archiv
+- **Chat-Profile:** Modell, Prompt, Temperatur, Top-K, Reranking und Sammlungen pro Projekt
+- **Provider:** Ollama lokal/Cloud und OpenAI-kompatible Endpunkte
+- **Identität und Betrieb:** lokale Nutzerverwaltung, Keycloak/OIDC, Audit-Log,
+  API-Keys, Import/Export, Einrichtungs-Wizard und Hell-/Dunkelmodus
 
 ## Schnellstart
 
@@ -33,56 +108,20 @@ docker compose up -d --wait
 # Erststart: http://localhost:8000 → Einrichtungs-Wizard
 ```
 
-## Nutzung — in fünf Schritten
-
-Nach dem Start (`http://localhost:8000`) führt Sie der Einrichtungs-Wizard einmalig
-durch Verbindungstests, Modellauswahl und das Anlegen des ersten Admin-Kontos.
-Danach arbeiten Sie so:
-
-1. **Projekt anlegen.** Ein Projekt bündelt Dokumente, Chats und Zugriffsrechte zu
-   einem Thema (z. B. „Vergaberecht" oder „Hausnotruf"). Über *Mitglieder* laden Sie
-   Kolleginnen mit passender Rolle ein — **Betrachter** (nur chatten), **Bearbeiter**
-   (Dokumente pflegen), **Admin** (Projekt verwalten).
-
-2. **Wissen hinzufügen.** Drei Wege, alle landen in derselben durchsuchbaren
-   Wissensbasis:
-   - **Hochladen** — PDF, DOCX, ODT, TXT, Markdown oder HTML per Drag-and-drop.
-   - **Internet-Agent** (*Verwalten* in der Karte „Internet-Quellen"): Start-URL
-     angeben und optional einen **Suchauftrag** formulieren, z. B. „Fristen und
-     Zuständigkeiten im Vergaberecht". Mit „Unterseiten einbeziehen" folgt der
-     KI-Agent selbstständig relevanten Links und bettet nur passende Seiten ein.
-   - **REST-API** — für automatisierte Übernahme aus Fremdsystemen (siehe *API-Keys*).
-
-   Dokumente lassen sich in **Sammlungen** gruppieren; der Fortschritt
-   (Parsen → Einbetten → bereit) wird live angezeigt.
-
-3. **Chatten mit Quellen.** Im Chat stellen Sie Fragen in natürlicher Sprache.
-   Die Antwort wird aus den eingebetteten Dokumenten belegt — jede Aussage ist mit
-   der **Quelle** verknüpft und nachvollziehbar. Nichts verlässt Ihre Instanz.
-
-4. **Chat-Profile zuschneiden.** Pro Projekt konfigurieren Sie unter *Chat-Profile*
-   System-Prompt, Modell, Temperatur und die berücksichtigten Sammlungen — etwa ein
-   sachlich-knappes Profil für Rechtsauskünfte und ein ausführlicheres für Einarbeitung.
-
-5. **Prüfen & verwalten.** Der **Retrieval-Test** zeigt, welche Textstellen zu einer
-   Frage gefunden werden (ideal zum Feinjustieren). Über **API-Keys** binden Sie
-   Fremdsysteme an, in den **Admin-Einstellungen** wählen Sie den KI-Provider
-   (lokales Ollama oder ein OpenAI-kompatibler Endpunkt), passen das Branding an und
-   sehen den Live-Status aller Dienste.
-
-Größere Vorhaben (Massen-Import, Import/Export, Passwort-Richtlinie,
-Kubernetes/Podman) stehen in der [ROADMAP.md](ROADMAP.md).
-
-## Entwicklung
-
-Voraussetzungen: [uv](https://docs.astral.sh/uv/), Docker und — auf macOS —
-ein natives [Ollama](https://ollama.com) (nutzt die Apple-GPU; unter Linux
-tut es auch der Compose-Container).
+Für die lokale Entwicklung mit Autoreload:
 
 ```bash
 make setup    # einmalig: Abhängigkeiten, .env, Dienste, Migrationen
 make dev      # App (mit Autoreload) + Worker — http://localhost:8000
 ```
+
+Der Wizard prüft Dienste und Modelle und legt das erste Admin-Konto an.
+
+## Entwicklung
+
+Voraussetzungen: [uv](https://docs.astral.sh/uv/), Docker und — auf macOS —
+ein natives [Ollama](https://ollama.com) für die Apple-GPU. Unter Linux kann
+Ollama als Compose-Dienst laufen.
 
 Alle weiteren Kommandos zeigt `make hilfe` (u. a. `make seed` für Demo-Daten,
 `make test`, `make smoke`, `make stop`). Ohne make:
@@ -170,6 +209,15 @@ docker compose exec app govdesk createadmin --username admin   # ohne Wizard
 
 Python 3.14 · FastAPI · HTMX · PostgreSQL · Qdrant · Ollama · procrastinate ·
 Text-Embeddings-Inference (Reranker) · Docker Compose
+
+## Mitmachen
+
+GovDesk ist bewusst als Open-Source-Baustein für souveräne Verwaltungs-KI angelegt.
+Fehlerberichte, Ideen für weitere Fach-Connectoren, Dokumentation und Pull Requests
+sind willkommen. Vor größeren Änderungen empfiehlt sich ein Issue, damit Architektur
+und Sicherheitsanforderungen früh abgestimmt werden können.
+
+Geplante Themen und offene Ausbaupfade stehen in der [ROADMAP.md](ROADMAP.md).
 
 ## Lizenz
 

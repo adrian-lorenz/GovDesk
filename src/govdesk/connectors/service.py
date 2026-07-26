@@ -6,6 +6,7 @@
 
 import hashlib
 import uuid
+from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,9 +24,19 @@ from govdesk.db.models import (
     Project,
 )
 from govdesk.documents import storage
+from govdesk.documents.parsers.registry import parser_for
 from govdesk.documents.service import DuplicateDocumentError, create_document, delete_document_full
+from govdesk.rag.chunking import Chunk, chunk_blocks
 
 ENABLED_SETTING_KEY = "connectors_enabled"
+
+
+@dataclass(frozen=True)
+class ConnectorPreview:
+    filename: str
+    source_url: str | None
+    chunk_count: int
+    chunks: list[Chunk]
 
 
 def resolve_config_secrets(config: dict) -> dict:
@@ -46,6 +57,35 @@ async def available_connectors(db: AsyncSession) -> list[ConnectorPlugin]:
     """Registrierte UND plattformweit freigeschaltete Connectoren."""
     enabled = set(await enabled_type_ids(db))
     return [c for c in all_connectors() if c.type_id in enabled]
+
+
+async def preview_connector(
+    plugin: ConnectorPlugin,
+    config: dict,
+    *,
+    max_documents: int = 3,
+    max_chunks: int = 6,
+) -> list[ConnectorPreview]:
+    """Einige Connector-Items durch den echten Parser/Chunker schicken.
+
+    Die Vorschau ist rein lesend: keine Dokumente, Dateien, Jobs oder Vektoren
+    werden angelegt. Der Abruf wird bewusst begrenzt, damit eine große Quelle
+    nicht versehentlich vollständig geladen wird.
+    """
+    previews: list[ConnectorPreview] = []
+    async for item in plugin.fetch_items(config):
+        chunks = chunk_blocks(parser_for(item.filename).parse(item.data).blocks)
+        previews.append(
+            ConnectorPreview(
+                filename=item.filename,
+                source_url=item.source_url,
+                chunk_count=len(chunks),
+                chunks=chunks[:max_chunks],
+            )
+        )
+        if len(previews) >= max_documents:
+            break
+    return previews
 
 
 async def list_sources_with_jobs(db: AsyncSession, project_id: uuid.UUID) -> list[dict]:
@@ -115,6 +155,7 @@ async def upsert_item_document(
             document.filename = item.filename
             document.content_type = item.content_type
             document.source_url = item.source_url
+            document.size_bytes = len(item.data)
             document.status = DocumentStatus.PENDING
             document.error = None
             if document.file_path:

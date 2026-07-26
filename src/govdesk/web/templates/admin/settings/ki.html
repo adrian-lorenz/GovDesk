@@ -35,6 +35,32 @@
   <div class="kern-card kern-card--hug">
     <div class="kern-card__container">
       <div class="kern-card__header">
+        <h2 class="kern-heading-small"><i aria-hidden="true">forum</i> Modellchat ohne RAG</h2>
+        <p class="kern-body--small kern-body--muted">
+          Erlaubt Projektprofilen, direkt mit dem Sprachmodell zu chatten, ohne die
+          Projekt-Wissensbasis zu durchsuchen.
+        </p>
+      </div>
+      <div class="kern-card__body">
+        <div class="kern-form-check">
+          <input class="kern-form-check__checkbox" type="checkbox"
+                 id="ki-model-chat-enabled" name="model_chat_enabled" value="true"
+                 {% if cfg.model_chat_enabled %}checked{% endif %}>
+          <label class="kern-label" for="ki-model-chat-enabled">
+            Normalen Modellchat als Profilmodus erlauben
+          </label>
+        </div>
+        <p class="kern-hint">
+          Ist die Freigabe deaktiviert, werden entsprechende Profile nicht zur Auswahl
+          angeboten und bestehende Modellchat-Sitzungen können keine neuen Antworten erzeugen.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="kern-card kern-card--hug">
+    <div class="kern-card__container">
+      <div class="kern-card__header">
         <h2 class="kern-heading-small"><i aria-hidden="true">model_training</i> Modelle</h2>
       </div>
       <div class="kern-card__body">

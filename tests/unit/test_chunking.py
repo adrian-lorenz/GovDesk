@@ -32,7 +32,7 @@ def test_heading_path_enthaelt_paragraph():
 
 
 def test_lange_abschnitte_mit_ueberlappung():
-    absatz = "Dies ist ein Satz über das Vergaberecht. " * 120  # ~5000 Zeichen
+    absatz = "Dies ist ein Satz über den Datenschutz. " * 120  # ~5000 Zeichen
     chunks = chunk_blocks([Block(text=absatz)])
     assert len(chunks) >= 2
     assert all(c.token_count <= 500 for c in chunks)
@@ -40,9 +40,9 @@ def test_lange_abschnitte_mit_ueberlappung():
 
 def test_ueberschriften_bilden_pfad():
     blocks = [
-        Block(text="Vergabeordnung", heading_level=1),
+        Block(text="Dienstanweisung", heading_level=1),
         Block(text="Abschnitt 2", heading_level=2),
-        Block(text="Die Vergabe erfolgt im offenen Verfahren."),
+        Block(text="Die Verarbeitung erfolgt nach dokumentierten Regeln."),
     ]
     chunks = chunk_blocks(blocks)
-    assert chunks[0].heading_path == "Vergabeordnung > Abschnitt 2"
+    assert chunks[0].heading_path == "Dienstanweisung > Abschnitt 2"

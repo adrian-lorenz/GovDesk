@@ -32,7 +32,8 @@
   <div class="kern-form-input">
     <label class="kern-label" for="cfg-{{ prefix }}-{{ f.key }}">{{ f.label }}</label>
     <textarea class="kern-form-input__input" id="cfg-{{ prefix }}-{{ f.key }}"
-              name="config_{{ f.key }}" rows="2">{{ (f.default or []) | join(", ") }}</textarea>
+              name="config_{{ f.key }}" rows="3"
+              {% if f.required %}required{% endif %}>{{ (f.default or []) | join("\n") }}</textarea>
   </div>
   {% elif f.kind == "select" %}
   <div class="kern-form-input">
@@ -100,7 +101,7 @@
               <div class="kern-form-input">
                 <label class="kern-label" for="cfg-{{ c.type_id }}-name">Bezeichnung</label>
                 <input class="kern-form-input__input" type="text" id="cfg-{{ c.type_id }}-name"
-                       name="name" required>
+                       name="name" value="{{ c.default_name | default('') }}" required>
               </div>
               {% for f in c.config_fields() %}
                 {{ config_field(f, c.type_id) }}
@@ -119,13 +120,27 @@
               <div class="kern-form-input">
                 <label class="kern-label" for="cfg-{{ c.type_id }}-sync">Automatischer Sync alle … Stunden (0 = manuell)</label>
                 <input class="kern-form-input__input" type="number" id="cfg-{{ c.type_id }}-sync"
-                       name="sync_interval_hours" value="0" min="0">
+                       name="sync_interval_hours"
+                       value="{{ c.default_sync_interval_hours | default(0) }}" min="0">
               </div>
               <div class="gd-dialog-actions">
+                {% if c.supports_preview | default(false) %}
+                <button type="button" class="kern-btn kern-btn--secondary"
+                        hx-post="/projects/{{ project.id }}/connectors/preview"
+                        hx-include="closest form"
+                        hx-target="#preview-{{ c.type_id }}"
+                        hx-swap="innerHTML"
+                        hx-disabled-elt="this">
+                  <i aria-hidden="true">preview</i><span class="kern-label">Chunk-Vorschau</span>
+                </button>
+                {% endif %}
                 <button type="submit" class="kern-btn kern-btn--primary">
                   <i aria-hidden="true">play_arrow</i><span class="kern-label">Anlegen &amp; starten</span>
                 </button>
               </div>
+              {% if c.supports_preview | default(false) %}
+              <div id="preview-{{ c.type_id }}" class="gd-connector-preview" aria-live="polite"></div>
+              {% endif %}
             </form>
           </details>
           {% endfor %}

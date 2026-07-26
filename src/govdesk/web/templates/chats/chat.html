@@ -51,16 +51,117 @@
   .stream-preview p, .stream-preview li { line-height: 1.55; }
   .stream-preview > :first-child { margin-block-start: 0; }
   .chat-eingabe { position: sticky; bottom: 0; z-index: 5;
-                  background: var(--kern-color-layout-background-default); padding: 1rem 0 0.5rem; }
+                  background: var(--kern-color-layout-background-default); padding: .75rem 0 .25rem; }
   .chat-eingabe form { max-width: 52rem; margin: 0 auto; }
+  .gd-chat-composer {
+    display: grid;
+    gap: .25rem;
+    padding: .55rem .6rem .55rem 1rem;
+    background: var(--kern-color-layout-background-default, #fff);
+    border: 1px solid var(--kern-color-layout-border-default, #b5b7c3);
+    border-radius: 1rem;
+    box-shadow: 0 .25rem 1rem rgb(19 21 37 / 8%);
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .gd-chat-composer:focus-within {
+    border-color: var(--kern-color-action-default, #454b6b);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--kern-color-action-default, #454b6b) 18%, transparent),
+                0 .35rem 1.25rem rgb(19 21 37 / 10%);
+  }
+  .gd-chat-composer__input {
+    inline-size: 100%;
+    min-block-size: 3rem;
+    max-block-size: 12rem;
+    field-sizing: content;
+    resize: none;
+    overflow-y: auto;
+    padding: .35rem .35rem .1rem 0;
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: var(--kern-color-layout-text-default, #131525);
+    font: inherit;
+    line-height: 1.5;
+  }
+  .gd-chat-composer__input::placeholder {
+    color: var(--kern-color-layout-text-muted, #696b75);
+    opacity: 1;
+  }
+  .gd-chat-composer__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .75rem;
+  }
+  .gd-chat-composer__hint { margin-inline-end: auto; padding-inline-start: .1rem; }
+  .gd-chat-composer__send {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--kern-color-action-default, #454b6b);
+    color: var(--kern-color-action-on-default, #fff);
+    cursor: pointer;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .gd-chat-composer__send:hover {
+    background: var(--kern-color-action-hover, #303551);
+    transform: translateY(-1px);
+  }
+  .gd-chat-composer__send:active { transform: translateY(0); }
+  .gd-chat-composer__send:focus-visible {
+    outline: 3px solid var(--kern-color-action-focus-default, #454b6b);
+    outline-offset: 2px;
+  }
+  .gd-chat-composer__send i { font-size: 1.25rem; }
 
   /* Alle drei Spalten oben bündig. (sticky versetzte das kurze rechte Aside
      um top:5rem nach unten — daher bewusst statisch.) */
   .gd-chat-nav, .gd-chat-aside { align-self: start; }
+  .gd-chat-nav > .kern-card,
+  .gd-chat-aside > .kern-card {
+    overflow: hidden;
+    background: var(--kern-color-layout-background-hued);
+    border-color: var(--kern-color-layout-border);
+    box-shadow: 0 .35rem 1.25rem rgb(19 21 37 / 8%);
+  }
+  .gd-chat-nav > .kern-card {
+    border-inline-start: .3rem solid var(--kern-color-action-default);
+  }
+  .gd-chat-aside > .kern-card {
+    border-inline-end: .3rem solid var(--kern-color-action-default);
+  }
   .gd-chat-liste { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+  .gd-chat-active-profile {
+    margin-block-start: .75rem;
+    padding: .7rem .75rem;
+    border-inline-start: .2rem solid var(--kern-color-action-default);
+    border-radius: .35rem;
+    background: var(--kern-color-layout-background-default);
+  }
+  .gd-chat-active-profile .kern-badge { flex: 0 0 auto; }
+  .gd-chat-neu {
+    display: grid;
+    gap: .55rem;
+    margin-block-start: .75rem;
+    padding-block-start: .75rem;
+    border-block-start: 1px solid var(--kern-color-layout-border);
+  }
+  .gd-chat-neu .kern-form-input__select-wrapper,
+  .gd-chat-neu .kern-form-input__select { inline-size: 100%; min-inline-size: 0; }
+  .gd-chat-neu .kern-btn { inline-size: 100%; justify-content: center; }
   .gd-chat-liste > li { display: flex; align-items: center; gap: 0.25rem;
                         border-radius: 0.5rem; padding: 0.25rem 0.5rem; }
-  .gd-chat-liste > li.aktiv { background: var(--kern-color-layout-background-hued); font-weight: 600; }
+  .gd-chat-liste > li.aktiv {
+    background: var(--kern-color-layout-background-default);
+    box-shadow: inset .2rem 0 0 var(--kern-color-action-default);
+    font-weight: 600;
+  }
   /* Titel + Zeitstempel vertikal, jeweils einzeilig mit Ellipsis. */
   .gd-chat-liste > li > a { flex: 1; min-inline-size: 0; display: block;
                             color: inherit; text-decoration: none; }
@@ -93,11 +194,41 @@
     .gd-chat { grid-template-columns: 1fr; grid-template-rows: none; }
     .gd-chat-nav { position: static; }
     .gd-chat-aside { max-block-size: none; }
+    .gd-chat-nav > .kern-card,
+    .gd-chat-aside > .kern-card {
+      border-inline: 1px solid var(--kern-color-layout-border);
+      border-block-start: .3rem solid var(--kern-color-action-default);
+    }
+    .gd-chat-composer__hint { display: none; }
+  }
+
+  .gd-retrieval-details {
+    margin-block-start: .75rem;
+    border-top: 1px solid var(--kern-color-layout-border-default, #d7d8dc);
+    padding-block-start: .5rem;
+  }
+  .gd-retrieval-details > summary { cursor: pointer; }
+  .gd-retrieval-hit {
+    margin-block-start: .75rem;
+    padding: .75rem;
+    background: var(--kern-color-layout-background-hued, #f4f5f8);
+    border-radius: var(--kern-metric-border-radius-default, .25rem);
+  }
+  .gd-retrieval-content {
+    max-block-size: 18rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: inherit;
+    font-size: .875rem;
   }
 </style>
 
 {% set answers = messages | selectattr("role", "equalto", "assistant") | list %}
 {% set citations = answers[-1].citations if answers else [] %}
+{% set model_knowledge_used = answers[-1].model_knowledge_used if answers else false %}
+{% set model_chat_used = answers[-1].model_chat_used if answers else false %}
+{% set model_chat_active = current_config and not current_config.retrieval_enabled %}
 
 <div class="gd-chat">
   <aside class="gd-chat-nav">
@@ -105,10 +236,41 @@
       <div class="kern-card__container">
         <div class="gd-row">
           <h2 class="kern-heading-small gd-grow"><i aria-hidden="true">chat</i> Meine Chats</h2>
-          <form method="post" action="/projects/{{ project.id }}/chats" class="gd-header-form">
-            <button class="gd-icon-btn" title="Neuer Chat"><i>add</i></button>
-          </form>
         </div>
+        <div class="gd-chat-active-profile">
+          <span class="kern-body--small kern-body--muted">Aktiver Chat</span>
+          <div class="gd-row">
+            <strong class="gd-grow">
+              {{ current_config.name if current_config else "Projektstandard" }}
+            </strong>
+            {% if current_config and not current_config.retrieval_enabled %}
+              <span class="kern-badge kern-badge--info kern-badge--small">
+                <span class="kern-label">Modellchat</span>
+              </span>
+            {% else %}
+              <span class="kern-badge kern-badge--small">
+                <span class="kern-label">RAG</span>
+              </span>
+            {% endif %}
+          </div>
+        </div>
+        <form method="post" action="/projects/{{ project.id }}/chats" class="gd-chat-neu">
+          <label class="kern-label" for="gd-chat-profil">Profil für neuen Chat</label>
+          <div class="kern-form-input__select-wrapper">
+            <select class="kern-form-input__select" id="gd-chat-profil" name="chat_config_id">
+              <option value="" {% if not current_config %}selected{% endif %}>Projektstandard · RAG</option>
+              {% for config in chat_configs %}
+              <option value="{{ config.id }}" {% if current_config and current_config.id == config.id %}selected{% endif %}>
+                {{ config.name }} · {{ "Modellchat" if not config.retrieval_enabled else "RAG" }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="kern-btn kern-btn--secondary kern-btn--small">
+            <i aria-hidden="true">add</i>
+            <span class="kern-label">Neuen Chat starten</span>
+          </button>
+        </form>
         <ul class="gd-chat-liste">
           {% for c in chats %}
           <li class="{{ 'aktiv' if c.id == chat.id }}">
@@ -133,7 +295,13 @@
         {% if message.role == "user" %}
           <div class="msg-user">{{ message.content }}</div>
         {% elif message.role == "assistant" %}
-          <div class="msg-assistant">{{ message.html | safe }}</div>
+          <div class="msg-assistant">
+            {{ message.html | safe }}
+            {% if can_manage %}
+              {% set citations = message.citations %}
+              {% include "partials/_retrieval_details.html" %}
+            {% endif %}
+          </div>
         {% endif %}
       {% endfor %}
     </div>
@@ -144,14 +312,23 @@
       <form hx-post="/projects/{{ project.id }}/chats/{{ chat.id }}/messages"
             hx-target="#nachrichten" hx-swap="beforeend"
             data-reset-on-success
-            class="gd-row">
-        <div class="kern-form-input gd-grow">
-          <textarea class="kern-form-input__input" name="frage" required rows="2"
-                    placeholder="Frage zu den Projektdokumenten stellen …"
-                    aria-label="Frage zu den Projektdokumenten stellen"
-                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.requestSubmit();}"></textarea>
+            class="gd-chat-composer">
+        <label class="kern-sr-only" for="gd-chat-frage">
+          {{ "Nachricht" if current_config and not current_config.retrieval_enabled else "Frage zur Wissensbasis" }}
+        </label>
+        <textarea class="gd-chat-composer__input" id="gd-chat-frage" name="frage"
+                  required rows="2"
+                  placeholder="{{ 'Nachricht schreiben …' if current_config and not current_config.retrieval_enabled else 'Frage zur Wissensbasis stellen …' }}"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.requestSubmit();}"></textarea>
+        <div class="gd-chat-composer__footer">
+          <span class="gd-chat-composer__hint kern-body--small kern-body--muted">
+            <kbd>Enter</kbd> senden · <kbd>Shift</kbd> + <kbd>Enter</kbd> neue Zeile
+          </span>
+          <button type="submit" class="gd-chat-composer__send" title="Nachricht senden"
+                  aria-label="Nachricht senden">
+            <i aria-hidden="true">arrow_upward</i>
+          </button>
         </div>
-        <button type="submit" class="gd-icon-btn" title="Senden"><i>send</i></button>
       </form>
     </div>
   </section>

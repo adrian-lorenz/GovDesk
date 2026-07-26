@@ -2,15 +2,18 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
+import base64
+import binascii
 import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from govdesk.auth.deps import Db
 from govdesk.auth.oidc import oidc_client, resolve_oidc_user
 from govdesk.auth.service import SESSION_COOKIE, authenticate, create_session, destroy_session
+from govdesk.core.app_settings import get_setting
 from govdesk.core.audit import audit
 from govdesk.core.config import get_settings
 from govdesk.core.ratelimit import limiter
@@ -19,6 +22,26 @@ from govdesk.web.deps import render
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get("/branding/logo", response_class=Response)
+async def branding_logo(db: Db) -> Response:
+    encoded = await get_setting(db, "branding_logo_data")
+    if not isinstance(encoded, str) or not encoded:
+        raise HTTPException(status_code=404, detail="Kein Logo konfiguriert")
+    try:
+        data = base64.b64decode(encoded, validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise HTTPException(status_code=404, detail="Logo nicht lesbar") from exc
+    logo_hash = await get_setting(db, "branding_logo_hash", "")
+    return Response(
+        content=data,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "ETag": f'"{logo_hash}"',
+        },
+    )
 
 
 @router.get("/login", response_class=HTMLResponse)

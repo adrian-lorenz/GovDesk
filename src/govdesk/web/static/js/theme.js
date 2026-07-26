@@ -19,9 +19,42 @@
     });
   }
 
+  function applyConfiguredUI() {
+    var config = document.getElementById("gd-ui-config");
+    if (!config) return;
+    refreshVersionedStyles(config.dataset.assetVersion);
+    var scale = parseInt(config.dataset.uiScale || "100", 10);
+    document.documentElement.style.fontSize =
+      Math.max(80, Math.min(Number.isFinite(scale) ? scale : 100, 115)) + "%";
+    document.documentElement.style.setProperty(
+      "--gd-primary-color", config.dataset.primaryColor || "#3154b8"
+    );
+    document.documentElement.style.setProperty(
+      "--gd-primary-on-color", config.dataset.primaryOnColor || "#ffffff"
+    );
+    document.documentElement.style.setProperty(
+      "--gd-accent-color", config.dataset.accentColor || "#0f7b6c"
+    );
+    applyMode(config.dataset.theme === "dark" ? "dark" : "light");
+  }
+
+  function refreshVersionedStyles(version) {
+    if (!version) return;
+    document.querySelectorAll("link[data-gd-versioned-style]").forEach(function (link) {
+      var url = new URL(link.href, window.location.href);
+      if (url.searchParams.get("v") !== version) {
+        url.searchParams.set("v", version);
+        link.href = url.toString();
+      }
+    });
+  }
+
   window.gdToggleTheme = function () {
+    var config = document.getElementById("gd-ui-config");
+    if (config && config.dataset.themePolicy !== "both") return;
     var mode = currentMode() === "dark" ? "light" : "dark";
     applyMode(mode);
+    if (config) config.dataset.theme = mode;
     try {
       localStorage.setItem("govdesk-theme", mode);
     } catch (e) { /* Speicher gesperrt — Cookie reicht */ }
@@ -30,9 +63,64 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    applyMode(currentMode());
+    applyConfiguredUI();
     initSidenav(document);
+    initBrandingPreview(document);
   });
+
+  function initBrandingPreview(root) {
+    var form = (root.querySelector ? root : document).querySelector("[data-gd-branding-form]");
+    if (!form || form.dataset.gdBrandingInit) return;
+    form.dataset.gdBrandingInit = "1";
+    var preview = form.querySelector("[data-gd-branding-preview]");
+    var namePreview = form.querySelector("[data-gd-branding-name-preview]");
+    var subtitlePreview = form.querySelector("[data-gd-branding-subtitle-preview]");
+    var logoPreview = form.querySelector("[data-gd-branding-logo-preview]");
+    var logoFallback = form.querySelector("[data-gd-branding-logo-fallback]");
+    var logoUrl = null;
+
+    form.addEventListener("input", function (event) {
+      var target = event.target;
+      if (target.name === "platform_name" && namePreview) {
+        namePreview.textContent = target.value.trim() || "GovDesk";
+      }
+      if (target.name === "platform_subtitle" && subtitlePreview) {
+        subtitlePreview.textContent = target.value.trim() || "Ihre souveräne KI-Plattform";
+      }
+      if (target.name === "primary_color") {
+        document.documentElement.style.setProperty("--gd-primary-color", target.value);
+        var code = target.closest(".gd-color-control").querySelector("code");
+        if (code) code.textContent = target.value;
+      }
+      if (target.name === "accent_color") {
+        document.documentElement.style.setProperty("--gd-accent-color", target.value);
+        var accentCode = target.closest(".gd-color-control").querySelector("code");
+        if (accentCode) accentCode.textContent = target.value;
+      }
+    });
+    form.addEventListener("change", function (event) {
+      var target = event.target;
+      if (target.name === "ui_scale") {
+        document.documentElement.style.fontSize = target.value + "%";
+      }
+      if (target.name === "theme_policy" && target.checked) {
+        if (target.value === "light" || target.value === "dark") {
+          applyMode(target.value);
+        } else {
+          var config = document.getElementById("gd-ui-config");
+          applyMode(config && config.dataset.theme === "dark" ? "dark" : "light");
+        }
+      }
+      if (target.name === "logo" && target.files && target.files[0] && logoPreview) {
+        if (logoUrl) URL.revokeObjectURL(logoUrl);
+        logoUrl = URL.createObjectURL(target.files[0]);
+        logoPreview.src = logoUrl;
+        logoPreview.hidden = false;
+        if (logoFallback) logoFallback.hidden = true;
+      }
+      if (preview) preview.dataset.previewActive = "1";
+    });
+  }
 
   // Projekt-Seitenleiste: einklappbare Minibar. Nutzerwahl in localStorage;
   // ohne Nutzerwahl gilt der Seiten-Default (data-gd-mini-default, z. B. Editor).
@@ -64,7 +152,9 @@
 
   // Nach HTMX-Boost-Swaps neu initialisieren (Body-Inhalt wurde ersetzt).
   document.body.addEventListener("htmx:afterSettle", function (e) {
+    applyConfiguredUI();
     initSidenav(e.target === document.body ? document : e.target);
+    initBrandingPreview(e.target === document.body ? document : e.target);
   });
 
   // CSRF-Header für ALLE HTMX-Requests aus #gd-csrf setzen. Das Element liegt

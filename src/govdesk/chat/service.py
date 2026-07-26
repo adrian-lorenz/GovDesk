@@ -75,9 +75,17 @@ async def add_message(
     content: str,
     citations: list[dict] | None = None,
     model: str | None = None,
+    model_knowledge_used: bool = False,
+    model_chat_used: bool = False,
 ) -> ChatMessage:
     message = ChatMessage(
-        session_id=session.id, role=role, content=content, citations=citations, model=model
+        session_id=session.id,
+        role=role,
+        content=content,
+        citations=citations,
+        model=model,
+        model_knowledge_used=model_knowledge_used,
+        model_chat_used=model_chat_used,
     )
     db.add(message)
     if session.title is None and role == MessageRole.USER:

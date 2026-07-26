@@ -8,7 +8,13 @@
   <div class="kern-card kern-card--hug" style="inline-size: 26rem">
     <div class="kern-card__container">
       <div class="kern-card__header gd-center">
+        {% if platform_logo_hash %}
+        <img class="gd-login-logo" src="/branding/logo?v={{ platform_logo_hash }}"
+             alt="{{ platform_name }}">
+        <h1 class="kern-heading-medium">{{ platform_name }}</h1>
+        {% else %}
         <h1 class="kern-heading-medium"><i aria-hidden="true">account_balance</i> {{ platform_name }}</h1>
+        {% endif %}
         <p class="kern-body--muted">{{ platform_subtitle or "Bitte melden Sie sich an." }}</p>
       </div>
       <div class="kern-card__body">

@@ -10,6 +10,15 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 from govdesk.auth.service import SESSION_COOKIE, resolve_session
 from govdesk.core.app_settings import get_all_settings
+from govdesk.core.branding import (
+    DEFAULT_ACCENT_COLOR,
+    DEFAULT_PRIMARY_COLOR,
+    DEFAULT_UI_SCALE,
+    contrast_color,
+    normalize_color,
+    normalize_theme_policy,
+    normalize_ui_scale,
+)
 from govdesk.db.session import get_session_factory
 from govdesk.users.service import admin_exists
 
@@ -36,6 +45,12 @@ class WebSessionMiddleware(BaseHTTPMiddleware):
         request.state.csrf_token = None
         request.state.platform_name = "GovDesk"
         request.state.platform_subtitle = None
+        request.state.platform_logo_hash = None
+        request.state.branding_primary_color = DEFAULT_PRIMARY_COLOR
+        request.state.branding_primary_on_color = "#ffffff"
+        request.state.branding_accent_color = DEFAULT_ACCENT_COLOR
+        request.state.branding_theme_policy = "both"
+        request.state.branding_ui_scale = DEFAULT_UI_SCALE
 
         async with get_session_factory()() as db:
             cookie = request.cookies.get(SESSION_COOKIE)
@@ -50,6 +65,20 @@ class WebSessionMiddleware(BaseHTTPMiddleware):
             settings = await get_all_settings(db)
             request.state.platform_name = settings.get("platform_name") or "GovDesk"
             request.state.platform_subtitle = settings.get("platform_subtitle") or None
+            request.state.platform_logo_hash = settings.get("branding_logo_hash") or None
+            request.state.branding_primary_color = normalize_color(
+                settings.get("branding_primary_color"), DEFAULT_PRIMARY_COLOR
+            )
+            request.state.branding_accent_color = normalize_color(
+                settings.get("branding_accent_color"), DEFAULT_ACCENT_COLOR
+            )
+            request.state.branding_theme_policy = normalize_theme_policy(
+                settings.get("branding_theme_policy")
+            )
+            request.state.branding_ui_scale = normalize_ui_scale(settings.get("branding_ui_scale"))
+            request.state.branding_primary_on_color = contrast_color(
+                request.state.branding_primary_color
+            )
             await db.commit()
 
         # Ersteinrichtung erzwingen bzw. abgeschlossenes Setup sperren

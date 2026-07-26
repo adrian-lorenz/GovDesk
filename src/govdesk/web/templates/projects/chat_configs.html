@@ -7,7 +7,7 @@
 {% block project_body %}
 <h2 class="kern-heading-small"><i aria-hidden="true">tune</i> Chat-Profile</h2>
 <p class="kern-body--small">Profile legen fest, wie ein Chat antwortet: System-Prompt,
-   Modell, Kreativität und welche Sammlungen durchsucht werden.</p>
+   Modell, Kreativität und ob die Projekt-Wissensbasis durchsucht wird.</p>
 
 <div class="kern-row gd-mt">
   <div class="kern-col-12 kern-col-5-md">
@@ -25,9 +25,17 @@
               <div class="gd-grow">
                 <strong>{{ config.name }}</strong>
                 <div class="kern-body--small kern-body--muted">
+                  {% if config.retrieval_enabled %}
+                    <span class="kern-badge kern-badge--small"><span class="kern-label">RAG</span></span>
+                  {% else %}
+                    <span class="kern-badge kern-badge--info kern-badge--small"><span class="kern-label">Modellchat</span></span>
+                    {% if not model_chat_enabled %}
+                      <span class="kern-badge kern-badge--warning kern-badge--small"><span class="kern-label">plattformweit deaktiviert</span></span>
+                    {% endif %}
+                  {% endif %}
                   {{ config.model or default_model ~ " (Standard)" }} ·
                   Temp {{ config.temperature }} · Top-{{ config.top_k }}
-                  {% if config.rerank_enabled %}· Reranker{% endif %}
+                  {% if config.retrieval_enabled and config.rerank_enabled %}· Reranker{% endif %}
                 </div>
               </div>
               <a class="gd-icon-btn" title="Bearbeiten"
@@ -89,6 +97,36 @@
               <input class="kern-form-input__input" type="text" id="cc-name" name="name"
                      required maxlength="150" value="{{ fd.name if fd else '' }}">
             </div>
+            <fieldset class="kern-fieldset gd-fallback-options">
+              <legend class="kern-label">Chat-Modus</legend>
+              <label class="kern-form-input__radio gd-fallback-option">
+                <input type="radio" name="chat_mode" value="rag"
+                       {% if not fd or fd.retrieval_enabled %}checked{% endif %}>
+                <span>
+                  <strong>Mit Wissensbasis (RAG)</strong><br>
+                  <span class="kern-body--small kern-body--muted">
+                    Durchsucht Projektquellen und erzeugt belegte Antworten.
+                  </span>
+                </span>
+              </label>
+              <label class="kern-form-input__radio gd-fallback-option">
+                <input type="radio" name="chat_mode" value="model"
+                       {% if fd and not fd.retrieval_enabled %}checked{% endif %}
+                       {% if not model_chat_enabled %}disabled{% endif %}>
+                <span>
+                  <strong>Normaler Modellchat</strong><br>
+                  <span class="kern-body--small kern-body--muted">
+                    Nutzt das Sprachmodell direkt und überspringt die Wissensbasis vollständig.
+                    {% if not model_chat_enabled %}
+                      Muss zuerst unter Plattform-Einstellungen → KI &amp; Modelle freigegeben werden.
+                    {% endif %}
+                  </span>
+                </span>
+              </label>
+              {% if fd and not fd.retrieval_enabled and not model_chat_enabled %}
+                <input type="hidden" name="chat_mode" value="model">
+              {% endif %}
+            </fieldset>
             <div class="kern-form-input">
               <label class="kern-label" for="cc-prompt">System-Prompt (optional)</label>
               <textarea class="kern-form-input__input" id="cc-prompt" name="system_prompt"
@@ -141,7 +179,7 @@
                 <input class="kern-form-check__checkbox" type="checkbox" id="cc-reranker"
                        name="rerank_enabled" value="true"
                        {% if not fd or fd.rerank_enabled %}checked{% endif %}>
-                <label class="kern-label" for="cc-reranker">Reranker verwenden</label>
+                <label class="kern-label" for="cc-reranker">Reranker verwenden (nur RAG)</label>
               </div>
               <div class="kern-form-check">
                 <input class="kern-form-check__checkbox" type="checkbox" id="cc-standard"

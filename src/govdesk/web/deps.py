@@ -12,14 +12,25 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from govdesk.core.branding import DEFAULT_UI_SCALE
+
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+STATIC_DIR = Path(__file__).parent / "static"
+VERSIONED_ASSETS = (
+    STATIC_DIR / "css" / "app.css",
+    STATIC_DIR / "js" / "theme.js",
+)
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-# Cache-Busting für statische Assets: ändert sich bei jedem Prozessstart.
-# Browser holen CSS/JS nach einem Deploy/Neustart sicher frisch, statt auf
-# veralteten Heuristik-Caches zu sitzen (?v=… in base.html & Co.).
-templates.env.globals["asset_v"] = str(int(datetime.now(UTC).timestamp()))
+
+def _asset_version() -> str:
+    """Ändert sich unmittelbar, wenn eigene CSS-/JS-Assets bearbeitet werden."""
+    return str(max(path.stat().st_mtime_ns for path in VERSIONED_ASSETS))
+
+
+# Fallback für Templates, die außerhalb von render() gerendert werden.
+templates.env.globals["asset_v"] = _asset_version()
 
 
 def render(
@@ -28,12 +39,25 @@ def render(
     context: dict[str, Any] | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
+    theme_policy = getattr(request.state, "branding_theme_policy", "both")
+    requested_theme = request.cookies.get("govdesk_theme", "light")
+    if theme_policy in {"light", "dark"}:
+        theme = theme_policy
+    else:
+        theme = requested_theme if requested_theme in {"light", "dark"} else "light"
     ctx: dict[str, Any] = {
-        "theme": request.cookies.get("govdesk_theme", "light"),
+        "asset_v": _asset_version(),
+        "theme": theme,
+        "theme_policy": theme_policy,
         "csrf_token": getattr(request.state, "csrf_token", None),
         "current_user": getattr(request.state, "user", None),
         "platform_name": getattr(request.state, "platform_name", "GovDesk"),
         "platform_subtitle": getattr(request.state, "platform_subtitle", None),
+        "platform_logo_hash": getattr(request.state, "platform_logo_hash", None),
+        "branding_primary_color": getattr(request.state, "branding_primary_color", "#3154b8"),
+        "branding_primary_on_color": getattr(request.state, "branding_primary_on_color", "#ffffff"),
+        "branding_accent_color": getattr(request.state, "branding_accent_color", "#0f7b6c"),
+        "branding_ui_scale": getattr(request.state, "branding_ui_scale", DEFAULT_UI_SCALE),
         # Naiv (UTC) — passend zu den DB-Timestamps ohne Zeitzone
         "now": datetime.now(UTC).replace(tzinfo=None),
     }

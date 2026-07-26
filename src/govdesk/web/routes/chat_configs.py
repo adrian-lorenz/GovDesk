@@ -58,6 +58,7 @@ async def _page_context(request: Request, project, user, db: Db, edit: ChatConfi
         "collections": collections,
         "models": models,
         "default_model": cfg.chat_model,
+        "model_chat_enabled": cfg.model_chat_enabled,
         "edit": edit,
     }
 
@@ -97,6 +98,7 @@ def _parse_draft(raw: str, project) -> dict:
         "top_k": top_k,
         "model": None,
         "rerank_enabled": True,
+        "retrieval_enabled": True,
         "is_default": False,
         "collection_ids": None,
     }
@@ -200,6 +202,7 @@ async def config_save(
     temperature: Annotated[float, Form()] = 0.2,
     top_k: Annotated[int, Form()] = 4,
     rerank_enabled: Annotated[bool, Form()] = False,
+    chat_mode: Annotated[str, Form()] = "rag",
     is_default: Annotated[bool, Form()] = False,
     config_id: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
@@ -209,6 +212,8 @@ async def config_save(
     )
     temperature = max(0.0, min(temperature, 2.0))
     top_k = max(1, min(top_k, 20))
+    if chat_mode not in {"rag", "model"}:
+        raise HTTPException(status_code=422, detail="Unbekannter Chat-Modus")
 
     if config_id:
         config = await _load_config(db, project, uuid.UUID(config_id))
@@ -224,6 +229,7 @@ async def config_save(
     config.temperature = temperature
     config.top_k = top_k
     config.rerank_enabled = rerank_enabled
+    config.retrieval_enabled = chat_mode == "rag"
     config.collection_ids = collection_ids
     config.is_default = is_default
     await db.flush()

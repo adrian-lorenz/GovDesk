@@ -1,0 +1,52 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{# Nur aus einem serverseitig geprüften Admin-Kontext einbinden. #}
+{% if citations %}
+<details class="gd-retrieval-details">
+  <summary class="kern-body--small">
+    <i aria-hidden="true">query_stats</i>
+    Retrieval-Details ({{ citations | length }} Treffer)
+  </summary>
+  <p class="kern-body--small kern-body--muted">
+    Diese Textstellen wurden in dieser Reihenfolge an das Sprachmodell übergeben.
+    Ein höherer Score bedeutet eine höhere Bewertung durch die aktive Retrieval-Pipeline.
+  </p>
+  {% for citation in citations %}
+  {% set rank = citation.get("number") %}
+  {% set score = citation.get("score") %}
+  {% set filename = citation.get("filename") %}
+  {% set heading_path = citation.get("heading_path") %}
+  {% set page_no = citation.get("page_no") %}
+  {% set chunk_index = citation.get("chunk_index") %}
+  {% set retrieved_content = citation.get("content") or citation.get("snippet") %}
+  <section class="gd-retrieval-hit">
+    <div class="gd-row">
+      <span class="kern-badge kern-badge--small">
+        <span class="kern-label">Rang {{ rank if rank is not none else loop.index }}</span>
+      </span>
+      {% if score is not none %}
+      <span class="kern-badge kern-badge--info kern-badge--small">
+        <span class="kern-label">Score {{ "%.4f" | format(score | float) }}</span>
+      </span>
+      {% endif %}
+      <strong class="kern-body--small">{{ filename or "Unbekannte Quelle" }}</strong>
+    </div>
+    {% if heading_path %}
+      <p class="kern-body--small">{{ heading_path }}</p>
+    {% elif page_no %}
+      <p class="kern-body--small">Seite {{ page_no }}</p>
+    {% endif %}
+    {% if chunk_index is not none %}
+      <p class="kern-body--small kern-body--muted">Chunk {{ (chunk_index | int) + 1 }}</p>
+    {% endif %}
+    {% if retrieved_content %}
+      <pre class="gd-retrieval-content">{{ retrieved_content }}</pre>
+    {% else %}
+      <p class="kern-body--small kern-body--muted">
+        Für diese ältere Quelle ist kein Retrieval-Text gespeichert.
+      </p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</details>
+{% endif %}

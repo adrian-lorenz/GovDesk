@@ -21,6 +21,7 @@ from govdesk.chat.service import (
 )
 from govdesk.chat.streaming import render_markdown, stream_answer
 from govdesk.chat.zusammenfassung import PLATZHALTER_HTML, transcript_for
+from govdesk.core.app_settings import get_runtime_config
 from govdesk.core.audit import audit
 from govdesk.db.models import ChatConfig, MessageRole, ProjectRole
 from govdesk.editor.service import create_document as create_editor_document
@@ -45,11 +46,21 @@ async def chat_create(
     db: Db,
     chat_config_id: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
+    cfg = await get_runtime_config(db)
     config_id = None
     if chat_config_id:
-        config = await db.get(ChatConfig, uuid.UUID(chat_config_id))
+        try:
+            requested_config_id = uuid.UUID(chat_config_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="Ungültiges Chat-Profil") from exc
+        config = await db.get(ChatConfig, requested_config_id)
         if config is None or config.project_id != project.id:
             raise HTTPException(status_code=404, detail="Chat-Profil nicht gefunden")
+        if not config.retrieval_enabled and not cfg.model_chat_enabled:
+            raise HTTPException(
+                status_code=403,
+                detail="Modellchat ohne RAG ist plattformweit deaktiviert.",
+            )
         config_id = config.id
     else:
         default = (
@@ -57,7 +68,11 @@ async def chat_create(
                 select(ChatConfig).where(ChatConfig.project_id == project.id, ChatConfig.is_default)
             )
         ).scalar_one_or_none()
-        config_id = default.id if default else None
+        config_id = (
+            default.id
+            if default and (default.retrieval_enabled or cfg.model_chat_enabled)
+            else None
+        )
     # Vorher ungenutzte leere Chats entfernen, damit sie sich nicht anhäufen.
     await delete_empty_chat_sessions(db, project, user)
     session = await create_chat_session(db, project, user, chat_config_id=config_id)
@@ -96,11 +111,30 @@ async def chat_page(
             "content": m.content,
             "html": render_markdown(m.content) if m.role == MessageRole.ASSISTANT else None,
             "citations": m.citations or [],
+            "model_knowledge_used": m.model_knowledge_used,
+            "model_chat_used": m.model_chat_used,
         }
         for m in session.messages
     ]
     chats = await chat_sessions_for_project(db, project, user)
+    cfg = await get_runtime_config(db)
+    chat_configs = list(
+        (
+            await db.execute(
+                select(ChatConfig)
+                .where(
+                    ChatConfig.project_id == project.id,
+                    ChatConfig.retrieval_enabled | cfg.model_chat_enabled,
+                )
+                .order_by(ChatConfig.is_default.desc(), ChatConfig.name)
+            )
+        ).scalars()
+    )
+    current_config = (
+        await db.get(ChatConfig, session.chat_config_id) if session.chat_config_id else None
+    )
     can_edit = await has_min_role(db, project, user, ProjectRole.EDITOR)
+    can_manage = await has_min_role(db, project, user, ProjectRole.ADMIN)
     editor_visible = await is_section_visible(db, project, user, "editor")
     return render(
         request,
@@ -110,7 +144,11 @@ async def chat_page(
             "chat": session,
             "messages": messages,
             "chats": chats,
+            "chat_configs": chat_configs,
+            "current_config": current_config,
+            "model_chat_enabled": cfg.model_chat_enabled,
             "can_edit": can_edit,
+            "can_manage": can_manage,
             "editor_visible": editor_visible,
         },
     )
@@ -187,8 +225,14 @@ async def chat_stream(
 
         return StreamingResponse(empty(), media_type="text/event-stream")
 
+    can_manage = await has_min_role(db, project, user, ProjectRole.ADMIN)
     return StreamingResponse(
-        stream_answer(project, session.id, last.content),
+        stream_answer(
+            project,
+            session.id,
+            last.content,
+            show_retrieval_details=can_manage,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

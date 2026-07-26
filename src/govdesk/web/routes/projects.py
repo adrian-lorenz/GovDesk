@@ -261,13 +261,21 @@ async def project_home(project: ProjectViewer, user: CurrentUser, db: Db) -> Red
     if sessions:
         target = sessions[0].id
     else:
+        cfg = await get_runtime_config(db)
         default = (
             await db.execute(
                 select(ChatConfig).where(ChatConfig.project_id == project.id, ChatConfig.is_default)
             )
         ).scalar_one_or_none()
         session = await create_chat_session(
-            db, project, user, chat_config_id=default.id if default else None
+            db,
+            project,
+            user,
+            chat_config_id=(
+                default.id
+                if default and (default.retrieval_enabled or cfg.model_chat_enabled)
+                else None
+            ),
         )
         await db.commit()
         target = session.id
@@ -332,3 +340,26 @@ async def project_mitglieder(
         "projects/mitglieder.html",
         {**ctx, "members": members, "available_users": available_users},
     )
+
+
+@router.post("/projects/{project_id}/rag-fallback")
+async def project_rag_fallback_update(
+    project: ProjectAdmin,
+    user: CurrentUser,
+    db: Db,
+    fallback_mode: Annotated[str, Form()],
+) -> RedirectResponse:
+    if fallback_mode not in {"strict", "model_knowledge"}:
+        raise HTTPException(status_code=422, detail="Unbekannter Antwortmodus")
+    project.rag_fallback_enabled = fallback_mode == "model_knowledge"
+    await audit(
+        db,
+        "project.rag_fallback.update",
+        actor_user_id=user.id,
+        project_id=project.id,
+        target_type="project",
+        target_id=str(project.id),
+        meta={"mode": fallback_mode},
+    )
+    await db.commit()
+    return RedirectResponse(f"/projects/{project.id}/mitglieder#antwortmodus", status_code=303)

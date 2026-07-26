@@ -6,6 +6,6 @@
 
 Jeder Connector implementiert das Protokoll in `base.ConnectorPlugin` und
 registriert sich in `registry`. Der generische Worker-Task und die Verwaltungs-UI
-(Phase 2) sowie konkrete Connectoren wie TED-Ausschreibungen (Phase 3) docken
+(Phase 2) sowie weitere konkrete Fachdaten-Connectoren (Phase 3) docken
 über diesen Vertrag an — ohne den Kern anzufassen.
 """

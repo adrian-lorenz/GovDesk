@@ -69,12 +69,12 @@ def test_pptx_parser():
 
     prs = Presentation()
     slide = prs.slides.add_slide(prs.slide_layouts[1])
-    slide.shapes.title.text = "Vergabe 2026"
+    slide.shapes.title.text = "Digitalstrategie 2026"
     slide.placeholders[1].text = "Punkt eins"
     buf = io.BytesIO()
     prs.save(buf)
     parsed = parser_for("t.pptx").parse(buf.getvalue())
-    assert any("Vergabe 2026" in b.text for b in parsed.blocks)
+    assert any("Digitalstrategie 2026" in b.text for b in parsed.blocks)
     assert any("Punkt eins" in b.text for b in parsed.blocks)
 
 

@@ -28,6 +28,35 @@ ausschließlich auf Grundlage der bereitgestellten Quellen. Zitiere Belege im Te
 mit [1], [2] usw. entsprechend der Quellen-Nummerierung. Wenn die Quellen keine \
 Antwort hergeben, sage das offen. Antworte auf Deutsch, präzise und sachlich."""
 
+NO_SOURCES_ANSWER = (
+    "Ich habe dazu noch keine passende Quelle in der Wissensbasis gefunden. "
+    "Möglicherweise werden die ausgewählten Dokumente noch eingebettet. "
+    "Bitte warten Sie, bis ihr Status „Bereit“ ist, und versuchen Sie es dann erneut."
+)
+
+MODEL_KNOWLEDGE_NOTICE = (
+    "⚠️ **Hinweis: Keine passende Quelle in der Wissensbasis gefunden. "
+    "Die folgende Antwort basiert auf allgemeinem Modellwissen und ist nicht "
+    "durch Projektquellen belegt.**"
+)
+
+MODEL_KNOWLEDGE_SYSTEM_PROMPT = """Du bist GovDesk, ein Assistent für Behörden. \
+Für die aktuelle Frage wurde keine passende Quelle in der Projekt-Wissensbasis \
+gefunden. Beantworte sie anhand deines allgemeinen Modellwissens auf Deutsch, \
+präzise und sachlich. Erfinde keine Quellen, Fundstellen oder Quellennummern. \
+Behaupte nicht, dass deine Antwort durch die Projekt-Wissensbasis belegt ist. \
+Weise auf Unsicherheit hin, besonders bei rechtlichen oder zeitabhängigen Aussagen."""
+
+MODEL_CHAT_SYSTEM_PROMPT = """Du bist GovDesk, ein hilfreicher Assistent für Behörden. \
+Dies ist ein normaler Modellchat ohne Zugriff auf die Projekt-Wissensbasis. Antworte \
+auf Deutsch, präzise und sachlich. Erfinde keine Quellen oder Fundstellen und weise \
+bei rechtlichen oder zeitabhängigen Aussagen transparent auf Unsicherheiten hin."""
+
+MODEL_CHAT_DISABLED_ANSWER = (
+    "Der Modellchat ohne Wissensbasis ist derzeit durch die Plattform-Administration "
+    "deaktiviert. Bitte wählen Sie für einen neuen Chat ein RAG-Profil."
+)
+
 
 def render_markdown(text: str) -> str:
     return nh3.clean(_md.render(text))
@@ -38,7 +67,13 @@ def _sse(event: str, data: str) -> str:
     return f"event: {event}\n{lines}\n"
 
 
-async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
+async def stream_answer(
+    project: Project,
+    session_id: uuid.UUID,
+    question: str,
+    *,
+    show_retrieval_details: bool = False,
+):
     """Async-Generator für die SSE-Response.
 
     Öffnet eigene DB-Sessions (kurzlebig), damit die Verbindung nicht für die
@@ -46,6 +81,8 @@ async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
     """
     answer_parts: list[str] = []
     retrieval: RetrievalResult | None = None
+    model_knowledge_used = False
+    model_chat_used = False
 
     model = None
     try:
@@ -80,42 +117,100 @@ async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
             top_n = chat_config.top_k if chat_config else 4
             rerank = chat_config.rerank_enabled if chat_config else True
             collection_ids = list(chat_config.collection_ids or []) if chat_config else None
+            retrieval_enabled = chat_config.retrieval_enabled if chat_config else True
 
-            retrieval = await retrieve(
-                project,
-                question,
-                cfg,
-                top_n=top_n,
-                collection_ids=collection_ids or None,
-                rerank=rerank,
-            )
+            if not retrieval_enabled:
+                if not cfg.model_chat_enabled:
+                    answer_parts.append(MODEL_CHAT_DISABLED_ANSWER)
+                    yield _sse("token", html.escape(MODEL_CHAT_DISABLED_ANSWER))
+                else:
+                    model_chat_used = True
+                    base_system = (
+                        f"{system_prompt}\n\n{MODEL_CHAT_SYSTEM_PROMPT}"
+                        if system_prompt
+                        else MODEL_CHAT_SYSTEM_PROMPT
+                    )
+                    guard_scope = scope_prompt(guardrails)
+                    if guard_scope:
+                        base_system = f"{base_system}\n\n{guard_scope}"
+                    messages = [{"role": "system", "content": base_system}, *history]
+                    provider = llm_provider_from_config(cfg)
+                    heartbeat = asyncio.get_event_loop().time()
+                    async for token in provider.stream_chat(
+                        messages, model=model, temperature=temperature
+                    ):
+                        answer_parts.append(token)
+                        yield _sse("token", html.escape(token))
+                        now = asyncio.get_event_loop().time()
+                        if now - heartbeat > 15:
+                            heartbeat = now
+                            yield ": heartbeat\n\n"
+            else:
+                retrieval = await retrieve(
+                    project,
+                    question,
+                    cfg,
+                    top_n=top_n,
+                    collection_ids=collection_ids or None,
+                    rerank=rerank,
+                )
 
-            base_system = system_prompt or SYSTEM_PROMPT
-            guard_scope = scope_prompt(guardrails)
-            if guard_scope:
-                base_system = f"{base_system}\n\n{guard_scope}"
-            messages = [{"role": "system", "content": base_system}]
-            if retrieval.context:
+            if retrieval_enabled and not retrieval.context:
+                if not project.rag_fallback_enabled:
+                    answer_parts.append(NO_SOURCES_ANSWER)
+                    yield _sse("token", html.escape(NO_SOURCES_ANSWER))
+                else:
+                    model_knowledge_used = True
+                    notice = f"{MODEL_KNOWLEDGE_NOTICE}\n\n"
+                    answer_parts.append(notice)
+                    yield _sse("token", html.escape(notice))
+
+                    base_system = (
+                        f"{system_prompt}\n\n{MODEL_KNOWLEDGE_SYSTEM_PROMPT}"
+                        if system_prompt
+                        else MODEL_KNOWLEDGE_SYSTEM_PROMPT
+                    )
+                    guard_scope = scope_prompt(guardrails)
+                    if guard_scope:
+                        base_system = f"{base_system}\n\n{guard_scope}"
+                    messages = [{"role": "system", "content": base_system}, *history]
+                    provider = llm_provider_from_config(cfg)
+                    heartbeat = asyncio.get_event_loop().time()
+                    async for token in provider.stream_chat(
+                        messages, model=model, temperature=temperature
+                    ):
+                        answer_parts.append(token)
+                        yield _sse("token", html.escape(token))
+                        now = asyncio.get_event_loop().time()
+                        if now - heartbeat > 15:
+                            heartbeat = now
+                            yield ": heartbeat\n\n"
+            elif retrieval_enabled:
+                base_system = system_prompt or SYSTEM_PROMPT
+                guard_scope = scope_prompt(guardrails)
+                if guard_scope:
+                    base_system = f"{base_system}\n\n{guard_scope}"
+                messages = [{"role": "system", "content": base_system}]
                 messages.append(
                     {
                         "role": "system",
                         "content": f"Quellen:\n\n{retrieval.context}",
                     }
                 )
-            messages.extend(history)
+                messages.extend(history)
 
-            provider = llm_provider_from_config(cfg)
-            heartbeat = asyncio.get_event_loop().time()
+                provider = llm_provider_from_config(cfg)
+                heartbeat = asyncio.get_event_loop().time()
 
-            async for token in provider.stream_chat(
-                messages, model=model, temperature=temperature
-            ):
-                answer_parts.append(token)
-                yield _sse("token", html.escape(token))
-                now = asyncio.get_event_loop().time()
-                if now - heartbeat > 15:
-                    heartbeat = now
-                    yield ": heartbeat\n\n"
+                async for token in provider.stream_chat(
+                    messages, model=model, temperature=temperature
+                ):
+                    answer_parts.append(token)
+                    yield _sse("token", html.escape(token))
+                    now = asyncio.get_event_loop().time()
+                    if now - heartbeat > 15:
+                        heartbeat = now
+                        yield ": heartbeat\n\n"
 
     except Exception:
         logger.exception("Chat-Streaming fehlgeschlagen (Session %s)", session_id)
@@ -143,6 +238,8 @@ async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
                     answer,
                     citations=citations,
                     model=model,
+                    model_knowledge_used=model_knowledge_used,
+                    model_chat_used=model_chat_used,
                 )
                 await db.commit()
 
@@ -154,5 +251,8 @@ async def stream_answer(project: Project, session_id: uuid.UUID, question: str):
         html_content=render_markdown(answer),
         citations=citations,
         project_id=project.id,
+        model_knowledge_used=model_knowledge_used,
+        model_chat_used=model_chat_used,
+        show_retrieval_details=show_retrieval_details,
     )
     yield _sse("done", final_html)

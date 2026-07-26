@@ -15,16 +15,22 @@
         <div class="kern-body--small kern-body--muted">{{ source.connector_type }}
           {% if source.sync_interval_hours %} · Sync alle {{ source.sync_interval_hours }} h{% endif %}
         </div>
+        {% if source.connector_type == "gesetze_im_internet" and source.config.get("laws") %}
+        <div class="kern-body--small">
+          Gesetze: {{ source.config.get("laws") | join(", ") }}
+        </div>
+        {% endif %}
         {% if job %}
         <div class="kern-body--small">
           {% if job.status.value == "running" %}
             <progress class="kern-progress"></progress> Läuft — {{ job.items_found }} gefunden,
-            {{ job.items_ingested }} eingebettet, {{ job.items_skipped }} übersprungen
+            {{ job.items_ingested }} zur Verarbeitung übergeben, {{ job.items_skipped }} übersprungen
           {% elif job.status.value == "queued" %}
             <i aria-hidden="true">schedule</i> In Warteschlange
           {% elif job.status.value == "done" %}
-            <i aria-hidden="true" class="gd-success-text">check_circle</i> Fertig — {{ job.items_ingested }} eingebettet
-            ({{ job.items_skipped }} übersprungen)
+            <i aria-hidden="true" class="gd-success-text">check_circle</i>
+            Import abgeschlossen — {{ job.items_ingested }} zur Verarbeitung übergeben
+            ({{ job.items_skipped }} unverändert). Embeddings können noch laufen.
           {% elif job.status.value == "cancelled" %}
             <i aria-hidden="true">cancel</i> Abgebrochen
           {% else %}

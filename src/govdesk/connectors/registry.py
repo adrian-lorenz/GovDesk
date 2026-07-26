@@ -40,5 +40,6 @@ def all_connectors() -> list[ConnectorPlugin]:
 # Konkrete Connectoren hier importieren, damit ihr Modul-Import sie via
 # register(...) einträgt. Der Import steht bewusst am Dateiende, nachdem
 # register() definiert ist (die Connectoren importieren register von hier).
+from govdesk.connectors.gesetze_im_internet import plugin as _gesetze  # noqa: E402, F401
 from govdesk.connectors.nextcloud import plugin as _nextcloud  # noqa: E402, F401
 from govdesk.connectors.notion import plugin as _notion  # noqa: E402, F401

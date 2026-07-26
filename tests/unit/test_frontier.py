@@ -12,31 +12,31 @@ def test_normalisierung():
 
 def test_frontier_regeln():
     frontier = Frontier(
-        "https://www.gesetze-im-internet.de/vgv_2016/",
+        "https://www.gesetze-im-internet.de/bdsg_2018/",
         max_depth=2,
         max_pages=50,
-        include_pattern=r"/vgv_2016/",
+        include_pattern=r"/bdsg_2018/",
         exclude_pattern=r"\.pdf$",
     )
     start = frontier.pop()
     assert start is not None and start[1] == 0
 
-    frontier.add("https://www.gesetze-im-internet.de/vgv_2016/__1.html", 1)
+    frontier.add("https://www.gesetze-im-internet.de/bdsg_2018/__1.html", 1)
     assert len(frontier) == 1
     # Duplikat
-    frontier.add("https://www.gesetze-im-internet.de/vgv_2016/__1.html", 1)
+    frontier.add("https://www.gesetze-im-internet.de/bdsg_2018/__1.html", 1)
     assert len(frontier) == 1
     # Fremde Domain
-    frontier.add("https://example.com/vgv_2016/x.html", 1)
+    frontier.add("https://example.com/bdsg_2018/x.html", 1)
     assert len(frontier) == 1
     # Exclude-Muster
-    frontier.add("https://www.gesetze-im-internet.de/vgv_2016/gesamt.pdf", 1)
+    frontier.add("https://www.gesetze-im-internet.de/bdsg_2018/gesamt.pdf", 1)
     assert len(frontier) == 1
     # Include-Muster verfehlt
     frontier.add("https://www.gesetze-im-internet.de/bgb/__433.html", 1)
     assert len(frontier) == 1
     # Zu tief
-    frontier.add("https://www.gesetze-im-internet.de/vgv_2016/__2.html", 3)
+    frontier.add("https://www.gesetze-im-internet.de/bdsg_2018/__2.html", 3)
     assert len(frontier) == 1
 
 

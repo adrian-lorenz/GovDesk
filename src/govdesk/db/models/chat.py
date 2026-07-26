@@ -6,7 +6,7 @@ import enum
 import uuid
 from typing import Any
 
-from sqlalchemy import Enum, ForeignKey, String, Text
+from sqlalchemy import Boolean, Enum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -35,6 +35,8 @@ class ChatConfig(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     temperature: Mapped[float] = mapped_column(default=0.2)
     top_k: Mapped[int] = mapped_column(default=4)
     rerank_enabled: Mapped[bool] = mapped_column(default=True)
+    # False = normaler Modellchat, die Projekt-Wissensbasis wird nicht abgefragt.
+    retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     # Leer = alle Sammlungen des Projekts
     collection_ids: Mapped[list[uuid.UUID] | None] = mapped_column(ARRAY(PgUUID(as_uuid=True)))
     is_default: Mapped[bool] = mapped_column(default=False)
@@ -71,5 +73,7 @@ class ChatMessage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     content: Mapped[str] = mapped_column(Text)
     citations: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
     model: Mapped[str | None] = mapped_column(String(120))
+    model_knowledge_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    model_chat_used: Mapped[bool] = mapped_column(Boolean, default=False)
 
     session: Mapped[ChatSession] = relationship(back_populates="messages")

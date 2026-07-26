@@ -1,0 +1,38 @@
+{# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
+{# SPDX-License-Identifier: EUPL-1.2 #}
+{% if preview_error %}
+<div class="kern-alert kern-alert--danger" role="alert">
+  <div class="kern-alert__content">
+    <strong>Vorschau nicht möglich</strong>
+    <p class="kern-body--small">{{ preview_error }}</p>
+  </div>
+</div>
+{% elif previews %}
+<div class="gd-stack">
+  <p class="kern-body--small">
+    Vorschau für {{ previews | length }} Gesetz{% if previews | length != 1 %}e{% endif %}.
+    Gezeigt werden höchstens sechs Chunks je Gesetz; der Import verarbeitet alle.
+  </p>
+  {% for preview in previews %}
+  <details {% if loop.first %}open{% endif %}>
+    <summary>
+      <strong>{{ preview.filename }}</strong>
+      <span class="kern-body--small kern-body--muted"> · {{ preview.chunk_count }} Chunks</span>
+    </summary>
+    <div class="gd-stack gd-mt">
+      {% for chunk in preview.chunks %}
+      <article class="gd-chunk-preview">
+        <div class="kern-body--small kern-body--muted">
+          Chunk {{ loop.index }} · ca. {{ chunk.token_count }} Token
+          {% if chunk.heading_path %}<br>{{ chunk.heading_path }}{% endif %}
+        </div>
+        <p class="kern-body--small">{{ chunk.text }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+</div>
+{% else %}
+<p class="kern-body--small">Keine importierbaren Inhalte gefunden.</p>
+{% endif %}

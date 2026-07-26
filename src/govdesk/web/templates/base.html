@@ -1,7 +1,7 @@
 {# SPDX-FileCopyrightText: 2026 GovDesk-Mitwirkende #}
 {# SPDX-License-Identifier: EUPL-1.2 #}
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" style="font-size: {{ branding_ui_scale }}%">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +10,29 @@
      per Function() kompilieren — sonst bricht es zur Laufzeit. #}
   <meta name="htmx-config" content='{"allowEval": false}'>
   <title>{% block title %}{{ platform_name }}{% endblock %}</title>
+  {% if platform_logo_hash %}
+  <link rel="icon" href="/branding/logo?v={{ platform_logo_hash }}">
+  {% else %}
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%232044aa'/%3E%3Cpath fill='white' d='M12 4 5 8v1h14V8zM6 10v6H5v2h14v-2h-1v-6h-2v6h-3v-6h-2v6H8v-6z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="{{ url_for('static', path='css/kern.min.css') }}?v={{ asset_v }}">
-  <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}?v={{ asset_v }}">
+  {% endif %}
+  <link rel="stylesheet" data-gd-versioned-style
+        href="{{ url_for('static', path='css/kern.min.css') }}?v={{ asset_v }}">
+  <link rel="stylesheet" data-gd-versioned-style
+        href="{{ url_for('static', path='css/app.css') }}?v={{ asset_v }}">
+  <style>
+    :root {
+      --gd-primary-color: {{ branding_primary_color }};
+      --gd-primary-on-color: {{ branding_primary_on_color }};
+      --gd-accent-color: {{ branding_accent_color }};
+    }
+    body.kern-light,
+    body.kern-dark {
+      --kern-color-action-default: var(--gd-primary-color);
+      --kern-color-action-default-contextual: var(--gd-primary-color);
+      --kern-color-action-on-default: var(--gd-primary-on-color);
+      --kern-color-action-on-default-contextual: var(--gd-primary-on-color);
+    }
+  </style>
   <script src="{{ url_for('static', path='js/htmx.min.js') }}?v={{ asset_v }}" defer></script>
   <script src="{{ url_for('static', path='js/sse.js') }}?v={{ asset_v }}" defer></script>
   <script src="{{ url_for('static', path='js/theme.js') }}?v={{ asset_v }}" defer></script>
@@ -24,6 +44,15 @@
    wird bei jedem Boost-Swap miterneuert, anders als Attribute am <body>. #}
 <body class="{{ 'kern-dark' if theme == 'dark' else 'kern-light' }}" hx-boost="true">
 <span id="gd-csrf" data-token="{{ csrf_token or '' }}" hidden></span>
+<span id="gd-ui-config"
+      data-theme="{{ theme }}"
+      data-theme-policy="{{ theme_policy }}"
+      data-ui-scale="{{ branding_ui_scale }}"
+      data-primary-color="{{ branding_primary_color }}"
+      data-primary-on-color="{{ branding_primary_on_color }}"
+      data-accent-color="{{ branding_accent_color }}"
+      data-asset-version="{{ asset_v }}"
+      hidden></span>
 <div id="gd-progress" aria-hidden="true"></div>
 
 {# Eigene Bestätigungs-/Hinweis-Modals statt window.confirm/alert — theme.js #}
@@ -67,7 +96,11 @@
 <header class="gd-header">
   <nav class="gd-header-nav" aria-label="Hauptnavigation">
     <a href="/" class="gd-brand">
+      {% if platform_logo_hash %}
+      <img class="gd-brand-logo" src="/branding/logo?v={{ platform_logo_hash }}" alt="">
+      {% else %}
       <i aria-hidden="true">account_balance</i>
+      {% endif %}
       <span class="gd-brand-name">{{ platform_name }}</span>
     </a>
     <div class="gd-header-spacer"></div>
@@ -77,9 +110,11 @@
     <a class="gd-icon-btn" href="/admin/audit" title="Audit-Log"><i>history</i></a>
     <a class="gd-icon-btn" href="/admin/settings" title="Einstellungen"><i>settings</i></a>
     {% endif %}
+    {% if theme_policy == "both" %}
     <button type="button" class="gd-icon-btn" onclick="gdToggleTheme()" title="Hell/Dunkel umschalten">
       <i data-theme-icon>{{ 'light_mode' if theme == 'dark' else 'dark_mode' }}</i>
     </button>
+    {% endif %}
     {% if current_user %}
     <form method="post" action="/logout" class="gd-header-form">
       <button type="submit" class="gd-icon-btn" title="Abmelden ({{ current_user.username }})"><i>logout</i></button>

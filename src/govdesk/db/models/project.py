@@ -5,7 +5,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Enum, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Enum, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from govdesk.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -38,6 +38,8 @@ class Project(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     embedding_model: Mapped[str] = mapped_column(String(120))
     qdrant_collection: Mapped[str] = mapped_column(String(120), unique=True)
     is_archived: Mapped[bool] = mapped_column(default=False)
+    # Sicherer Standard: Ohne passende Projektquelle keine Antwort aus Modellwissen.
+    rag_fallback_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     members: Mapped[list[ProjectMember]] = relationship(
         back_populates="project", cascade="all, delete-orphan"

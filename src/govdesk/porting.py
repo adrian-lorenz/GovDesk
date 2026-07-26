@@ -58,6 +58,7 @@ async def export_project_archive(db: AsyncSession, project: Project) -> bytes:
                         "name": project.name,
                         "description": project.description,
                         "embedding_model": project.embedding_model,
+                        "rag_fallback_enabled": project.rag_fallback_enabled,
                     },
                 },
                 ensure_ascii=False,
@@ -79,6 +80,7 @@ async def export_project_archive(db: AsyncSession, project: Project) -> bytes:
                         "temperature": c.temperature,
                         "top_k": c.top_k,
                         "rerank_enabled": c.rerank_enabled,
+                        "retrieval_enabled": c.retrieval_enabled,
                         "collection_ids": [str(i) for i in (c.collection_ids or [])],
                         "is_default": c.is_default,
                     }
@@ -135,7 +137,9 @@ async def import_project_archive(
             description=meta_project.get("description"),
             embedding_model=embedding_model,
             embedding_dimensions=embedding_dimensions,
+            create_model_chat_profile=False,
         )
+        project.rag_fallback_enabled = bool(meta_project.get("rag_fallback_enabled", False))
 
         # Sammlungen neu anlegen, alte→neue ID merken
         coll_map: dict[str, uuid.UUID] = {}
@@ -158,8 +162,28 @@ async def import_project_archive(
                     temperature=c.get("temperature", 0.2),
                     top_k=c.get("top_k", 4),
                     rerank_enabled=c.get("rerank_enabled", True),
+                    retrieval_enabled=c.get("retrieval_enabled", True),
                     collection_ids=new_ids or None,
                     is_default=c.get("is_default", False),
+                )
+            )
+
+        if not any(not c.get("retrieval_enabled", True) for c in configs):
+            db.add(
+                ChatConfig(
+                    project_id=project.id,
+                    name="Allgemeiner Modellchat",
+                    system_prompt=(
+                        "Du bist ein hilfreicher Assistent für Behörden. Antworte auf Deutsch, "
+                        "präzise, sachlich und transparent über Unsicherheiten."
+                    ),
+                    model=None,
+                    temperature=0.4,
+                    top_k=4,
+                    rerank_enabled=False,
+                    retrieval_enabled=False,
+                    collection_ids=None,
+                    is_default=False,
                 )
             )
 

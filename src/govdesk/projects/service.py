@@ -11,7 +11,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from govdesk.db.models import Project, ProjectMember, ProjectRole, User
+from govdesk.db.models import ChatConfig, Project, ProjectMember, ProjectRole, User
 from govdesk.rag.vectorstore import VectorStore, collection_name_for_project
 
 
@@ -40,6 +40,7 @@ async def create_project(
     description: str | None,
     embedding_model: str,
     embedding_dimensions: int,
+    create_model_chat_profile: bool = True,
 ) -> Project:
     project_id = uuid.uuid4()
     project = Project(
@@ -53,6 +54,24 @@ async def create_project(
     )
     db.add(project)
     db.add(ProjectMember(project_id=project_id, user_id=owner.id, role=ProjectRole.OWNER))
+    if create_model_chat_profile:
+        db.add(
+            ChatConfig(
+                project_id=project_id,
+                name="Allgemeiner Modellchat",
+                system_prompt=(
+                    "Du bist ein hilfreicher Assistent für Behörden. Antworte auf Deutsch, "
+                    "präzise, sachlich und transparent über Unsicherheiten."
+                ),
+                model=None,
+                temperature=0.4,
+                top_k=4,
+                rerank_enabled=False,
+                retrieval_enabled=False,
+                collection_ids=None,
+                is_default=False,
+            )
+        )
     await db.flush()
 
     store = VectorStore()

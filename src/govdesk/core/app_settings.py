@@ -56,6 +56,8 @@ class RuntimeConfig:
     # per Vision-Modell (Ollama) auslesen.
     ocr_enabled: bool
     ocr_model: str
+    # Plattformweite Freigabe für Profile, die RAG vollständig überspringen.
+    model_chat_enabled: bool
 
     @property
     def chat_model(self) -> str:
@@ -82,4 +84,5 @@ async def get_runtime_config(db: AsyncSession) -> RuntimeConfig:
         openai_model=stored.get("openai_model") or None,
         ocr_enabled=bool(stored.get("ocr_enabled", False)),
         ocr_model=stored.get("ocr_model") or "glm-ocr:latest",
+        model_chat_enabled=bool(stored.get("model_chat_enabled", False)),
     )

@@ -44,6 +44,9 @@ class Citation:
             "source_url": self.source_url,
             "score": round(self.score, 4),
             "snippet": self.snippet[:300],
+            # Nur serverseitig in der Admin-Diagnose rendern. Normale Nutzer
+            # erhalten diesen vollständigen Prompt-Kontext nicht im HTML.
+            "content": self.snippet,
         }
 
 

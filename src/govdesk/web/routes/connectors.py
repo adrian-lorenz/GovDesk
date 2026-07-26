@@ -8,6 +8,7 @@ import re
 import uuid
 from typing import Annotated, Any
 
+import httpx
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
@@ -18,6 +19,7 @@ from govdesk.connectors.service import (
     available_connectors,
     delete_source_full,
     list_sources_with_jobs,
+    preview_connector,
 )
 from govdesk.core.audit import audit
 from govdesk.core.secrets import seal
@@ -43,6 +45,23 @@ def _coerce(field: ConfigField, raw: Any) -> Any:
     if field.kind == "list":
         return [x.strip() for x in re.split(r"[\n,]", value) if x.strip()]
     return value
+
+
+def _config_from_form(
+    plugin: ConnectorPlugin, form: Any, *, encrypt_passwords: bool
+) -> dict[str, Any]:
+    config: dict[str, Any] = {}
+    for field in plugin.config_fields():
+        if field.kind == "checkboxes":
+            config[field.key] = form.getlist(f"config_{field.key}")
+            continue
+        value = _coerce(field, form.get(f"config_{field.key}"))
+        if field.kind == "password":
+            if value:
+                config[field.key] = seal(value) if encrypt_passwords else value
+            continue
+        config[field.key] = value
+    return config
 
 
 @router.get("/projects/{project_id}/connectors", response_class=HTMLResponse)
@@ -92,18 +111,7 @@ async def source_create(
         raise HTTPException(status_code=422, detail="Connector nicht verfügbar")
 
     form = await request.form()
-    config: dict[str, Any] = {}
-    for f in plugin.config_fields():
-        if f.kind == "checkboxes":
-            config[f.key] = form.getlist(f"config_{f.key}")
-            continue
-        value = _coerce(f, form.get(f"config_{f.key}"))
-        # Geheimnisse (App-Passwörter, Tokens) verschlüsselt ablegen.
-        if f.kind == "password":
-            if value:
-                config[f.key] = seal(value)
-            continue
-        config[f.key] = value
+    config = _config_from_form(plugin, form, encrypt_passwords=True)
 
     source = ConnectorSource(
         project_id=project.id,
@@ -126,6 +134,36 @@ async def source_create(
     )
     await db.commit()
     return await source_start(project, user, db, source.id)
+
+
+@router.post("/projects/{project_id}/connectors/preview", response_class=HTMLResponse)
+async def source_preview(
+    request: Request,
+    project: ProjectEditor,
+    db: Db,
+    connector_type: Annotated[str, Form()],
+) -> HTMLResponse:
+    plugin: ConnectorPlugin | None = next(
+        (c for c in await available_connectors(db) if c.type_id == connector_type), None
+    )
+    if plugin is None or not getattr(plugin, "supports_preview", False):
+        raise HTTPException(status_code=422, detail="Vorschau für diesen Connector nicht verfügbar")
+
+    form = await request.form()
+    config = _config_from_form(plugin, form, encrypt_passwords=False)
+    try:
+        previews = await preview_connector(plugin, config)
+        return render(
+            request,
+            "partials/_connector_preview.html",
+            {"previews": previews, "preview_error": None},
+        )
+    except (ValueError, httpx.HTTPError) as exc:
+        return render(
+            request,
+            "partials/_connector_preview.html",
+            {"previews": [], "preview_error": str(exc)},
+        )
 
 
 async def _load_source(db: Db, project, source_id: uuid.UUID) -> ConnectorSource:

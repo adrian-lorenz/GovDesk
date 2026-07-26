@@ -20,7 +20,7 @@ OVERLAP_TOKENS = 60
 CHARS_PER_TOKEN = 4
 
 # Deutsche Rechtstexte: neue §§/Artikel beginnen immer einen neuen Chunk,
-# damit Zitate wie „§ 3 VgV" nie zwei Paragraphen vermischen.
+# damit Zitate wie „§ 3 BDSG" nie zwei Paragraphen vermischen.
 SECTION_BOUNDARY = re.compile(
     r"^\s*(§+\s?\d+[a-z]?|Art(?:ikel|\.)?\s?\d+[a-z]?|Anlage\s?\d*|Präambel)\b",
     re.IGNORECASE,

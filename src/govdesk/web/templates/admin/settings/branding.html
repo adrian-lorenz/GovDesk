@@ -4,14 +4,105 @@
 {% set active = "branding" %}
 
 {% block settings_body %}
-<div class="kern-card kern-card--hug">
-  <div class="kern-card__container">
-    <div class="kern-card__header">
-      <h2 class="kern-heading-small"><i aria-hidden="true">badge</i> Branding</h2>
-      <p class="kern-body--small kern-body--muted">Name und Untertitel der Plattform (Login- und Startseite).</p>
+<form method="post" action="/admin/settings/branding"
+      enctype="multipart/form-data" hx-encoding="multipart/form-data"
+      class="gd-stack kern-w-full" data-gd-branding-form>
+  <div class="gd-branding-overview">
+    <div class="kern-card kern-card--hug">
+      <div class="kern-card__container">
+        <div class="kern-card__header">
+          <h2 class="kern-heading-small"><i aria-hidden="true">preview</i> Vorschau</h2>
+          <p class="kern-body--small kern-body--muted">So erscheint die Marke in Kopfzeile und Anmeldung.</p>
+        </div>
+        <div class="kern-card__body">
+          <div class="gd-branding-preview" data-gd-branding-preview>
+            <div class="gd-branding-preview__brand">
+              {% if platform_logo_hash %}
+              <img src="/branding/logo?v={{ platform_logo_hash }}"
+                   alt="" data-gd-branding-logo-preview>
+              {% else %}
+              <i aria-hidden="true" data-gd-branding-logo-fallback>account_balance</i>
+              <img alt="" data-gd-branding-logo-preview hidden>
+              {% endif %}
+              <strong data-gd-branding-name-preview>{{ platform_name }}</strong>
+            </div>
+            <p class="kern-body--small" data-gd-branding-subtitle-preview>
+              {{ platform_subtitle or "Ihre souveräne KI-Plattform" }}
+            </p>
+            <button type="button" class="kern-btn kern-btn--primary">
+              <span class="kern-label">Primäraktion</span>
+            </button>
+            <span class="gd-branding-accent">Markenakzent</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="kern-card__body">
-      <form method="post" action="/admin/settings/branding" class="gd-stack kern-w-full">
+
+    <div class="kern-card kern-card--hug">
+      <div class="kern-card__container">
+        <div class="kern-card__header">
+          <h2 class="kern-heading-small"><i aria-hidden="true">photo_size_select_large</i> UI-Größe</h2>
+          <p class="kern-body--small kern-body--muted">Wirkt global auf Schrift, Abstände und Bedienelemente.</p>
+        </div>
+        <div class="kern-card__body">
+          <div class="kern-form-input">
+            <label class="kern-label" for="branding-ui-scale">Globale Skalierung</label>
+            <div class="kern-form-input__select-wrapper">
+              <select class="kern-form-input__select" id="branding-ui-scale" name="ui_scale">
+                <option value="80" {{ 'selected' if branding_ui_scale == 80 }}>80 % · Sehr kompakt</option>
+                <option value="85" {{ 'selected' if branding_ui_scale == 85 }}>85 % · Kompakt</option>
+                <option value="90" {{ 'selected' if branding_ui_scale == 90 }}>90 % · Empfohlen</option>
+                <option value="95" {{ 'selected' if branding_ui_scale == 95 }}>95 % · Etwas kompakter</option>
+                <option value="100" {{ 'selected' if branding_ui_scale == 100 }}>100 % · Standard</option>
+                <option value="105" {{ 'selected' if branding_ui_scale == 105 }}>105 % · Etwas größer</option>
+                <option value="110" {{ 'selected' if branding_ui_scale == 110 }}>110 % · Groß</option>
+                <option value="115" {{ 'selected' if branding_ui_scale == 115 }}>115 % · Sehr groß</option>
+              </select>
+            </div>
+            <p class="kern-body--small kern-body--muted">Die Vorschau wird sofort auf die gewählte Größe gesetzt.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kern-card kern-card--hug">
+    <div class="kern-card__container">
+      <div class="kern-card__header">
+        <h2 class="kern-heading-small"><i aria-hidden="true">image</i> Logo &amp; Name</h2>
+        <p class="kern-body--small kern-body--muted">Das Logo wird lokal verarbeitet und automatisch passend verkleinert.</p>
+      </div>
+      <div class="kern-card__body gd-stack">
+        <div class="gd-branding-logo-row">
+          <div class="gd-branding-logo-current">
+            {% if platform_logo_hash %}
+            <img src="/branding/logo?v={{ platform_logo_hash }}" alt="Aktuelles Logo">
+            {% else %}
+            <i aria-hidden="true">account_balance</i>
+            <span class="kern-body--small kern-body--muted">Noch kein eigenes Logo</span>
+            {% endif %}
+          </div>
+          <div class="kern-form-input gd-grow">
+            <label class="kern-label" for="branding-logo">Neues Logo hochladen</label>
+            <input class="gd-file-input" type="file" id="branding-logo" name="logo"
+                   accept="image/png,image/jpeg,image/webp">
+            <p class="kern-body--small kern-body--muted">
+              PNG, JPEG oder WebP bis 5 MB. Ausgabe als optimiertes PNG, maximal 640 × 192 px.
+              Transparente Hintergründe bleiben erhalten.
+            </p>
+          </div>
+        </div>
+        {% if platform_logo_hash %}
+        <label class="kern-form-input__checkbox">
+          <input type="checkbox" name="logo_remove" value="true">
+          <span>Eigenes Logo entfernen und Standardsymbol verwenden</span>
+        </label>
+        {% if branding_logo_size %}
+        <p class="kern-body--small kern-body--muted">
+          Gespeicherte Größe: {{ branding_logo_size.width }} × {{ branding_logo_size.height }} px
+        </p>
+        {% endif %}
+        {% endif %}
         <div class="kern-form-input">
           <label class="kern-label" for="branding-name">Plattform-Name</label>
           <input class="kern-form-input__input" type="text" id="branding-name" name="platform_name"
@@ -22,13 +113,89 @@
           <input class="kern-form-input__input" type="text" id="branding-untertitel" name="platform_subtitle"
                  value="{{ platform_subtitle or '' }}" maxlength="160">
         </div>
-        <div class="gd-dialog-actions">
-          <button type="submit" class="kern-btn kern-btn--primary">
-            <i aria-hidden="true">save</i><span class="kern-label">Speichern</span>
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
-</div>
+
+  <div class="kern-card kern-card--hug">
+    <div class="kern-card__container">
+      <div class="kern-card__header">
+        <h2 class="kern-heading-small"><i aria-hidden="true">palette</i> Farben</h2>
+        <p class="kern-body--small kern-body--muted">
+          Primärfarbe für Aktionen, Akzentfarbe für Marke und visuelle Hervorhebungen.
+        </p>
+      </div>
+      <div class="kern-card__body gd-branding-color-grid">
+        <label class="gd-color-control" for="branding-primary-color">
+          <input type="color" id="branding-primary-color" name="primary_color"
+                 value="{{ branding_primary_color }}">
+          <span>
+            <strong>Primärfarbe</strong>
+            <small>Buttons, aktive Zustände und Links</small>
+          </span>
+          <code>{{ branding_primary_color }}</code>
+        </label>
+        <label class="gd-color-control" for="branding-accent-color">
+          <input type="color" id="branding-accent-color" name="accent_color"
+                 value="{{ branding_accent_color }}">
+          <span>
+            <strong>Akzentfarbe</strong>
+            <small>Marke, Seitenleisten und dekorative Hervorhebungen</small>
+          </span>
+          <code>{{ branding_accent_color }}</code>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="kern-card kern-card--hug">
+    <div class="kern-card__container">
+      <div class="kern-card__header">
+        <h2 class="kern-heading-small"><i aria-hidden="true">contrast</i> Farbschema</h2>
+        <p class="kern-body--small kern-body--muted">Legt fest, welche Darstellung für alle Nutzer verfügbar ist.</p>
+      </div>
+      <div class="kern-card__body">
+        <fieldset class="kern-fieldset">
+          <legend class="kern-label">Erlaubter Modus</legend>
+          <div class="kern-fieldset__body gd-theme-options">
+            <label class="kern-form-input__radio gd-theme-option">
+              <input type="radio" name="theme_policy" value="both"
+                     {{ 'checked' if theme_policy == 'both' }}>
+              <i aria-hidden="true">contrast</i>
+              <span>
+                <strong>Hell &amp; Dunkel</strong>
+                <small>Nutzer können selbst umschalten.</small>
+              </span>
+            </label>
+            <label class="kern-form-input__radio gd-theme-option">
+              <input type="radio" name="theme_policy" value="light"
+                     {{ 'checked' if theme_policy == 'light' }}>
+              <i aria-hidden="true">light_mode</i>
+              <span>
+                <strong>Nur hell</strong>
+                <small>Die helle Oberfläche ist fest vorgegeben.</small>
+              </span>
+            </label>
+            <label class="kern-form-input__radio gd-theme-option">
+              <input type="radio" name="theme_policy" value="dark"
+                     {{ 'checked' if theme_policy == 'dark' }}>
+              <i aria-hidden="true">dark_mode</i>
+              <span>
+                <strong>Nur dunkel</strong>
+                <small>Die dunkle Oberfläche ist fest vorgegeben.</small>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </div>
+
+  <div class="gd-branding-savebar">
+    <p class="kern-body--small kern-body--muted">Die Einstellungen gelten sofort für alle Nutzer.</p>
+    <button type="submit" class="kern-btn kern-btn--primary">
+      <i aria-hidden="true">save</i><span class="kern-label">Branding speichern</span>
+    </button>
+  </div>
+</form>
 {% endblock %}

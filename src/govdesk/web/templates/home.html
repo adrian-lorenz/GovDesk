@@ -6,7 +6,14 @@
 <div class="kern-card kern-card--hug gd-hero">
   <div class="kern-card__container">
     <div class="kern-card__header">
-      <h1 class="kern-heading-large"><i aria-hidden="true">account_balance</i> Willkommen bei {{ platform_name }}</h1>
+      <h1 class="kern-heading-large">
+        {% if platform_logo_hash %}
+        <img class="gd-heading-logo" src="/branding/logo?v={{ platform_logo_hash }}" alt="">
+        {% else %}
+        <i aria-hidden="true">account_balance</i>
+        {% endif %}
+        Willkommen bei {{ platform_name }}
+      </h1>
     </div>
     <div class="kern-card__body">
       <p class="kern-body">Souveräne KI/RAG-Plattform für Behörden — Dokumente einbetten,

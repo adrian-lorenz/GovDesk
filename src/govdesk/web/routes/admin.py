@@ -7,15 +7,30 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, select, text
 
 from govdesk.auth.deps import Db, PlatformAdmin
 from govdesk.connectors.registry import all_connectors
 from govdesk.connectors.service import ENABLED_SETTING_KEY, enabled_type_ids
-from govdesk.core.app_settings import RuntimeConfig, get_runtime_config, set_setting
+from govdesk.core.app_settings import (
+    RuntimeConfig,
+    get_runtime_config,
+    get_setting,
+    set_setting,
+)
 from govdesk.core.audit import audit
+from govdesk.core.branding import (
+    DEFAULT_ACCENT_COLOR,
+    DEFAULT_PRIMARY_COLOR,
+    DEFAULT_UI_SCALE,
+    MAX_LOGO_BYTES,
+    normalize_color,
+    normalize_theme_policy,
+    normalize_ui_scale,
+    process_logo,
+)
 from govdesk.core.config import get_settings
 from govdesk.core.guardrails import TOPIC_RULES, load_guardrails
 from govdesk.core.password_policy import load_policy
@@ -51,8 +66,11 @@ async def _service_status(db: Db, cfg: RuntimeConfig) -> list[dict]:
     finally:
         await store.close()
     status.append(
-        {"name": "Qdrant (Vektor-DB)", "ok": qdrant_ok,
-         "detail": "erreichbar" if qdrant_ok else "nicht erreichbar"}
+        {
+            "name": "Qdrant (Vektor-DB)",
+            "ok": qdrant_ok,
+            "detail": "erreichbar" if qdrant_ok else "nicht erreichbar",
+        }
     )
 
     try:
@@ -63,17 +81,23 @@ async def _service_status(db: Db, cfg: RuntimeConfig) -> list[dict]:
 
     rr_ok = await RerankerClient(cfg.reranker_url).is_available()
     status.append(
-        {"name": "Reranker", "ok": rr_ok,
-         "detail": ("erreichbar" if rr_ok else "nicht erreichbar")
-         + ("" if cfg.reranker_enabled else " (deaktiviert)")}
+        {
+            "name": "Reranker",
+            "ok": rr_ok,
+            "detail": ("erreichbar" if rr_ok else "nicht erreichbar")
+            + ("" if cfg.reranker_enabled else " (deaktiviert)"),
+        }
     )
 
     if cfg.llm_provider == "openai" and cfg.openai_base_url:
         try:
             ext = await OpenAICompatProvider(cfg.openai_base_url, cfg.openai_api_key).list_models()
             status.append(
-                {"name": "Externer LLM (OpenAI-kompatibel)", "ok": True,
-                 "detail": f"{len(ext)} Modell(e)"}
+                {
+                    "name": "Externer LLM (OpenAI-kompatibel)",
+                    "ok": True,
+                    "detail": f"{len(ext)} Modell(e)",
+                }
             )
         except Exception as exc:
             status.append(
@@ -253,9 +277,14 @@ async def settings_index(admin: PlatformAdmin) -> RedirectResponse:
 
 
 @router.get("/settings/branding", response_class=HTMLResponse)
-async def settings_branding(request: Request, admin: PlatformAdmin) -> HTMLResponse:
-    # platform_name / platform_subtitle liefert render() global aus request.state.
-    return render(request, "admin/settings/branding.html")
+async def settings_branding(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
+    # Der restliche Branding-Kontext kommt global aus request.state.
+    logo_size = await get_setting(db, "branding_logo_size")
+    return render(
+        request,
+        "admin/settings/branding.html",
+        {"branding_logo_size": logo_size if isinstance(logo_size, dict) else None},
+    )
 
 
 @router.get("/settings/ki", response_class=HTMLResponse)
@@ -458,9 +487,7 @@ async def settings_qdrant_delete(
         await store.drop_collection(name)
     finally:
         await store.close()
-    await audit(
-        db, "qdrant.collection.delete", actor_user_id=admin.id, meta={"collection": name}
-    )
+    await audit(db, "qdrant.collection.delete", actor_user_id=admin.id, meta={"collection": name})
     await db.commit()
     return RedirectResponse("/admin/settings/qdrant", status_code=303)
 
@@ -510,7 +537,8 @@ async def settings_openai_test(
     base = openai_base_url.strip()
     if not base:
         return render(
-            request, "setup/_testergebnis.html",
+            request,
+            "setup/_testergebnis.html",
             {"ok": False, "detail": "Keine Endpunkt-URL angegeben"},
         )
     provider = OpenAICompatProvider(base, openai_api_key.strip() or None)
@@ -528,10 +556,54 @@ async def settings_branding_save(
     db: Db,
     platform_name: Annotated[str, Form()] = "",
     platform_subtitle: Annotated[str, Form()] = "",
+    primary_color: Annotated[str, Form()] = DEFAULT_PRIMARY_COLOR,
+    accent_color: Annotated[str, Form()] = DEFAULT_ACCENT_COLOR,
+    theme_policy: Annotated[str, Form()] = "both",
+    ui_scale: Annotated[int, Form()] = DEFAULT_UI_SCALE,
+    logo_remove: Annotated[bool, Form()] = False,
+    logo: UploadFile | None = None,
 ) -> RedirectResponse:
+    processed_logo = None
+    if logo is not None and logo.filename:
+        try:
+            processed_logo = process_logo(await logo.read(MAX_LOGO_BYTES + 1))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     await set_setting(db, "platform_name", platform_name.strip() or None)
     await set_setting(db, "platform_subtitle", platform_subtitle.strip() or None)
-    await audit(db, "settings.update", actor_user_id=admin.id, meta={"section": "branding"})
+    await set_setting(
+        db, "branding_primary_color", normalize_color(primary_color, DEFAULT_PRIMARY_COLOR)
+    )
+    await set_setting(
+        db, "branding_accent_color", normalize_color(accent_color, DEFAULT_ACCENT_COLOR)
+    )
+    await set_setting(db, "branding_theme_policy", normalize_theme_policy(theme_policy))
+    await set_setting(db, "branding_ui_scale", normalize_ui_scale(ui_scale))
+    if processed_logo is not None:
+        await set_setting(db, "branding_logo_data", processed_logo.data_base64)
+        await set_setting(db, "branding_logo_hash", processed_logo.content_hash)
+        await set_setting(
+            db,
+            "branding_logo_size",
+            {"width": processed_logo.width, "height": processed_logo.height},
+        )
+    elif logo_remove:
+        await set_setting(db, "branding_logo_data", None)
+        await set_setting(db, "branding_logo_hash", None)
+        await set_setting(db, "branding_logo_size", None)
+    await audit(
+        db,
+        "settings.update",
+        actor_user_id=admin.id,
+        meta={
+            "section": "branding",
+            "theme_policy": normalize_theme_policy(theme_policy),
+            "ui_scale": normalize_ui_scale(ui_scale),
+            "logo_updated": processed_logo is not None,
+            "logo_removed": bool(logo_remove and processed_logo is None),
+        },
+    )
     await db.commit()
     return RedirectResponse("/admin/settings/branding", status_code=303)
 
@@ -549,9 +621,11 @@ async def settings_ki_save(
     openai_model: Annotated[str, Form()] = "",
     ocr_enabled: Annotated[bool, Form()] = False,
     ocr_model: Annotated[str, Form()] = "",
+    model_chat_enabled: Annotated[bool, Form()] = False,
 ) -> RedirectResponse:
     await set_setting(db, "ocr_enabled", ocr_enabled)
     await set_setting(db, "ocr_model", ocr_model.strip() or "glm-ocr:latest")
+    await set_setting(db, "model_chat_enabled", model_chat_enabled)
     await set_setting(db, "ollama_base_url", ollama_base_url.strip())
     await set_setting(db, "ollama_api_key", ollama_api_key.strip() or None)
     await set_setting(db, "default_llm_model", default_llm_model.strip())
@@ -563,7 +637,11 @@ async def settings_ki_save(
         db,
         "settings.update",
         actor_user_id=admin.id,
-        meta={"section": "ki", "llm_provider": llm_provider},
+        meta={
+            "section": "ki",
+            "llm_provider": llm_provider,
+            "model_chat_enabled": model_chat_enabled,
+        },
     )
     await db.commit()
     return RedirectResponse("/admin/settings/ki", status_code=303)
@@ -646,9 +724,7 @@ async def _queue_context(db) -> dict:
     # Aufschlüsselung je Task: {task: {status: n}}
     tasks: dict[str, dict[str, int]] = {}
     for _queue_name, task_name, status, n in je_queue:
-        tasks.setdefault(task_name, {})[status] = tasks.setdefault(task_name, {}).get(
-            status, 0
-        ) + n
+        tasks.setdefault(task_name, {})[status] = tasks.setdefault(task_name, {}).get(status, 0) + n
 
     verlauf = (
         await db.execute(
@@ -684,7 +760,7 @@ async def _queue_context(db) -> dict:
 
             try:
                 doc_id = json.loads(row.args).get("document_id")
-            except (ValueError, AttributeError):
+            except ValueError, AttributeError:
                 doc_id = None
         eintraege.append(
             {
@@ -730,9 +806,7 @@ async def settings_queue(request: Request, admin: PlatformAdmin, db: Db) -> HTML
 
 
 @router.get("/settings/queue/inhalt", response_class=HTMLResponse)
-async def settings_queue_partial(
-    request: Request, admin: PlatformAdmin, db: Db
-) -> HTMLResponse:
+async def settings_queue_partial(request: Request, admin: PlatformAdmin, db: Db) -> HTMLResponse:
     """HTMX-Partial für die automatische Aktualisierung alle 5 s."""
     ctx = await _queue_context(db)
     return render(request, "admin/settings/_queue_inhalt.html", ctx)

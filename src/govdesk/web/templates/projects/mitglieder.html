@@ -5,6 +5,45 @@
 {% set page_title = "Verwaltung" %}
 
 {% block project_body %}
+<div class="kern-card kern-card--hug" id="antwortmodus">
+  <div class="kern-card__container">
+    <h2 class="kern-heading-small"><i aria-hidden="true">psychology</i> Antwortmodus</h2>
+    <p class="kern-body--small">
+      Legt für dieses Projekt fest, was geschieht, wenn die Wissensbasis keine passende
+      Quelle liefert.
+    </p>
+    <form method="post" action="/projects/{{ project.id }}/rag-fallback">
+      <fieldset class="kern-fieldset gd-fallback-options">
+        <legend class="kern-label">Ohne passende RAG-Quelle</legend>
+        <label class="kern-form-input__radio gd-fallback-option">
+          <input type="radio" name="fallback_mode" value="strict"
+                 {% if not project.rag_fallback_enabled %}checked{% endif %}>
+          <span>
+            <strong>Nur Wissensbasis</strong><br>
+            <span class="kern-body--small kern-body--muted">
+              Keine inhaltliche Antwort ohne Projektquelle (sicherer Standard).
+            </span>
+          </span>
+        </label>
+        <label class="kern-form-input__radio gd-fallback-option">
+          <input type="radio" name="fallback_mode" value="model_knowledge"
+                 {% if project.rag_fallback_enabled %}checked{% endif %}>
+          <span>
+            <strong>Modellwissen als Fallback</strong><br>
+            <span class="kern-body--small kern-body--muted">
+              Das Modell darf antworten; Antwort und Quellenleiste werden deutlich als
+              unbelegtes Modellwissen gekennzeichnet.
+            </span>
+          </span>
+        </label>
+      </fieldset>
+      <button type="submit" class="kern-btn kern-btn--primary gd-mt">
+        <i aria-hidden="true">save</i><span class="kern-label">Antwortmodus speichern</span>
+      </button>
+    </form>
+  </div>
+</div>
+
 <div class="kern-card kern-card--hug">
   <div class="kern-card__container">
     <div class="gd-row">

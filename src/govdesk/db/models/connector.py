@@ -5,7 +5,7 @@
 """Generisches Connector-Datenmodell.
 
 Ein Connector ist eine abschaltbare Quellen-Erweiterung (Plugin), die Dokumente
-aus einer externen Quelle (z. B. der EU-Ausschreibungsdatenbank TED) in ein
+aus einer externen Fachdatenquelle in ein
 Projekt einspeist. Anders als der Crawler mit eigenen Tabellen teilen sich alle
 Connector-Typen dieses Modell; `connector_type` ist der Diskriminator und `config`
 hält die typ-spezifischen Optionen als JSON. Die eigentliche Abruf-Logik lebt im
@@ -84,7 +84,7 @@ class ConnectorItem(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     connector_source_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("connector_sources.id", ondelete="CASCADE"), index=True
     )
-    # Stabile ID beim Anbieter (bei TED z. B. die publication-number).
+    # Stabile ID beim Anbieter (z. B. eine externe Dokumentnummer).
     external_id: Mapped[str] = mapped_column(String(200))
     content_hash: Mapped[str | None] = mapped_column(String(64))
     document_id: Mapped[uuid.UUID | None] = mapped_column(

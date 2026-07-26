@@ -41,6 +41,41 @@
     {% endif %}
   </div>
   {% endfor %}
+{% elif model_chat_used %}
+  <div class="quelle">
+    <div class="gd-row">
+      <i aria-hidden="true">forum</i>
+      <strong class="kern-body--small">Modellchat</strong>
+    </div>
+    <p class="kern-body--small kern-body--muted">
+      Für diese Antwort wurde die Projekt-Wissensbasis bewusst nicht durchsucht.
+      Es gibt daher keine RAG-Quellen.
+    </p>
+  </div>
+{% elif model_chat_active %}
+  <div class="quelle">
+    <div class="gd-row">
+      <i aria-hidden="true">forum</i>
+      <strong class="kern-body--small">Modellchat</strong>
+    </div>
+    <p class="kern-body--small kern-body--muted">
+      In diesem Chat ist die Projekt-Wissensbasis ausgeschaltet. Antworten stammen
+      direkt vom ausgewählten Sprachmodell.
+    </p>
+  </div>
+{% elif model_knowledge_used %}
+  <div class="quelle">
+    <div class="gd-row">
+      <i class="gd-warning-text" aria-hidden="true">warning</i>
+      <strong class="kern-body--small">Modellwissen</strong>
+    </div>
+    <p class="kern-body--small kern-body--muted">
+      Keine passende Projektquelle gefunden. Diese Antwort basiert auf allgemeinem
+      Modellwissen und ist nicht durch die Wissensbasis belegt.
+    </p>
+  </div>
 {% else %}
-  <p class="kern-body--small kern-body--muted">Die Quellen zur jeweils letzten Antwort erscheinen hier.</p>
+  <p class="kern-body--small kern-body--muted">
+    Für die letzte Antwort wurden keine Quellen aus der Wissensbasis gefunden.
+  </p>
 {% endif %}
