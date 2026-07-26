@@ -28,7 +28,7 @@ dependencies = [
     # Jobs
     "procrastinate>=3.0",
     # RAG
-    "qdrant-client>=1.12",
+    "qdrant-client>=1.18,<1.19",
     "httpx>=0.28",
     "ollama>=0.4",
     # Auth

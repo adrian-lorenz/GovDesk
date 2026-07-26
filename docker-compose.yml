@@ -20,7 +20,7 @@ services:
       retries: 10
 
   qdrant:
-    image: qdrant/qdrant:v1.15.5
+    image: qdrant/qdrant:v1.18.0
     volumes:
       - qdrant_data:/qdrant/storage
     healthcheck:
